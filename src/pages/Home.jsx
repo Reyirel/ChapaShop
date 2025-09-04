@@ -1,13 +1,6 @@
-import { Link } from 'react-router-dom'
-import ConfigNotification from '../components/ConfigNotification'            {/* CTA Buttons */}
-            <div className="mb-16 flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <SimpleButton to="/login" variant="primary" icon={LogIn}>
-                Iniciar Sesión
-              </SimpleButton>
-              <SimpleButton to="/register" variant="secondary" icon={UserPlus}>
-                Crear Cuenta
-              </SimpleButton>
-            </div>{ FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
+﻿import { Link } from 'react-router-dom'
+import ConfigNotification from '../components/ConfigNotification'
+import { FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
 import { Store, Star, Rocket, LogIn, UserPlus } from 'lucide-react'
 
 const Home = () => {
@@ -113,30 +106,30 @@ const Home = () => {
 
             {/* CTA Buttons */}
             <div className="mb-16 flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <GlowButton to="/login" variant="primary">
-                � Iniciar Sesión
-              </GlowButton>
-              <GlowButton to="/register" variant="secondary">
-                ✨ Crear Cuenta
-              </GlowButton>
+              <SimpleButton to="/login" variant="primary" icon={LogIn}>
+                Iniciar Sesión
+              </SimpleButton>
+              <SimpleButton to="/register" variant="secondary" icon={UserPlus}>
+                Crear Cuenta
+              </SimpleButton>
             </div>
 
             {/* Feature Cards */}
             <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               <FeatureCard
-                icon="🏪"
+                icon={Store}
                 title="Negocios Locales"
                 description="Conecta con comercios de tu comunidad y apoya la economía local con una experiencia digital moderna"
                 stats={{ value: 500, suffix: "+", label: "Negocios registrados" }}
               />
               <FeatureCard
-                icon="⭐"
+                icon={Star}
                 title="Calidad Premium"
                 description="Solo los mejores productos y servicios verificados por nuestra comunidad activa"
                 stats={{ value: 98, suffix: "%", label: "Satisfacción" }}
               />
               <FeatureCard
-                icon="🚀"
+                icon={Rocket}
                 title="Experiencia Rápida"
                 description="Interfaz intuitiva y moderna para encontrar lo que necesitas al instante"
                 stats={{ value: 3, suffix: "s", label: "Tiempo promedio" }}
@@ -150,7 +143,7 @@ const Home = () => {
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#3ecf8e] to-transparent" />
           <div className="text-center pb-8">
             <p className="text-gray-500 text-sm">
-              © 2025 ChapaShop - Conectando comunidades digitalmente
+               2025 ChapaShop - Conectando comunidades digitalmente
             </p>
           </div>
         </div>
