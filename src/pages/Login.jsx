@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../services/supabase'
+import { useAuth } from '../context/AuthContext'
 import { FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
 import { LogIn, UserPlus, Shield, ArrowLeft } from 'lucide-react'
 
@@ -12,6 +13,7 @@ const Login = () => {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
+  const { signIn } = useAuth()
 
   // Detectar si estamos en modo desarrollo
   const isDevelopment = import.meta.env.DEV
@@ -23,19 +25,31 @@ const Login = () => {
     setMessage('')
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+      const { data, error } = await signIn(email, password)
       
       if (error) throw error
       
       setMessage('¡Inicio de sesión exitoso!')
-      console.log('Usuario logueado:', data)
-      // Redirigir después de un breve delay
-      setTimeout(() => {
-        navigate('/negocios')
-      }, 1500)
+      
+      // Obtener el perfil del usuario para redirigir según su rol
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single()
+
+        // Redirigir según el rol del usuario
+        setTimeout(() => {
+          if (profile?.role === 'admin') {
+            navigate('/admin-panel')
+          } else if (profile?.role === 'business') {
+            navigate('/business-dashboard')
+          } else {
+            navigate('/negocios')
+          }
+        }, 1500)
+      }
     } catch (error) {
       setError(error.message)
     } finally {
@@ -49,23 +63,71 @@ const Login = () => {
     setMessage('')
 
     try {
-      // Primero crear el usuario en Auth
+      // Verificar si ya existe un admin
+      const { data: existingAdmin } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', 'admin@chapashop.com')
+        .single()
+
+      if (existingAdmin) {
+        setMessage('El usuario admin ya existe! Email: admin@chapashop.com, Password: Admin123!')
+        return
+      }
+
+      // Crear el usuario en Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: 'admin@chapashop.com',
         password: 'Admin123!',
+        options: {
+          data: {
+            full_name: 'Administrador',
+            role: 'admin'
+          }
+        }
       })
 
-      if (authError) throw authError
+      if (authError) {
+        // Si el error es que el usuario ya existe, intentar crear solo el perfil
+        if (authError.message.includes('already registered')) {
+          const { data: { session } } = await supabase.auth.signInWithPassword({
+            email: 'admin@chapashop.com',
+            password: 'Admin123!'
+          })
+          
+          if (session?.user) {
+            // Crear/actualizar el perfil
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: session.user.id,
+                email: 'admin@chapashop.com',
+                full_name: 'Administrador',
+                role: 'admin',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
 
-      if (authData.user) {
-        // Luego actualizar el perfil del usuario para marcar como admin
+            if (profileError) {
+              console.log('Error actualizando perfil admin:', profileError)
+            }
+            
+            await supabase.auth.signOut() // Cerrar la sesión del admin
+          }
+        } else {
+          throw authError
+        }
+      } else if (authData.user) {
+        // Usuario creado exitosamente, crear el perfil
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
             id: authData.user.id,
             email: 'admin@chapashop.com',
+            full_name: 'Administrador',
             role: 'admin',
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           })
 
         if (profileError) {
@@ -73,9 +135,9 @@ const Login = () => {
         }
       }
 
-      setMessage('Usuario admin creado exitosamente! Email: admin@chapashop.com, Password: Admin123!')
+      setMessage('Usuario admin configurado exitosamente! Email: admin@chapashop.com, Password: Admin123!')
     } catch (error) {
-      setError(`Error creando admin: ${error.message}`)
+      setError(`Error configurando admin: ${error.message}`)
     } finally {
       setAdminLoading(false)
     }

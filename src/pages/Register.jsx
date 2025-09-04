@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../services/supabase'
 import { FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
-import { UserPlus, LogIn, ArrowLeft, Mail, Lock, CheckCircle } from 'lucide-react'
+import { UserPlus, LogIn, ArrowLeft, Mail, Lock, CheckCircle, User, Store } from 'lucide-react'
 
 const Register = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [userType, setUserType] = useState('person') // 'person' o 'business'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -31,16 +33,47 @@ const Register = () => {
       return
     }
 
+    if (!fullName.trim()) {
+      setError('El nombre completo es requerido')
+      setLoading(false)
+      return
+    }
+
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Registrar usuario en Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: userType
+          }
+        }
       })
       
-      if (error) throw error
+      if (authError) throw authError
+
+      // Crear perfil de usuario
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: authData.user.id,
+            email: email,
+            full_name: fullName,
+            role: userType,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+
+        if (profileError) {
+          console.error('Error creando perfil:', profileError)
+        }
+      }
       
       setMessage('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.')
-      console.log('Usuario registrado:', data)
+      console.log('Usuario registrado:', authData)
       
       // Redirigir al login después de un breve delay
       setTimeout(() => {
@@ -117,6 +150,57 @@ const Register = () => {
 
             {/* Register Form */}
             <form onSubmit={handleRegister} className="space-y-6">
+              {/* Tipo de Usuario */}
+              <div>
+                <label className="block text-white text-sm font-semibold mb-4">
+                  Tipo de Cuenta
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setUserType('person')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      userType === 'person'
+                        ? 'border-[#3ecf8e] bg-[#3ecf8e]/10'
+                        : 'border-gray-600 bg-gray-900/30'
+                    }`}
+                  >
+                    <User size={32} className={`mx-auto mb-2 ${userType === 'person' ? 'text-[#3ecf8e]' : 'text-gray-400'}`} />
+                    <p className="text-sm font-medium">Persona</p>
+                    <p className="text-xs text-gray-400">Cliente/Usuario</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUserType('business')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      userType === 'business'
+                        ? 'border-[#3ecf8e] bg-[#3ecf8e]/10'
+                        : 'border-gray-600 bg-gray-900/30'
+                    }`}
+                  >
+                    <Store size={32} className={`mx-auto mb-2 ${userType === 'business' ? 'text-[#3ecf8e]' : 'text-gray-400'}`} />
+                    <p className="text-sm font-medium">Negocio</p>
+                    <p className="text-xs text-gray-400">Vendedor/Empresa</p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Nombre Completo */}
+              <div>
+                <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <User size={16} />
+                  {userType === 'business' ? 'Nombre del Responsable' : 'Nombre Completo'}
+                </label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                  placeholder={userType === 'business' ? 'Nombre del responsable' : 'Tu nombre completo'}
+                  required
+                />
+              </div>
+
               <div>
                 <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
                   <Mail size={16} />

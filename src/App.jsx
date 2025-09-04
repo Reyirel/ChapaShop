@@ -7,6 +7,8 @@ import NegocioDetail from './pages/NegocioDetail'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Admin from './pages/Admin'
+import BusinessDashboard from './pages/BusinessDashboard'
+import AdminPanel from './pages/AdminPanel'
 import './App.css'
 
 function App() {
@@ -22,6 +24,8 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/business-dashboard" element={<BusinessDashboard />} />
+            <Route path="/admin-panel" element={<AdminPanel />} />
           </Routes>
         </div>
       </Router>

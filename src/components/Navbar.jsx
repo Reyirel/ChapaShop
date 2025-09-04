@@ -1,31 +1,41 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
-import { Menu, X, Home, Store, LogIn, UserPlus, Shield, LogOut } from 'lucide-react'
+import { Menu, X, Home, Store, LogIn, UserPlus, Shield, LogOut, Settings, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const location = useLocation()
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut, isAdmin, isBusiness } = useAuth()
 
   const isActiveRoute = (path) => {
     return location.pathname === path
   }
 
-  // Elementos de navegación cuando el usuario está autenticado
-  const authenticatedNavItems = [
-    { path: '/', label: 'Inicio', icon: Home },
-    { path: '/negocios', label: 'Negocios', icon: Store },
-    { path: '/admin', label: 'Admin', icon: Shield }
-  ]
+  // Obtener elementos de navegación según el rol del usuario
+  const getNavItems = () => {
+    if (!user) {
+      return [
+        { path: '/login', label: 'Iniciar Sesión', icon: LogIn },
+        { path: '/register', label: 'Registrarse', icon: UserPlus }
+      ]
+    }
 
-  // Elementos de navegación cuando el usuario NO está autenticado
-  const unauthenticatedNavItems = [
-    { path: '/login', label: 'Iniciar Sesión', icon: LogIn },
-    { path: '/register', label: 'Registrarse', icon: UserPlus }
-  ]
+    const baseItems = [
+      { path: '/', label: 'Inicio', icon: Home },
+      { path: '/negocios', label: 'Negocios', icon: Store }
+    ]
 
-  const navItems = user ? authenticatedNavItems : unauthenticatedNavItems
+    if (isAdmin()) {
+      baseItems.push({ path: '/admin-panel', label: 'Panel Admin', icon: Shield })
+    } else if (isBusiness()) {
+      baseItems.push({ path: '/business-dashboard', label: 'Mi Dashboard', icon: Settings })
+    }
+
+    return baseItems
+  }
+
+  const navItems = getNavItems()
 
   const NavLink = ({ to, children, icon: IconComponent, mobile = false }) => {
     const isActive = isActiveRoute(to)
@@ -81,13 +91,32 @@ const Navbar = () => {
               </NavLink>
             ))}
             {user && (
-              <button
-                onClick={signOut}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 text-white hover:text-red-400 hover:bg-red-400/10"
-              >
-                <LogOut size={18} />
-                <span>Cerrar Sesión</span>
-              </button>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                  <User size={16} className="text-[#3ecf8e]" />
+                  <span className="text-sm text-gray-300">
+                    {profile?.full_name || user.email}
+                  </span>
+                  {profile?.role && (
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      profile.role === 'admin' 
+                        ? 'bg-red-500/20 text-red-400' 
+                        : profile.role === 'business'
+                        ? 'bg-blue-500/20 text-blue-400'
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      {profile.role === 'admin' ? 'Admin' : profile.role === 'business' ? 'Negocio' : 'Usuario'}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 text-white hover:text-red-400 hover:bg-red-400/10"
+                >
+                  <LogOut size={18} />
+                  <span>Cerrar Sesión</span>
+                </button>
+              </div>
             )}
           </div>
 
