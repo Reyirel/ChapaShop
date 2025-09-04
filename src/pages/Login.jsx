@@ -1,17 +1,26 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../services/supabase'
+import { FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
+import { LogIn, UserPlus, Shield, ArrowLeft } from 'lucide-react'
 
 const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [adminLoading, setAdminLoading] = useState(false)
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+  const navigate = useNavigate()
+
+  // Detectar si estamos en modo desarrollo
+  const isDevelopment = import.meta.env.DEV
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setMessage('')
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -21,8 +30,12 @@ const Login = () => {
       
       if (error) throw error
       
+      setMessage('¡Inicio de sesión exitoso!')
       console.log('Usuario logueado:', data)
-      // Aquí puedes redirigir al usuario o actualizar el estado global
+      // Redirigir después de un breve delay
+      setTimeout(() => {
+        navigate('/negocios')
+      }, 1500)
     } catch (error) {
       setError(error.message)
     } finally {
@@ -30,55 +43,173 @@ const Login = () => {
     }
   }
 
+  const createAdminUser = async () => {
+    setAdminLoading(true)
+    setError('')
+    setMessage('')
+
+    try {
+      // Primero crear el usuario en Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: 'admin@chapashop.com',
+        password: 'Admin123!',
+      })
+
+      if (authError) throw authError
+
+      if (authData.user) {
+        // Luego actualizar el perfil del usuario para marcar como admin
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: authData.user.id,
+            email: 'admin@chapashop.com',
+            role: 'admin',
+            created_at: new Date().toISOString()
+          })
+
+        if (profileError) {
+          console.log('Error creando perfil admin:', profileError)
+        }
+      }
+
+      setMessage('Usuario admin creado exitosamente! Email: admin@chapashop.com, Password: Admin123!')
+    } catch (error) {
+      setError(`Error creando admin: ${error.message}`)
+    } finally {
+      setAdminLoading(false)
+    }
+  }
+
+  const HeroBackground = () => (
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
+      <GridPattern />
+      <GlowOrbs />
+      <FloatingParticles />
+    </div>
+  )
+
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center w-full">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6">Iniciar Sesión</h2>
-        
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
-          
-          {error && (
-            <div className="text-red-600 text-sm">{error}</div>
-          )}
-          
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <HeroBackground />
+      
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md">
+          {/* Back Button */}
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-2 text-[#3ecf8e] hover:text-white transition-colors mb-8 group"
           >
-            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-          </button>
-        </form>
-        
-        <div className="mt-4 text-center">
-          <Link to="/register" className="text-blue-600 hover:underline">
-            ¿No tienes cuenta? Regístrate
+            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+            <span>Volver al inicio</span>
           </Link>
+
+          {/* Login Card */}
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-8 rounded-2xl">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="mb-4 flex justify-center">
+                <LogIn size={48} className="text-[#3ecf8e]" />
+              </div>
+              <h1 className="text-3xl font-bold mb-2">Iniciar Sesión</h1>
+              <p className="text-gray-400">Accede a tu cuenta en ChapaShop</p>
+            </div>
+
+            {/* Login Form */}
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <label className="block text-white text-sm font-semibold mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                  placeholder="tu@email.com"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-white text-sm font-semibold mb-2">
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+              
+              {error && (
+                <div className="bg-red-900/30 border border-red-500/50 text-red-400 p-3 rounded-xl text-sm">
+                  {error}
+                </div>
+              )}
+
+              {message && (
+                <div className="bg-green-900/30 border border-green-500/50 text-green-400 p-3 rounded-xl text-sm">
+                  {message}
+                </div>
+              )}
+              
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#3ecf8e] text-black py-3 px-4 rounded-xl font-semibold hover:bg-[#2eb57a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+                    Iniciando sesión...
+                  </div>
+                ) : (
+                  'Iniciar Sesión'
+                )}
+              </button>
+            </form>
+
+            {/* Development Admin Button */}
+            {isDevelopment && (
+              <div className="mt-6 pt-6 border-t border-gray-700/50">
+                <button
+                  onClick={createAdminUser}
+                  disabled={adminLoading}
+                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <Shield size={20} />
+                  {adminLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                      Creando Admin...
+                    </div>
+                  ) : (
+                    'Crear Usuario Admin (DEV)'
+                  )}
+                </button>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Solo visible en modo desarrollo
+                </p>
+              </div>
+            )}
+            
+            {/* Register Link */}
+            <div className="mt-6 text-center">
+              <p className="text-gray-400 mb-2">¿No tienes cuenta?</p>
+              <Link 
+                to="/register" 
+                className="inline-flex items-center gap-2 text-[#3ecf8e] hover:text-white transition-colors font-semibold"
+              >
+                <UserPlus size={18} />
+                Crear cuenta
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>
