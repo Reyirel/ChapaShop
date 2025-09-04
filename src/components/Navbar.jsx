@@ -1,22 +1,31 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
-import { Menu, X, Home, Store, LogIn, UserPlus, Shield } from 'lucide-react'
+import { Menu, X, Home, Store, LogIn, UserPlus, Shield, LogOut } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const location = useLocation()
+  const { user, signOut } = useAuth()
 
   const isActiveRoute = (path) => {
     return location.pathname === path
   }
 
-  const navItems = [
+  // Elementos de navegación cuando el usuario está autenticado
+  const authenticatedNavItems = [
     { path: '/', label: 'Inicio', icon: Home },
     { path: '/negocios', label: 'Negocios', icon: Store },
-    { path: '/login', label: 'Iniciar Sesión', icon: LogIn },
-    { path: '/register', label: 'Registrarse', icon: UserPlus },
     { path: '/admin', label: 'Admin', icon: Shield }
   ]
+
+  // Elementos de navegación cuando el usuario NO está autenticado
+  const unauthenticatedNavItems = [
+    { path: '/login', label: 'Iniciar Sesión', icon: LogIn },
+    { path: '/register', label: 'Registrarse', icon: UserPlus }
+  ]
+
+  const navItems = user ? authenticatedNavItems : unauthenticatedNavItems
 
   const NavLink = ({ to, children, icon: IconComponent, mobile = false }) => {
     const isActive = isActiveRoute(to)
@@ -71,6 +80,15 @@ const Navbar = () => {
                 {item.label}
               </NavLink>
             ))}
+            {user && (
+              <button
+                onClick={signOut}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 text-white hover:text-red-400 hover:bg-red-400/10"
+              >
+                <LogOut size={18} />
+                <span>Cerrar Sesión</span>
+              </button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -97,6 +115,18 @@ const Navbar = () => {
                 {item.label}
               </NavLink>
             ))}
+            {user && (
+              <button
+                onClick={() => {
+                  signOut()
+                  setIsMenuOpen(false)
+                }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 w-full text-white hover:bg-red-400/20 hover:text-red-400"
+              >
+                <LogOut size={20} />
+                <span>Cerrar Sesión</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
