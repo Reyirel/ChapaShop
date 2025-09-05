@@ -7,7 +7,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const location = useLocation()
-  const { user, profile, signOut, isAdmin, isBusiness } = useAuth()
+  const { user, profile, signOut, forceSignOut, diagnoseAndRepair, isAdmin, isBusiness } = useAuth()
   const userMenuRef = useRef(null)
 
   // Cerrar menú de usuario al hacer clic fuera
@@ -190,14 +190,51 @@ const Navbar = () => {
 
                     <div className="border-t border-gray-700/50 mt-2 pt-2">
                       <button
-                        onClick={() => {
-                          signOut()
+                        onClick={async () => {
                           setIsUserMenuOpen(false)
+                          
+                          // Mostrar indicador de carga (opcional)
+                          const button = event.target.closest('button')
+                          const originalText = button.textContent
+                          button.textContent = 'Cerrando sesión...'
+                          button.disabled = true
+                          
+                          try {
+                            // Timeout para el logout
+                            const logoutTimeout = setTimeout(() => {
+                              console.log('Logout taking too long, forcing logout')
+                              forceSignOut()
+                            }, 3000)
+                            
+                            await signOut()
+                            clearTimeout(logoutTimeout)
+                          } catch (error) {
+                            console.error('Error during logout, forcing logout:', error)
+                            forceSignOut()
+                          } finally {
+                            // Restaurar botón (aunque probablemente la página se recargará)
+                            button.textContent = originalText
+                            button.disabled = false
+                          }
                         }}
                         className="flex items-center gap-3 px-4 py-2 text-white hover:bg-red-500/20 hover:text-red-400 transition-colors w-full"
                       >
                         <LogOut size={16} />
                         <span>Cerrar Sesión</span>
+                      </button>
+                      
+                      {/* Botón de logout forzado */}
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false)
+                          if (confirm('¿Estás seguro de que quieres forzar el cierre de sesión? Esto cerrará tu sesión inmediatamente.')) {
+                            forceSignOut()
+                          }
+                        }}
+                        className="flex items-center gap-3 px-4 py-1 text-xs text-gray-500 hover:text-gray-400 transition-colors w-full mt-1"
+                        title="Forzar cierre de sesión si hay problemas"
+                      >
+                        <span>¿Problemas? Forzar salida</span>
                       </button>
                     </div>
                   </div>

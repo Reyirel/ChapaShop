@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../services/supabase'
+import LocationPicker from '../components/LocationPicker'
+import BusinessHours from '../components/BusinessHours'
+import ImageUploader from '../components/ImageUploader'
+import ProductList from '../components/ProductList'
 import { 
   Store, 
   Plus, 
@@ -101,28 +105,35 @@ const BusinessDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3ecf8e] mx-auto"></div>
+          <p className="mt-4 text-gray-300">Cargando dashboard...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="bg-gray-900/50 backdrop-blur-sm border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard de Negocios</h1>
-              <p className="text-gray-600">Bienvenido, {user?.full_name}</p>
+          <div className="flex justify-between items-center py-8">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-gradient-to-br from-[#3ecf8e]/20 to-[#3ecf8e]/5 border border-[#3ecf8e]/20">
+                <Store size={32} className="text-[#3ecf8e]" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  Dashboard de Negocios
+                </h1>
+                <p className="text-gray-400 text-lg">Bienvenido, {user?.full_name}</p>
+              </div>
             </div>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black px-6 py-3 rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 flex items-center gap-2 font-semibold"
             >
               <Plus size={20} />
               Crear Negocio
@@ -134,46 +145,54 @@ const BusinessDashboard = () => {
       {/* Stats */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 rounded-2xl">
             <div className="flex items-center">
-              <Store className="text-blue-600" size={24} />
+              <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/20">
+                <Store className="text-blue-400" size={24} />
+              </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Negocios</p>
-                <p className="text-2xl font-bold text-gray-900">{businesses.length}</p>
+                <p className="text-sm font-medium text-gray-400">Total Negocios</p>
+                <p className="text-3xl font-bold text-white">{businesses.length}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 rounded-2xl">
             <div className="flex items-center">
-              <CheckCircle className="text-green-600" size={24} />
+              <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/20">
+                <CheckCircle className="text-green-400" size={24} />
+              </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Aprobados</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-400">Aprobados</p>
+                <p className="text-3xl font-bold text-white">
                   {businesses.filter(b => b.status === 'approved').length}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 rounded-2xl">
             <div className="flex items-center">
-              <Clock className="text-yellow-600" size={24} />
+              <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-500/5 border border-yellow-500/20">
+                <Clock className="text-yellow-400" size={24} />
+              </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pendientes</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-400">Pendientes</p>
+                <p className="text-3xl font-bold text-white">
                   {businesses.filter(b => b.status === 'pending').length}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 rounded-2xl">
             <div className="flex items-center">
-              <Star className="text-yellow-500" size={24} />
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#3ecf8e]/20 to-[#3ecf8e]/5 border border-[#3ecf8e]/20">
+                <Star className="text-[#3ecf8e]" size={24} />
+              </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Rating Promedio</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-400">Rating Promedio</p>
+                <p className="text-3xl font-bold text-white">
                   {businesses.length > 0 
                     ? (businesses.reduce((acc, b) => acc + parseFloat(calculateAverageRating(b.reviews)), 0) / businesses.length).toFixed(1)
                     : '0.0'
@@ -185,34 +204,41 @@ const BusinessDashboard = () => {
         </div>
 
         {/* Business List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Mis Negocios</h2>
+        <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl">
+          <div className="px-6 py-4 border-b border-gray-700/50">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-[#3ecf8e]/20 to-[#3ecf8e]/5 border border-[#3ecf8e]/20">
+                <Store className="text-[#3ecf8e]" size={20} />
+              </div>
+              Mis Negocios
+            </h2>
           </div>
           
           {businesses.length === 0 ? (
             <div className="p-12 text-center">
-              <Store size={48} className="mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No tienes negocios registrados</h3>
-              <p className="text-gray-600 mb-4">Crea tu primer negocio para comenzar</p>
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-[#3ecf8e]/20 to-[#3ecf8e]/5 border border-[#3ecf8e]/20 mx-auto mb-6 w-fit">
+                <Store size={48} className="text-[#3ecf8e]" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-3">No tienes negocios registrados</h3>
+              <p className="text-gray-400 mb-6 text-lg">Crea tu primer negocio para comenzar</p>
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black px-6 py-3 rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 font-semibold"
               >
                 Crear Negocio
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-700/50">
               {businesses.map((business) => (
-                <div key={business.id} className="p-6">
+                <div key={business.id} className="p-6 hover:bg-gray-700/20 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{business.name}</h3>
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="text-xl font-bold text-white">{business.name}</h3>
                         {business.business_categories && (
                           <span 
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium text-white"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white"
                             style={{ backgroundColor: business.business_categories.color || '#3ecf8e' }}
                           >
                             {business.business_categories.name}
@@ -221,48 +247,48 @@ const BusinessDashboard = () => {
                         {getStatusBadge(business.status)}
                       </div>
                       
-                      <p className="text-gray-600 mb-3">{business.description}</p>
+                      <p className="text-gray-300 mb-4 leading-relaxed">{business.description}</p>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-500">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-400">
                         {business.address && (
-                          <div className="flex items-center gap-1">
-                            <MapPin size={14} />
+                          <div className="flex items-center gap-2">
+                            <MapPin size={14} className="text-[#3ecf8e]" />
                             <span>{business.address}</span>
                           </div>
                         )}
                         {business.phone && (
-                          <div className="flex items-center gap-1">
-                            <Phone size={14} />
+                          <div className="flex items-center gap-2">
+                            <Phone size={14} className="text-[#3ecf8e]" />
                             <span>{business.phone}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-1">
-                          <Package size={14} />
+                        <div className="flex items-center gap-2">
+                          <Package size={14} className="text-[#3ecf8e]" />
                           <span>{business.products?.length || 0} productos</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Star size={14} />
+                        <div className="flex items-center gap-2">
+                          <Star size={14} className="text-[#3ecf8e]" />
                           <span>{calculateAverageRating(business.reviews)} ({business.reviews?.length || 0} reseñas)</span>
                         </div>
                       </div>
                       
                       {business.status === 'rejected' && business.admin_notes && (
-                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                          <div className="flex items-start gap-2">
-                            <AlertCircle size={16} className="text-red-600 mt-0.5" />
+                        <div className="mt-4 p-4 bg-red-900/20 border border-red-700/50 rounded-xl">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle size={16} className="text-red-400 mt-0.5" />
                             <div>
-                              <p className="text-sm font-medium text-red-800">Razón del rechazo:</p>
-                              <p className="text-sm text-red-700">{business.admin_notes}</p>
+                              <p className="text-sm font-medium text-red-300">Razón del rechazo:</p>
+                              <p className="text-sm text-red-400">{business.admin_notes}</p>
                             </div>
                           </div>
                         </div>
                       )}
                     </div>
                     
-                    <div className="flex gap-2 ml-4">
+                    <div className="flex gap-3 ml-6">
                       <button
                         onClick={() => navigate(`/business/${business.id}/edit`)}
-                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-3 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-blue-500/30"
                         title="Editar negocio"
                       >
                         <Edit size={18} />
@@ -304,8 +330,14 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
     instagram: '',
     whatsapp: ''
   })
+  const [location, setLocation] = useState(null)
+  const [businessHours, setBusinessHours] = useState(null)
+  const [images, setImages] = useState([])
+  const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [currentStep, setCurrentStep] = useState(1)
+  const totalSteps = 5
 
   useEffect(() => {
     fetchCategories()
@@ -335,52 +367,151 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('No hay sesión activa')
 
-      const { error } = await supabase
-        .from('businesses')
-        .insert({
-          ...formData,
-          owner_id: session.user.id,
-          status: 'pending'
-        })
+      // Preparar datos del negocio
+      const businessData = {
+        ...formData,
+        owner_id: session.user.id,
+        status: 'pending',
+        latitude: location?.latitude || null,
+        longitude: location?.longitude || null,
+        business_hours: businessHours ? JSON.stringify(businessHours) : null
+      }
 
-      if (error) throw error
+      // Si hay ubicación, usar esa dirección
+      if (location?.address) {
+        businessData.address = location.address
+      }
+
+      // Insertar negocio
+      const { data: business, error: businessError } = await supabase
+        .from('businesses')
+        .insert(businessData)
+        .select()
+        .single()
+
+      if (businessError) throw businessError
+
+      // Subir imágenes si las hay
+      if (images.length > 0) {
+        await uploadBusinessImages(business.id, images)
+      }
+
+      // Agregar productos si los hay
+      if (products.length > 0) {
+        await addBusinessProducts(business.id, products)
+      }
 
       onSuccess()
     } catch (error) {
+      console.error('Error completo:', error)
       setError(error.message)
     } finally {
       setLoading(false)
     }
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Crear Nuevo Negocio</h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
+  const uploadBusinessImages = async (businessId, imageFiles) => {
+    for (let i = 0; i < imageFiles.length; i++) {
+      const image = imageFiles[i]
+      const fileName = `${businessId}_${i}_${Date.now()}.${image.file.name.split('.').pop()}`
+      
+      try {
+        // Subir archivo a Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('business-images')
+          .upload(fileName, image.file)
+
+        if (uploadError) throw uploadError
+
+        // Guardar referencia en la base de datos
+        const { error: dbError } = await supabase
+          .from('business_images')
+          .insert({
+            business_id: businessId,
+            image_url: fileName,
+            is_primary: i === 0,
+            order_index: i
+          })
+
+        if (dbError) throw dbError
+      } catch (error) {
+        console.error('Error subiendo imagen:', error)
+      }
+    }
+  }
+
+  const addBusinessProducts = async (businessId, productNames) => {
+    const productsData = productNames.map(name => ({
+      business_id: businessId,
+      name: name,
+      description: '',
+      price: 0,
+      is_available: true
+    }))
+
+    const { error } = await supabase
+      .from('products')
+      .insert(productsData)
+
+    if (error) throw error
+  }
+
+  const nextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const canProceedToNext = () => {
+    switch (currentStep) {
+      case 1:
+        return formData.name && formData.category_id
+      case 2:
+        return true // Información de contacto es opcional
+      case 3:
+        return true // Ubicación es opcional
+      case 4:
+        return true // Horarios son opcionales
+      case 5:
+        return true // Imágenes y productos son opcionales
+      default:
+        return false
+    }
+  }
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-gray-300 mb-3">
                 Nombre del Negocio *
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                placeholder="Ingresa el nombre de tu negocio"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-gray-300 mb-3">
                 Categoría *
               </label>
               <select
                 value={formData.category_id}
                 onChange={(e) => setFormData({...formData, category_id: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
                 required
               >
                 <option value="">Selecciona una categoría</option>
@@ -393,112 +524,197 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-gray-300 mb-3">
                 Descripción
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                placeholder="Describe tu negocio..."
                 rows={3}
               />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          </div>
+        )
+      
+      case 2:
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-gray-300 mb-3">
                   Teléfono
                 </label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                  placeholder="Número de contacto"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-gray-300 mb-3">
                   Email
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                  placeholder="correo@ejemplo.com"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Dirección
-              </label>
-              <input
-                type="text"
-                value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-gray-300 mb-3">
                   Sitio Web
                 </label>
                 <input
                   type="url"
                   value={formData.website}
                   onChange={(e) => setFormData({...formData, website: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                  placeholder="https://tusitio.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-gray-300 mb-3">
                   Facebook
                 </label>
                 <input
                   type="text"
                   value={formData.facebook}
                   onChange={(e) => setFormData({...formData, facebook: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                  placeholder="@tu_negocio"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-bold text-gray-300 mb-3">
                   Instagram
                 </label>
                 <input
                   type="text"
                   value={formData.instagram}
                   onChange={(e) => setFormData({...formData, instagram: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                  placeholder="@tu_negocio"
                 />
               </div>
             </div>
+          </div>
+        )
+
+      case 3:
+        return <LocationPicker onLocationChange={setLocation} />
+
+      case 4:
+        return <BusinessHours onHoursChange={setBusinessHours} />
+
+      case 5:
+        return (
+          <div className="space-y-8">
+            <ImageUploader onImagesChange={setImages} maxImages={3} />
+            <ProductList onProductsChange={setProducts} />
+          </div>
+        )
+
+      default:
+        return null
+    }
+  }
+
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 1: return 'Información Básica'
+      case 2: return 'Información de Contacto'
+      case 3: return 'Ubicación'
+      case 4: return 'Horarios de Atención'
+      case 5: return 'Imágenes y Productos'
+      default: return ''
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-gray-900 border border-gray-700/50 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-8">
+          {/* Header con progreso */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-3xl font-bold text-white">Crear Nuevo Negocio</h2>
+              <div className="text-sm text-gray-400">
+                Paso {currentStep} de {totalSteps}
+              </div>
+            </div>
+            
+            {/* Barra de progreso */}
+            <div className="w-full bg-gray-800 rounded-full h-2 mb-4">
+              <div 
+                className="bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+              ></div>
+            </div>
+
+            <h3 className="text-xl font-semibold text-gray-300">{getStepTitle()}</h3>
+          </div>
+          
+          <form onSubmit={handleSubmit}>
+            {renderStep()}
 
             {error && (
-              <div className="text-red-600 text-sm">{error}</div>
+              <div className="bg-red-900/20 border border-red-700/50 rounded-xl p-4 mt-6">
+                <p className="text-red-400 text-sm">{error}</p>
+              </div>
             )}
 
-            <div className="flex gap-4 pt-4">
+            {/* Navegación */}
+            <div className="flex gap-4 pt-8 mt-8 border-t border-gray-700/50">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                className="px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors"
               >
                 Cancelar
               </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-              >
-                {loading ? 'Creando...' : 'Crear Negocio'}
-              </button>
+              
+              <div className="flex-1 flex gap-3">
+                {currentStep > 1 && (
+                  <button
+                    type="button"
+                    onClick={prevStep}
+                    className="px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors"
+                  >
+                    Anterior
+                  </button>
+                )}
+                
+                {currentStep < totalSteps ? (
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={!canProceedToNext()}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                  >
+                    Siguiente
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 disabled:opacity-50 font-semibold"
+                  >
+                    {loading ? 'Creando...' : 'Crear Negocio'}
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         </div>

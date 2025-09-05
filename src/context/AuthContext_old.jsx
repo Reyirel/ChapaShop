@@ -41,37 +41,29 @@ export const AuthProvider = ({ children }) => {
       }
     )
 
+    // Chequear estado de sesión periódicamente para detectar sesiones inválidas
+    const sessionCheckInterval = setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (user && !session) {
+        console.log('Session expired detected, cleaning up')
+        setUser(null)
+        setProfile(null)
+        localStorage.removeItem('supabase.auth.token')
+        localStorage.removeItem('sb-auth-token')
+        sessionStorage.clear()
+      } else if (session && !user) {
+        console.log('New session detected, updating state')
+        setUser(session.user)
+        await fetchProfile(session.user.id)
+      }
+    }, 30000) // Chequear cada 30 segundos
+
     return () => {
       subscription.unsubscribe()
-    }
-  }, []) // ¡SIN DEPENDENCIAS! Solo se ejecuta una vez
-
-  // useEffect separado para el chequeo periódico, con control de estado
-  useEffect(() => {
-    if (!user) return // No chequear si no hay usuario
-
-    const sessionCheckInterval = setInterval(async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        
-        if (!session) {
-          console.log('Session expired detected, cleaning up')
-          setUser(null)
-          setProfile(null)
-          localStorage.removeItem('supabase.auth.token')
-          localStorage.removeItem('sb-auth-token')
-          sessionStorage.clear()
-        }
-      } catch (error) {
-        console.error('Session check failed:', error)
-        // No hacer nada drástico en errores de chequeo
-      }
-    }, 60000) // Chequear cada 60 segundos (menos frecuente)
-
-    return () => {
       clearInterval(sessionCheckInterval)
     }
-  }, [user?.id]) // Solo depende del ID del usuario, no del objeto completo
+  }, [user])
 
   const getInitialSession = async () => {
     try {
@@ -112,15 +104,6 @@ export const AuthProvider = ({ children }) => {
   // Función para verificar si una sesión es válida
   const verifySession = async (session) => {
     try {
-      // Si hay problemas de recursos, asumir que la sesión es válida
-      // para evitar loops de verificación
-      if (verifySession.lastCheck && Date.now() - verifySession.lastCheck < 10000) {
-        console.log('Session verification skipped - too recent')
-        return true
-      }
-
-      verifySession.lastCheck = Date.now()
-
       // Intentar hacer una consulta simple para verificar que la sesión funcione
       const { error } = await supabase
         .from('profiles')
@@ -132,18 +115,11 @@ export const AuthProvider = ({ children }) => {
       if (error && (error.code === 'PGRST301' || error.message.includes('JWT'))) {
         return false
       }
-
-      // Si hay errores de recursos, asumir sesión válida para evitar loops
-      if (error && (error.message?.includes('Failed to fetch') || error.message?.includes('INSUFFICIENT_RESOURCES'))) {
-        console.log('Resource error during session verification, assuming valid session')
-        return true
-      }
       
       return true
     } catch (error) {
       console.error('Session verification failed:', error)
-      // En caso de error, asumir sesión válida para evitar loops infinitos
-      return true
+      return false
     }
   }
 
@@ -165,14 +141,6 @@ export const AuthProvider = ({ children }) => {
   }
 
   const fetchProfile = async (userId) => {
-    // Evitar múltiples peticiones simultáneas para el mismo usuario
-    if (fetchProfile.loading === userId) {
-      console.log('Profile fetch already in progress for user:', userId)
-      return
-    }
-
-    fetchProfile.loading = userId
-
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -188,18 +156,11 @@ export const AuthProvider = ({ children }) => {
           return
         }
         
-        // Para errores de recursos, no reintentar
-        if (error.message?.includes('Failed to fetch') || error.message?.includes('INSUFFICIENT_RESOURCES')) {
-          console.error('Network/Resource error fetching profile, skipping retry:', error.message)
-          setProfile(null)
-          return
-        }
-        
-        // Para otros errores, intentar una vez más con delay más largo
+        // Para otros errores, intentar una vez más
         console.error('Error fetching profile (retrying once):', error)
         
-        // Retry una vez después de un delay más largo
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // Retry una vez después de un breve delay
+        await new Promise(resolve => setTimeout(resolve, 1000))
         
         const { data: retryData, error: retryError } = await supabase
           .from('profiles')
@@ -207,14 +168,8 @@ export const AuthProvider = ({ children }) => {
           .eq('id', userId)
           .single()
           
-        if (retryError) {
-          if (retryError.code === 'PGRST116') {
-            setProfile(null)
-            return
-          }
-          console.error('Retry also failed, setting profile to null:', retryError)
-          setProfile(null)
-          return
+        if (retryError && retryError.code !== 'PGRST116') {
+          throw retryError
         }
         
         setProfile(retryData)
@@ -223,11 +178,9 @@ export const AuthProvider = ({ children }) => {
 
       setProfile(data)
     } catch (error) {
-      console.error('Unexpected error fetching profile:', error)
+      console.error('Error fetching profile:', error)
       // En caso de error persistente, mantener el usuario pero sin perfil
       setProfile(null)
-    } finally {
-      fetchProfile.loading = null
     }
   }
 
@@ -280,7 +233,7 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (timeoutError) {
         console.error('Logout timeout, proceeding with local cleanup:', timeoutError)
-        // Continuar with limpieza local si hay timeout
+        // Continuar con limpieza local si hay timeout
       }
       
       // Limpiar cookies relacionadas con autenticación
@@ -348,6 +301,56 @@ export const AuthProvider = ({ children }) => {
     
     // Usar replace para evitar que el usuario regrese con el botón atrás
     window.location.replace('/')
+  }
+
+  // Función de diagnóstico y auto-reparación para problemas de autenticación
+  const diagnoseAndRepair = async () => {
+    console.log('Running authentication diagnosis...')
+    
+    try {
+      // 1. Verificar estado actual
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      console.log('Current session state:', {
+        hasSession: !!session,
+        hasUser: !!user,
+        hasProfile: !!profile,
+        sessionError: error?.message
+      })
+      
+      // 2. Verificar almacenamiento local
+      const localTokens = {
+        supabaseAuthToken: localStorage.getItem('supabase.auth.token'),
+        sbAuthToken: localStorage.getItem('sb-auth-token'),
+        sessionData: sessionStorage.length
+      }
+      
+      console.log('Local storage state:', localTokens)
+      
+      // 3. Si hay inconsistencias, limpiar
+      if (user && !session) {
+        console.log('Inconsistent state detected: user exists but no session')
+        await cleanupAuthState()
+        return { repaired: true, issue: 'inconsistent_state' }
+      }
+      
+      if (!user && session) {
+        console.log('Inconsistent state detected: session exists but no user')
+        setUser(session.user)
+        await fetchProfile(session.user.id)
+        return { repaired: true, issue: 'missing_user_state' }
+      }
+      
+      // 4. Verificar validez de sesión si existe
+      if (session && user) {
+        const isValid = await verifySession(session)
+        if (!isValid) {
+          console.log('Invalid session detected')
+          await cleanupAuthState()
+          return { repaired: true, issue: 'invalid_session' }
+        }
+      }
+      
   }
 
   const updateProfile = async (updates) => {
@@ -452,7 +455,6 @@ export const AuthProvider = ({ children }) => {
     signOut,
     forceSignOut,
     updateProfile,
-    diagnoseAndRepair,
     isAdmin,
     isBusiness,
     isPerson,
