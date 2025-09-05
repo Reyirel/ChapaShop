@@ -14,7 +14,9 @@ import {
   MapPin,
   Phone,
   Mail,
-  Globe
+  Globe,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react'
 
 const AdminPanel = () => {
@@ -23,15 +25,18 @@ const AdminPanel = () => {
   const [pendingBusinesses, setPendingBusinesses] = useState([])
   const [selectedBusiness, setSelectedBusiness] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [businessToDelete, setBusinessToDelete] = useState(null)
   const [adminNotes, setAdminNotes] = useState('')
   const [loading, setLoading] = useState(true)
+  const [deleteLoading, setDeleteLoading] = useState(false)
   const [stats, setStats] = useState({})
   const navigate = useNavigate()
 
   useEffect(() => {
     checkAdmin()
     fetchData()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkAdmin = async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -118,6 +123,67 @@ const AdminPanel = () => {
     } catch (error) {
       console.error('Error updating business:', error)
     }
+  }
+
+  const handleDeleteBusiness = async (businessId) => {
+    setDeleteLoading(true)
+    try {
+      // Primero eliminar las referencias relacionadas
+      // Eliminar imágenes del negocio
+      const { error: imagesError } = await supabase
+        .from('business_images')
+        .delete()
+        .eq('business_id', businessId)
+
+      if (imagesError) {
+        console.error('Error eliminando imágenes:', imagesError)
+      }
+
+      // Eliminar productos del negocio
+      const { error: productsError } = await supabase
+        .from('products')
+        .delete()
+        .eq('business_id', businessId)
+
+      if (productsError) {
+        console.error('Error eliminando productos:', productsError)
+      }
+
+      // Eliminar reseñas del negocio
+      const { error: reviewsError } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('business_id', businessId)
+
+      if (reviewsError) {
+        console.error('Error eliminando reseñas:', reviewsError)
+      }
+
+      // Finalmente eliminar el negocio
+      const { error: businessError } = await supabase
+        .from('businesses')
+        .delete()
+        .eq('id', businessId)
+
+      if (businessError) throw businessError
+
+      // Actualizar datos
+      fetchData()
+      setShowDeleteModal(false)
+      setBusinessToDelete(null)
+      setShowModal(false)
+      setSelectedBusiness(null)
+    } catch (error) {
+      console.error('Error eliminando negocio:', error)
+      alert('Error al eliminar el negocio. Por favor, inténtalo de nuevo.')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const openDeleteModal = (business) => {
+    setBusinessToDelete(business)
+    setShowDeleteModal(true)
   }
 
   const openBusinessModal = (business) => {
@@ -342,6 +408,13 @@ const AdminPanel = () => {
                       >
                         <XCircle size={18} />
                       </button>
+                      <button
+                        onClick={() => openDeleteModal(business)}
+                        className="p-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-red-500/30"
+                        title="Eliminar permanentemente"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -407,6 +480,13 @@ const AdminPanel = () => {
                       title="Ver detalles"
                     >
                       <Eye size={18} />
+                    </button>
+                    <button
+                      onClick={() => openDeleteModal(business)}
+                      className="p-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-red-500/30"
+                      title="Eliminar negocio"
+                    >
+                      <Trash2 size={18} />
                     </button>
                   </div>
                 </div>
@@ -518,10 +598,22 @@ const AdminPanel = () => {
               <div className="flex gap-4">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors"
+                  className="px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors"
                 >
                   Cerrar
                 </button>
+                
+                <button
+                  onClick={() => {
+                    setShowModal(false)
+                    openDeleteModal(selectedBusiness)
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 transition-all flex items-center gap-2"
+                >
+                  <Trash2 size={16} />
+                  Eliminar
+                </button>
+                
                 {selectedBusiness.status === 'pending' && (
                   <>
                     <button
@@ -546,6 +638,73 @@ const AdminPanel = () => {
                     Marcar como Pendiente
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && businessToDelete && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 border border-red-700/50 rounded-2xl max-w-md w-full">
+            <div className="p-8">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-red-500/5 border border-red-500/20">
+                  <AlertTriangle className="text-red-400" size={32} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Confirmar Eliminación</h2>
+                  <p className="text-gray-400">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+
+              <div className="bg-red-900/20 border border-red-700/50 rounded-xl p-4 mb-6">
+                <h3 className="font-bold text-white mb-2">¿Estás seguro que deseas eliminar este negocio?</h3>
+                <p className="text-red-300 font-medium text-lg">{businessToDelete.name}</p>
+                <p className="text-gray-400 text-sm mt-2">
+                  Propietario: {businessToDelete.profiles?.full_name}
+                </p>
+                
+                <div className="mt-4 space-y-2 text-sm text-gray-300">
+                  <p className="font-medium text-red-300">Se eliminará permanentemente:</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-400">
+                    <li>El negocio y toda su información</li>
+                    <li>Todas las imágenes asociadas</li>
+                    <li>Todos los productos del negocio</li>
+                    <li>Todas las reseñas y calificaciones</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false)
+                    setBusinessToDelete(null)
+                  }}
+                  className="flex-1 px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors"
+                  disabled={deleteLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleDeleteBusiness(businessToDelete.id)}
+                  disabled={deleteLoading}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {deleteLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      Eliminar Permanentemente
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

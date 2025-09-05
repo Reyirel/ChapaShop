@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../services/supabase'
 import LocationPicker from '../components/LocationPicker'
@@ -17,7 +17,8 @@ import {
   Package,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Image
 } from 'lucide-react'
 
 const BusinessDashboard = () => {
@@ -27,12 +28,7 @@ const BusinessDashboard = () => {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    checkUser()
-    fetchBusinesses()
-  }, [])
-
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       navigate('/login')
@@ -53,9 +49,9 @@ const BusinessDashboard = () => {
     }
 
     setUser(profile)
-  }
+  }, [navigate])
 
-  const fetchBusinesses = async () => {
+  const fetchBusinesses = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
@@ -79,7 +75,12 @@ const BusinessDashboard = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    checkUser()
+    fetchBusinesses()
+  }, [checkUser, fetchBusinesses])
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -373,6 +374,13 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Solo procesar el envío si estamos en el último paso
+    if (currentStep !== totalSteps) {
+      console.log('Formulario enviado prematuramente, step actual:', currentStep)
+      return
+    }
+    
     setLoading(true)
     setError('')
 
@@ -503,13 +511,21 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
     if (error) throw error
   }
 
-  const nextStep = () => {
+  const nextStep = (e) => {
+    if (e) {
+      e.preventDefault() // Prevenir envío accidental del formulario
+    }
+    console.log('NextStep called, current step:', currentStep, 'total steps:', totalSteps)
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1)
+      console.log('Moving to step:', currentStep + 1)
     }
   }
 
-  const prevStep = () => {
+  const prevStep = (e) => {
+    if (e) {
+      e.preventDefault() // Prevenir envío accidental del formulario
+    }
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
     }
@@ -526,7 +542,7 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       case 4:
         return true // Horarios son opcionales
       case 5:
-        return true // Imágenes y productos son opcionales
+        return true // Permitir proceder siempre en el último paso
       default:
         return false
     }
@@ -668,8 +684,25 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       case 5:
         return (
           <div className="space-y-8">
+            <div className="bg-gradient-to-r from-[#3ecf8e]/10 to-[#2fb577]/10 border border-[#3ecf8e]/20 rounded-xl p-6">
+              <h4 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                <Image size={20} className="text-[#3ecf8e]" />
+                Personaliza tu Negocio
+              </h4>
+              <p className="text-gray-300 text-sm">
+                Agrega imágenes y productos para hacer tu negocio más atractivo. 
+                Estas secciones son opcionales pero recomendadas.
+              </p>
+            </div>
+            
             <ImageUploader onImagesChange={setImages} maxImages={3} />
             <ProductList onProductsChange={setProducts} />
+            
+            <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-4">
+              <p className="text-sm text-blue-300">
+                💡 <strong>¿Listo para continuar?</strong> Puedes agregar más imágenes y productos después de crear tu negocio.
+              </p>
+            </div>
           </div>
         )
 
@@ -736,7 +769,10 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
                 {currentStep > 1 && (
                   <button
                     type="button"
-                    onClick={prevStep}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      prevStep(e)
+                    }}
                     className="px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors"
                   >
                     Anterior
@@ -746,7 +782,10 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
                 {currentStep < totalSteps ? (
                   <button
                     type="button"
-                    onClick={nextStep}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      nextStep(e)
+                    }}
                     disabled={!canProceedToNext()}
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                   >
@@ -758,7 +797,17 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
                     disabled={loading}
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 disabled:opacity-50 font-semibold"
                   >
-                    {loading ? 'Creando...' : 'Crear Negocio'}
+                    {loading ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+                        Creando...
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2">
+                        <CheckCircle size={18} />
+                        Crear Negocio
+                      </div>
+                    )}
                   </button>
                 )}
               </div>
