@@ -45,7 +45,9 @@ const BusinessDashboard = () => {
       .eq('id', session.user.id)
       .single()
 
-    if (profile?.role !== 'business' && profile?.role !== 'admin') {
+    // Permitir acceso a usuarios 'person', 'business' y 'admin'
+    // Un usuario 'person' puede crear su primer negocio aquí
+    if (!profile || !['person', 'business', 'admin'].includes(profile?.role)) {
       navigate('/negocios')
       return
     }
@@ -345,16 +347,27 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
 
   const fetchCategories = async () => {
     try {
+      console.log('Fetching categories...')
       const { data, error } = await supabase
         .from('business_categories')
         .select('*')
         .eq('is_active', true)
         .order('name')
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching categories:', error)
+        throw error
+      }
+      
+      console.log('Categories fetched:', data)
       setCategories(data || [])
     } catch (error) {
       console.error('Error fetching categories:', error)
+      // Si hay error con las categorías, mostrar un mensaje al usuario
+      if (error.message.includes('permission denied')) {
+        console.warn('Permission denied for categories. Setting empty categories.')
+        setCategories([])
+      }
     }
   }
 
@@ -366,6 +379,24 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('No hay sesión activa')
+
+      console.log('Sesión de usuario:', { 
+        userId: session.user.id, 
+        email: session.user.email 
+      })
+
+      // Verificar el perfil del usuario antes de proceder
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('id, role, full_name, email')
+        .eq('id', session.user.id)
+        .single()
+
+      console.log('Perfil del usuario:', userProfile)
+
+      if (!userProfile) {
+        throw new Error('No se encontró el perfil del usuario. Por favor, contacta al administrador.')
+      }
 
       // Preparar datos del negocio
       const businessData = {
@@ -382,6 +413,8 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
         businessData.address = location.address
       }
 
+      console.log('Datos del negocio a insertar:', businessData)
+
       // Insertar negocio
       const { data: business, error: businessError } = await supabase
         .from('businesses')
@@ -389,7 +422,12 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
         .select()
         .single()
 
-      if (businessError) throw businessError
+      if (businessError) {
+        console.error('Error al insertar negocio:', businessError)
+        throw businessError
+      }
+
+      console.log('Negocio creado exitosamente:', business)
 
       // Subir imágenes si las hay
       if (images.length > 0) {
@@ -404,7 +442,16 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       onSuccess()
     } catch (error) {
       console.error('Error completo:', error)
-      setError(error.message)
+      
+      // Mejorar el mensaje de error para el usuario
+      let errorMessage = error.message
+      if (error.code === '42501') {
+        errorMessage = 'Error de permisos: No tienes autorización para crear negocios. Por favor, verifica que tu cuenta esté configurada correctamente.'
+      } else if (error.message.includes('permission denied')) {
+        errorMessage = 'Error de permisos: Asegúrate de estar autenticado correctamente.'
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
