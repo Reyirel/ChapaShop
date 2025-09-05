@@ -63,7 +63,6 @@ const Login = () => {
     setMessage('')
 
     try {
-      console.log('Iniciando creación de usuario admin...')
       
       // Verificar si ya existe el usuario
       const { data: existingProfile, error: searchError } = await supabase
@@ -83,7 +82,6 @@ const Login = () => {
           return
         } else {
           // Actualizar rol a admin
-          console.log('Actualizando rol a admin para usuario existente...')
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ 
@@ -103,7 +101,6 @@ const Login = () => {
       }
 
       // Crear usuario usando signUp normal con metadatos
-      console.log('Creando nuevo usuario...')
       const { data: signupData, error: signupError } = await supabase.auth.signUp({
         email: 'luis.narutochavez@gmail.com',
         password: 'Correrapido1.',
@@ -117,13 +114,12 @@ const Login = () => {
 
       if (signupError) {
         if (signupError.message.includes('already registered') || signupError.message.includes('User already registered')) {
-          console.log('Usuario ya registrado, buscando perfil...')
           setMessage('Usuario ya registrado. Configurando como admin...')
           
           // Esperar un poco y luego buscar el perfil
           setTimeout(async () => {
             try {
-              const { data: profile, error: profileError } = await supabase
+              const { data: profile } = await supabase
                 .from('profiles')
                 .select('id')
                 .eq('email', 'luis.narutochavez@gmail.com')
@@ -161,7 +157,6 @@ const Login = () => {
       }
 
       if (signupData?.user) {
-        console.log('Usuario creado exitosamente:', signupData.user.id)
         setMessage('Usuario admin creado! El trigger automáticamente asignará el rol. Email: luis.narutochavez@gmail.com, Password: Correrapido1.')
       }
 

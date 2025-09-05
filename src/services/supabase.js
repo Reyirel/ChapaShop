@@ -75,7 +75,6 @@ if (!isConfigured) {
       }
     })
     
-    console.log('✅ Supabase inicializado correctamente')
   } catch (error) {
     console.error('❌ Error inicializando Supabase:', error)
     // Fallback al cliente mock en caso de error

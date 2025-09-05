@@ -73,7 +73,6 @@ const Register = () => {
       }
       
       setMessage('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.')
-      console.log('Usuario registrado:', authData)
       
       // Redirigir al login después de un breve delay
       setTimeout(() => {

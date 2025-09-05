@@ -30,7 +30,6 @@ export const AuthProvider = ({ children }) => {
     // Función para inicializar la autenticación
     const initializeAuth = async () => {
       try {
-        console.log('Iniciando autenticación...')
         
         // Obtener sesión inicial
         const { data: { session }, error } = await supabase.auth.getSession()
@@ -45,11 +44,9 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (session?.user) {
-          console.log('Sesión encontrada, configurando usuario')
           setUser(session.user)
           await fetchProfile(session.user.id)
         } else {
-          console.log('No hay sesión activa')
           setUser(null)
           setProfile(null)
         }
@@ -70,7 +67,6 @@ export const AuthProvider = ({ children }) => {
     // Escuchar cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Cambio de estado de auth:', event, session ? 'Sesión existe' : 'Sin sesión')
         
         // Evitar procesar si aún estamos inicializando
         if (initializingRef.current) return
@@ -111,7 +107,6 @@ export const AuthProvider = ({ children }) => {
         const { data: { session } } = await supabase.auth.getSession()
         
         if (!session && user) {
-          console.log('Sesión expirada detectada')
           setUser(null)
           setProfile(null)
           cleanupStorage()
@@ -138,14 +133,12 @@ export const AuthProvider = ({ children }) => {
   const fetchProfile = async (userId) => {
     // Evitar múltiples peticiones simultáneas
     if (fetchingProfileRef.current) {
-      console.log('Ya hay una petición de perfil en progreso')
       return
     }
 
     fetchingProfileRef.current = true
 
     try {
-      console.log('Obteniendo perfil del usuario:', userId)
       
       const { data, error } = await supabase
         .from('profiles')
@@ -155,7 +148,6 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('Perfil no encontrado')
           setProfile(null)
           return
         }
@@ -166,7 +158,6 @@ export const AuthProvider = ({ children }) => {
       }
 
       setProfile(data)
-      console.log('Perfil obtenido correctamente')
     } catch (error) {
       console.error('Error inesperado obteniendo perfil:', error)
       setProfile(null)
@@ -210,7 +201,6 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
-      console.log('Iniciando proceso de logout...')
       
       // Limpiar estado local inmediatamente
       setUser(null)
@@ -228,8 +218,6 @@ export const AuthProvider = ({ children }) => {
         
         if (error) {
           console.error('Error cerrando sesión:', error)
-        } else {
-          console.log('Sesión cerrada correctamente')
         }
       } catch (timeoutError) {
         console.error('Timeout en logout:', timeoutError)
@@ -250,7 +238,6 @@ export const AuthProvider = ({ children }) => {
   }
 
   const forceSignOut = () => {
-    console.log('Ejecutando logout forzado...')
     
     setUser(null)
     setProfile(null)

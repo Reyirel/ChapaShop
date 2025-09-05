@@ -30,7 +30,6 @@ const Negocios = () => {
 
   const fetchData = async () => {
     try {
-      console.log('Fetching data...')
       
       // Inicializar con datos de ejemplo para evitar pantallas vacías
       const negociosEjemplo = [
@@ -209,8 +208,6 @@ const Negocios = () => {
         if (negociosError) {
           console.warn('Warning fetching businesses:', negociosError.message)
         }
-
-        console.log('Supabase data loaded - Negocios:', negociosData?.length || 0, 'Categories:', categoriasData?.length || 0)
 
         // Si se obtuvieron datos reales, reemplazar los de ejemplo
         if (negociosData && negociosData.length > 0) {

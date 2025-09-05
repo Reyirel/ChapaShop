@@ -32,7 +32,7 @@ const Register = () => {
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password
       })
@@ -40,7 +40,6 @@ const Register = () => {
       if (error) throw error
       
       setMessage('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.')
-      console.log('Usuario registrado:', data)
       
       // Redirigir al login después de un breve delay
       setTimeout(() => {

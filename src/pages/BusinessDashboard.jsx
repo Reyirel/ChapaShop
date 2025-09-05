@@ -348,7 +348,6 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
 
   const fetchCategories = async () => {
     try {
-      console.log('Fetching categories...')
       const { data, error } = await supabase
         .from('business_categories')
         .select('*')
@@ -360,7 +359,6 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
         throw error
       }
       
-      console.log('Categories fetched:', data)
       setCategories(data || [])
     } catch (error) {
       console.error('Error fetching categories:', error)
@@ -377,7 +375,6 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
     
     // Solo procesar el envío si estamos en el último paso
     if (currentStep !== totalSteps) {
-      console.log('Formulario enviado prematuramente, step actual:', currentStep)
       return
     }
     
@@ -388,19 +385,12 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('No hay sesión activa')
 
-      console.log('Sesión de usuario:', { 
-        userId: session.user.id, 
-        email: session.user.email 
-      })
-
       // Verificar el perfil del usuario antes de proceder
       const { data: userProfile } = await supabase
         .from('profiles')
         .select('id, role, full_name, email')
         .eq('id', session.user.id)
         .single()
-
-      console.log('Perfil del usuario:', userProfile)
 
       if (!userProfile) {
         throw new Error('No se encontró el perfil del usuario. Por favor, contacta al administrador.')
@@ -421,8 +411,6 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
         businessData.address = location.address
       }
 
-      console.log('Datos del negocio a insertar:', businessData)
-
       // Insertar negocio
       const { data: business, error: businessError } = await supabase
         .from('businesses')
@@ -435,8 +423,6 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
         throw businessError
       }
 
-      console.log('Negocio creado exitosamente:', business)
-
       // Subir imágenes si las hay
       if (images.length > 0) {
         await uploadBusinessImages(business.id, images)
@@ -448,19 +434,7 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       }
 
       // Mostrar mensaje de éxito con información sobre configuración
-      const hasImages = images.length > 0
-      const hasProducts = products.length > 0
       
-      if (hasImages || hasProducts) {
-        console.log('ℹ️ Negocio creado exitosamente.')
-        if (hasImages) {
-          console.log('📸 Nota: Si las imágenes no aparecen, verifica la configuración del storage en STORAGE_SETUP.md')
-        }
-        if (hasProducts) {
-          console.log('🛍️ Nota: Si los productos no aparecen, verifica los permisos en STORAGE_SETUP.md')
-        }
-      }
-
       onSuccess()
     } catch (error) {
       console.error('Error completo:', error)
@@ -510,6 +484,16 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
           })
 
         if (dbError) {
+          // Manejar errores de permisos específicamente
+          if (dbError.code === '42501' || 
+              dbError.message.includes('permission denied') ||
+              dbError.message.includes('403') ||
+              dbError.details?.includes('policy')) {
+            console.warn('⚠️ Error 403: Políticas RLS de business_images no configuradas.')
+            console.warn('📋 Consulta SOLUCION_ERROR_403_PRODUCTOS.md para configurar las políticas.')
+            console.warn('💡 El negocio se creó correctamente, solo fallan las imágenes.')
+            continue // No fallar por esto
+          }
           console.error('Error guardando referencia de imagen:', dbError)
           // No fallar por esto, la imagen ya se subió
         }
@@ -537,17 +521,27 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
         .insert(productsData)
 
       if (error) {
-        if (error.code === '42501' || error.message.includes('permission denied')) {
-          console.warn('⚠️ Permisos de productos no configurados. Los productos no se guardarán.')
-          console.warn('📋 Consulta STORAGE_SETUP.md para configurar los permisos correctamente.')
+        // Manejar errores de permisos (PostgreSQL y HTTP)
+        if (error.code === '42501' || 
+            error.message.includes('permission denied') ||
+            error.message.includes('403') ||
+            error.details?.includes('policy')) {
+          console.warn('⚠️ Error 403: Políticas RLS de productos no configuradas.')
+          console.warn('📋 Consulta SOLUCION_ERROR_403_PRODUCTOS.md para configurar las políticas.')
+          console.warn('💡 El negocio se creó correctamente, solo fallan los productos.')
           return // No fallar por esto
         }
         throw error
       }
 
-      console.log('Productos agregados correctamente')
     } catch (error) {
       console.error('Error agregando productos:', error)
+      // Manejar error 403 en el catch también
+      if (error.message && (error.message.includes('403') || error.message.includes('Forbidden'))) {
+        console.warn('⚠️ Error 403: Políticas RLS de productos no configuradas.')
+        console.warn('📋 Consulta SOLUCION_ERROR_403_PRODUCTOS.md para configurar las políticas.')
+        console.warn('💡 El negocio se creó correctamente, solo fallan los productos.')
+      }
       // No fallar todo el proceso por los productos
     }
   }
@@ -556,10 +550,8 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
     if (e) {
       e.preventDefault() // Prevenir envío accidental del formulario
     }
-    console.log('NextStep called, current step:', currentStep, 'total steps:', totalSteps)
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1)
-      console.log('Moving to step:', currentStep + 1)
     }
   }
 

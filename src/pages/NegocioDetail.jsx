@@ -275,8 +275,6 @@ const NegocioDetail = () => {
             setProducts(productsData)
           }
 
-          console.log('Supabase data loaded for business:', id)
-
         } catch (supabaseError) {
           console.warn('Supabase connection error:', supabaseError.message)
           // Mantener los datos de ejemplo que ya están cargados

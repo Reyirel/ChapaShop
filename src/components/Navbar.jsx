@@ -7,7 +7,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const location = useLocation()
-  const { user, profile, signOut, forceSignOut, diagnoseAndRepair, isAdmin, isBusiness } = useAuth()
+  const { user, profile, signOut, forceSignOut, isAdmin, isBusiness } = useAuth()
   const userMenuRef = useRef(null)
 
   // Cerrar menú de usuario al hacer clic fuera
@@ -202,7 +202,6 @@ const Navbar = () => {
                           try {
                             // Timeout para el logout
                             const logoutTimeout = setTimeout(() => {
-                              console.log('Logout taking too long, forcing logout')
                               forceSignOut()
                             }, 3000)
                             
