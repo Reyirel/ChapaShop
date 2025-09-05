@@ -63,22 +63,50 @@ const Login = () => {
     setMessage('')
 
     try {
-      // Verificar si ya existe un admin
-      const { data: existingAdmin } = await supabase
+      console.log('Iniciando creación de usuario admin...')
+      
+      // Verificar si ya existe el usuario
+      const { data: existingProfile, error: searchError } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('email', 'admin@chapashop.com')
-        .single()
+        .select('id, role, email')
+        .eq('email', 'luis.narutochavez@gmail.com')
+        .maybeSingle()
 
-      if (existingAdmin) {
-        setMessage('El usuario admin ya existe! Email: admin@chapashop.com, Password: Admin123!')
-        return
+      if (searchError && !searchError.message.includes('Row not found')) {
+        console.error('Error buscando perfil existente:', searchError)
+        throw searchError
       }
 
-      // Crear el usuario en Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: 'admin@chapashop.com',
-        password: 'Admin123!',
+      if (existingProfile) {
+        if (existingProfile.role === 'admin') {
+          setMessage('El usuario admin ya existe! Email: luis.narutochavez@gmail.com, Password: Correrapido1.')
+          return
+        } else {
+          // Actualizar rol a admin
+          console.log('Actualizando rol a admin para usuario existente...')
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ 
+              role: 'admin',
+              full_name: 'Administrador',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingProfile.id)
+
+          if (updateError) {
+            console.error('Error actualizando rol:', updateError)
+            throw updateError
+          }
+          setMessage('Usuario actualizado a admin exitosamente! Email: luis.narutochavez@gmail.com, Password: Correrapido1.')
+          return
+        }
+      }
+
+      // Crear usuario usando signUp normal con metadatos
+      console.log('Creando nuevo usuario...')
+      const { data: signupData, error: signupError } = await supabase.auth.signUp({
+        email: 'luis.narutochavez@gmail.com',
+        password: 'Correrapido1.',
         options: {
           data: {
             full_name: 'Administrador',
@@ -87,56 +115,58 @@ const Login = () => {
         }
       })
 
-      if (authError) {
-        // Si el error es que el usuario ya existe, intentar crear solo el perfil
-        if (authError.message.includes('already registered')) {
-          const { data: { session } } = await supabase.auth.signInWithPassword({
-            email: 'admin@chapashop.com',
-            password: 'Admin123!'
-          })
+      if (signupError) {
+        if (signupError.message.includes('already registered') || signupError.message.includes('User already registered')) {
+          console.log('Usuario ya registrado, buscando perfil...')
+          setMessage('Usuario ya registrado. Configurando como admin...')
           
-          if (session?.user) {
-            // Crear/actualizar el perfil
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .upsert({
-                id: session.user.id,
-                email: 'admin@chapashop.com',
-                full_name: 'Administrador',
-                role: 'admin',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              })
+          // Esperar un poco y luego buscar el perfil
+          setTimeout(async () => {
+            try {
+              const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('email', 'luis.narutochavez@gmail.com')
+                .single()
 
-            if (profileError) {
-              console.log('Error actualizando perfil admin:', profileError)
+              if (profile) {
+                const { error: updateError } = await supabase
+                  .from('profiles')
+                  .update({
+                    full_name: 'Administrador',
+                    role: 'admin',
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', profile.id)
+                
+                if (updateError) {
+                  console.error('Error actualizando perfil:', updateError)
+                  setError(`Error actualizando perfil: ${updateError.message}`)
+                } else {
+                  setMessage('Usuario admin configurado exitosamente! Email: luis.narutochavez@gmail.com, Password: Correrapido1.')
+                }
+              } else {
+                setError('No se pudo encontrar el perfil del usuario')
+              }
+            } catch (err) {
+              console.error('Error en proceso de actualización:', err)
+              setError(`Error actualizando perfil: ${err.message}`)
             }
-            
-            await supabase.auth.signOut() // Cerrar la sesión del admin
-          }
+          }, 2000)
+          return
         } else {
-          throw authError
-        }
-      } else if (authData.user) {
-        // Usuario creado exitosamente, crear el perfil
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: authData.user.id,
-            email: 'admin@chapashop.com',
-            full_name: 'Administrador',
-            role: 'admin',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-
-        if (profileError) {
-          console.log('Error creando perfil admin:', profileError)
+          console.error('Error en signUp:', signupError)
+          throw signupError
         }
       }
 
-      setMessage('Usuario admin configurado exitosamente! Email: admin@chapashop.com, Password: Admin123!')
+      if (signupData?.user) {
+        console.log('Usuario creado exitosamente:', signupData.user.id)
+        setMessage('Usuario admin creado! El trigger automáticamente asignará el rol. Email: luis.narutochavez@gmail.com, Password: Correrapido1.')
+      }
+
     } catch (error) {
+      console.error('Error completo:', error)
       setError(`Error configurando admin: ${error.message}`)
     } finally {
       setAdminLoading(false)

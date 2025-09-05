@@ -1,12 +1,41 @@
 import { Link, useLocation } from 'react-router-dom'
-import { useState } from 'react'
-import { Menu, X, Home, Store, LogIn, UserPlus, Shield, LogOut, Settings, User } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Menu, X, Home, Store, LogIn, UserPlus, Shield, LogOut, Settings, User, ChevronDown } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const location = useLocation()
   const { user, profile, signOut, isAdmin, isBusiness } = useAuth()
+  const userMenuRef = useRef(null)
+
+  // Cerrar menú de usuario al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Función para obtener las iniciales del nombre o email
+  const getInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name
+        .split(' ')
+        .map(name => name.charAt(0))
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    } else if (user?.email) {
+      return user.email.charAt(0).toUpperCase()
+    }
+    return 'U'
+  }
 
   const isActiveRoute = (path) => {
     return location.pathname === path
@@ -26,12 +55,8 @@ const Navbar = () => {
       { path: '/negocios', label: 'Negocios', icon: Store }
     ]
 
-    if (isAdmin()) {
-      baseItems.push({ path: '/admin-panel', label: 'Panel Admin', icon: Shield })
-    } else if (isBusiness()) {
-      baseItems.push({ path: '/business-dashboard', label: 'Mi Dashboard', icon: Settings })
-    }
-
+    // Los enlaces específicos de rol se muestran en el menú desplegable del usuario
+    // para mantener la barra de navegación limpia
     return baseItems
   }
 
@@ -91,31 +116,92 @@ const Navbar = () => {
               </NavLink>
             ))}
             {user && (
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/30 rounded-xl border border-gray-700/50">
-                  <User size={16} className="text-[#3ecf8e]" />
-                  <span className="text-sm text-gray-300">
-                    {profile?.full_name || user.email}
-                  </span>
-                  {profile?.role && (
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      profile.role === 'admin' 
-                        ? 'bg-red-500/20 text-red-400' 
-                        : profile.role === 'business'
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : 'bg-gray-500/20 text-gray-400'
-                    }`}>
-                      {profile.role === 'admin' ? 'Admin' : profile.role === 'business' ? 'Negocio' : 'Usuario'}
-                    </span>
-                  )}
-                </div>
+              <div className="relative" ref={userMenuRef}>
                 <button
-                  onClick={signOut}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 text-white hover:text-red-400 hover:bg-red-400/10"
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-3 px-3 py-2 bg-gray-800/30 rounded-xl border border-gray-700/50 hover:bg-gray-700/30 transition-all duration-300 group"
                 >
-                  <LogOut size={18} />
-                  <span>Cerrar Sesión</span>
+                  {/* Avatar with initials */}
+                  <div className="w-8 h-8 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-full flex items-center justify-center text-black text-sm font-bold">
+                    {getInitials()}
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm text-white font-medium">
+                      {profile?.full_name || 'Usuario'}
+                    </span>
+                    {profile?.role && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        profile.role === 'admin' 
+                          ? 'bg-red-500/20 text-red-400' 
+                          : profile.role === 'business'
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : 'bg-gray-500/20 text-gray-400'
+                      }`}>
+                        {profile.role === 'admin' ? 'Admin' : profile.role === 'business' ? 'Negocio' : 'Usuario'}
+                      </span>
+                    )}
+                  </div>
+                  <ChevronDown 
+                    size={16} 
+                    className={`text-gray-400 transition-transform duration-200 ${
+                      isUserMenuOpen ? 'rotate-180' : ''
+                    }`} 
+                  />
                 </button>
+
+                {/* User Dropdown Menu */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-xl py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-700/50">
+                      <p className="text-sm text-gray-400">Conectado como</p>
+                      <p className="text-sm text-white font-medium truncate">{user.email}</p>
+                    </div>
+                    
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-white hover:bg-gray-700/50 transition-colors"
+                    >
+                      <User size={16} className="text-[#3ecf8e]" />
+                      <span>Mi Perfil</span>
+                    </Link>
+
+                    {isAdmin() && (
+                      <Link
+                        to="/admin-panel"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-gray-700/50 transition-colors"
+                      >
+                        <Shield size={16} className="text-red-400" />
+                        <span>Panel Admin</span>
+                      </Link>
+                    )}
+
+                    {isBusiness() && (
+                      <Link
+                        to="/business-dashboard"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-gray-700/50 transition-colors"
+                      >
+                        <Settings size={16} className="text-blue-400" />
+                        <span>Mi Dashboard</span>
+                      </Link>
+                    )}
+
+                    <div className="border-t border-gray-700/50 mt-2 pt-2">
+                      <button
+                        onClick={() => {
+                          signOut()
+                          setIsUserMenuOpen(false)
+                        }}
+                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-red-500/20 hover:text-red-400 transition-colors w-full"
+                      >
+                        <LogOut size={16} />
+                        <span>Cerrar Sesión</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -144,17 +230,79 @@ const Navbar = () => {
                 {item.label}
               </NavLink>
             ))}
+            
             {user && (
-              <button
-                onClick={() => {
-                  signOut()
-                  setIsMenuOpen(false)
-                }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 w-full text-white hover:bg-red-400/20 hover:text-red-400"
-              >
-                <LogOut size={20} />
-                <span>Cerrar Sesión</span>
-              </button>
+              <>
+                {/* User Info */}
+                <div className="flex items-center gap-3 px-4 py-3 bg-gray-800/30 rounded-xl border border-gray-700/50 mx-0">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-full flex items-center justify-center text-black text-sm font-bold">
+                    {getInitials()}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white font-medium text-sm">
+                      {profile?.full_name || 'Usuario'}
+                    </p>
+                    <p className="text-gray-400 text-xs truncate">{user.email}</p>
+                    {profile?.role && (
+                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full mt-1 ${
+                        profile.role === 'admin' 
+                          ? 'bg-red-500/20 text-red-400' 
+                          : profile.role === 'business'
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : 'bg-gray-500/20 text-gray-400'
+                      }`}>
+                        {profile.role === 'admin' ? 'Admin' : profile.role === 'business' ? 'Negocio' : 'Usuario'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Profile Link */}
+                <Link
+                  to="/profile"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-white hover:bg-[#3ecf8e]/20 hover:text-[#3ecf8e]"
+                >
+                  <User size={20} />
+                  <span>Mi Perfil</span>
+                </Link>
+
+                {/* Admin Panel Link for Mobile */}
+                {isAdmin() && (
+                  <Link
+                    to="/admin-panel"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-white hover:bg-red-400/20 hover:text-red-400"
+                  >
+                    <Shield size={20} />
+                    <span>Panel Admin</span>
+                  </Link>
+                )}
+
+                {/* Business Dashboard Link for Mobile */}
+                {isBusiness() && (
+                  <Link
+                    to="/business-dashboard"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-white hover:bg-blue-400/20 hover:text-blue-400"
+                  >
+                    <Settings size={20} />
+                    <span>Mi Dashboard</span>
+                  </Link>
+                )}
+
+                {/* Logout */}
+                <button
+                  onClick={() => {
+                    signOut()
+                    setIsMenuOpen(false)
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 w-full text-white hover:bg-red-400/20 hover:text-red-400"
+                >
+                  <LogOut size={20} />
+                  <span>Cerrar Sesión</span>
+                </button>
+              </>
             )}
           </div>
         </div>
