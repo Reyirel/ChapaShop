@@ -447,6 +447,20 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
         await addBusinessProducts(business.id, products)
       }
 
+      // Mostrar mensaje de éxito con información sobre configuración
+      const hasImages = images.length > 0
+      const hasProducts = products.length > 0
+      
+      if (hasImages || hasProducts) {
+        console.log('ℹ️ Negocio creado exitosamente.')
+        if (hasImages) {
+          console.log('📸 Nota: Si las imágenes no aparecen, verifica la configuración del storage en STORAGE_SETUP.md')
+        }
+        if (hasProducts) {
+          console.log('🛍️ Nota: Si los productos no aparecen, verifica los permisos en STORAGE_SETUP.md')
+        }
+      }
+
       onSuccess()
     } catch (error) {
       console.error('Error completo:', error)
@@ -476,9 +490,16 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
           .from('business-images')
           .upload(fileName, image.file)
 
-        if (uploadError) throw uploadError
+        if (uploadError) {
+          if (uploadError.message.includes('Bucket not found')) {
+            console.warn('⚠️ Bucket de storage no configurado. Las imágenes no se subirán.')
+            console.warn('📋 Consulta STORAGE_SETUP.md para configurar el storage correctamente.')
+            continue // Continuar sin fallar
+          }
+          throw uploadError
+        }
 
-        // Guardar referencia en la base de datos
+        // Guardar referencia en la base de datos solo si la subida fue exitosa
         const { error: dbError } = await supabase
           .from('business_images')
           .insert({
@@ -488,14 +509,20 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
             order_index: i
           })
 
-        if (dbError) throw dbError
+        if (dbError) {
+          console.error('Error guardando referencia de imagen:', dbError)
+          // No fallar por esto, la imagen ya se subió
+        }
       } catch (error) {
         console.error('Error subiendo imagen:', error)
+        // No fallar todo el proceso por una imagen
       }
     }
   }
 
   const addBusinessProducts = async (businessId, productNames) => {
+    if (productNames.length === 0) return
+
     const productsData = productNames.map(name => ({
       business_id: businessId,
       name: name,
@@ -504,11 +531,25 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       is_available: true
     }))
 
-    const { error } = await supabase
-      .from('products')
-      .insert(productsData)
+    try {
+      const { error } = await supabase
+        .from('products')
+        .insert(productsData)
 
-    if (error) throw error
+      if (error) {
+        if (error.code === '42501' || error.message.includes('permission denied')) {
+          console.warn('⚠️ Permisos de productos no configurados. Los productos no se guardarán.')
+          console.warn('📋 Consulta STORAGE_SETUP.md para configurar los permisos correctamente.')
+          return // No fallar por esto
+        }
+        throw error
+      }
+
+      console.log('Productos agregados correctamente')
+    } catch (error) {
+      console.error('Error agregando productos:', error)
+      // No fallar todo el proceso por los productos
+    }
   }
 
   const nextStep = (e) => {
