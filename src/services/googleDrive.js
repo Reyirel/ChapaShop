@@ -28,7 +28,7 @@ class GoogleDriveService {
   }
 
   // Upload image to Google Drive
-  async uploadImage(file, fileName) {
+  async uploadImage(file, businessId, fileName) {
     // Si no está configurado o estamos en desarrollo, usar mock directamente
     if (!this.isConfigured || this.isDevelopment) {
       console.log('📦 Usando modo demo para imágenes')
@@ -86,13 +86,14 @@ class GoogleDriveService {
   mockUpload(file, fileName) {
     const fakeId = Math.random().toString(36).substr(2, 9)
     
-    // Verificar si file es realmente un objeto File
+    // Verificar si file es realmente un objeto File o Blob válido
     let objectUrl
     try {
-      if (file instanceof File || file instanceof Blob) {
+      if (file && (file instanceof File || file instanceof Blob) && file.size > 0) {
         objectUrl = URL.createObjectURL(file)
       } else {
-        // Si no es un File, crear una URL de placeholder
+        console.warn('File no válido para createObjectURL, usando placeholder')
+        // Si no es un File válido, crear una URL de placeholder
         objectUrl = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjY2NjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbiBkZSBkZW1vPC90ZXh0Pjwvc3ZnPg==`
       }
     } catch (error) {
@@ -235,7 +236,7 @@ class MockDriveService {
     }
   }
 
-  async deleteImage(fileId) {
+  async deleteImage() {
     return true
   }
 
@@ -243,7 +244,7 @@ class MockDriveService {
     return `https://via.placeholder.com/400x300?text=Demo+Image+${fileId}`
   }
 
-  async getBusinessImages(businessId) {
+  async getBusinessImages() {
     return []
   }
 }

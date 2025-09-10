@@ -104,13 +104,8 @@ const AdminPanel = () => {
   const handleDeleteBusiness = async (businessId) => {
     setDeleteLoading(true)
     try {
-      // Eliminar negocio y sus relaciones usando el servicio de base de datos
+      // Eliminar negocio usando el servicio de base de datos Firebase
       await dbService.deleteBusiness(businessId)
-        .eq('business_id', businessId)
-
-      if (reviewsError) {
-        console.error('Error eliminando reseñas:', reviewsError)
-      }
 
       // Actualizar datos
       fetchData()

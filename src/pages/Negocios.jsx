@@ -32,31 +32,50 @@ const Negocios = () => {
     try {
       setLoading(true)
       
-      // Obtener categorías de negocios
-      const categoriasData = await dbService.getBusinessCategories()
+      // Categorías predefinidas
+      const categoriasData = [
+        { id: 'restaurante', name: 'Restaurantes' },
+        { id: 'tienda', name: 'Tiendas' },
+        { id: 'servicio', name: 'Servicios' },
+        { id: 'entretenimiento', name: 'Entretenimiento' },
+        { id: 'salud', name: 'Salud y Belleza' },
+        { id: 'tecnologia', name: 'Tecnología' },
+        { id: 'educacion', name: 'Educación' },
+        { id: 'automotriz', name: 'Automotriz' },
+        { id: 'hogar', name: 'Hogar y Jardín' },
+        { id: 'otros', name: 'Otros' }
+      ]
 
-      // Obtener negocios aprobados con sus categorías y calcular ratings
-      const negociosData = await dbService.getApprovedBusinesses()
-        .order('created_at', { ascending: false })
-
-      if (negociosError) {
-        console.error('Error fetching businesses:', negociosError.message)
-        throw negociosError
-      }
+      // Obtener negocios aprobados
+      const negociosData = await dbService.getBusinesses({ status: 'approved' })
 
       // Procesar negocios para calcular ratings promedio
-      const negociosConRating = negociosData.map(negocio => {
-        const reviews = negocio.reviews || []
-        const avgRating = reviews.length > 0 
-          ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
-          : 0
-        
-        return {
-          ...negocio,
-          avgRating: parseFloat(avgRating.toFixed(1)),
-          reviewCount: reviews.length
-        }
-      })
+      const negociosConRating = await Promise.all(
+        negociosData.map(async (negocio) => {
+          try {
+            // Obtener reseñas del negocio
+            const reviews = await dbService.getReviews(negocio.id)
+            const avgRating = reviews.length > 0 
+              ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+              : 0
+            
+            return {
+              ...negocio,
+              avgRating: parseFloat(avgRating.toFixed(1)),
+              reviewCount: reviews.length,
+              reviews: reviews
+            }
+          } catch (error) {
+            console.error(`Error getting reviews for business ${negocio.id}:`, error)
+            return {
+              ...negocio,
+              avgRating: 0,
+              reviewCount: 0,
+              reviews: []
+            }
+          }
+        })
+      )
 
       // Establecer datos
       setNegocios(negociosConRating)
@@ -88,7 +107,7 @@ const Negocios = () => {
   const filteredNegocios = negocios.filter(negocio => {
     const matchesSearch = negocio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          negocio.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = !selectedCategory || negocio.category_id === selectedCategory
+    const matchesCategory = !selectedCategory || negocio.category === selectedCategory
     return matchesSearch && matchesCategory
   }).sort((a, b) => {
     switch (sortBy) {
@@ -99,7 +118,7 @@ const Negocios = () => {
       case 'name':
         return a.name.localeCompare(b.name)
       default:
-        return new Date(b.created_at) - new Date(a.created_at)
+        return new Date(b.createdAt) - new Date(a.createdAt)
     }
   })
 

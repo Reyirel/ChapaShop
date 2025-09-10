@@ -97,7 +97,7 @@ class DatabaseService {
     try {
       let q = collection(db, 'businesses')
       
-      // Apply filters
+      // Si hay filtros específicos, aplicarlos uno por uno
       if (filters.status) {
         q = query(q, where('status', '==', filters.status))
       }
@@ -110,8 +110,10 @@ class DatabaseService {
         q = query(q, where('category', '==', filters.category))
       }
       
-      // Order by creation date
-      q = query(q, orderBy('createdAt', 'desc'))
+      // Solo ordenar si no hay filtros complejos para evitar problemas de índice
+      if (!filters.ownerId || (!filters.status && !filters.category)) {
+        q = query(q, orderBy('createdAt', 'desc'))
+      }
       
       // Apply limit if specified
       if (filters.limit) {
@@ -119,7 +121,7 @@ class DatabaseService {
       }
       
       const querySnapshot = await getDocs(q)
-      const businesses = []
+      let businesses = []
       
       querySnapshot.forEach((doc) => {
         businesses.push({
@@ -128,9 +130,73 @@ class DatabaseService {
         })
       })
       
+      // Si no pudimos ordenar en la query, ordenar en JavaScript
+      if (filters.ownerId && (filters.status || filters.category)) {
+        businesses.sort((a, b) => {
+          if (!a.createdAt || !b.createdAt) return 0
+          return b.createdAt.toDate() - a.createdAt.toDate()
+        })
+      }
+      
       return businesses
     } catch (error) {
       console.error('Error getting businesses:', error)
+      
+      // Si es un error de índice y tenemos filtros, intentar una consulta más simple
+      if (error.message.includes('index') && filters.ownerId) {
+        console.log('⚠️ Error de índice detectado, usando consulta simplificada')
+        return this.getBusinessesSimple(filters)
+      }
+      
+      throw error
+    }
+  }
+
+  // Función simplificada para evitar problemas de índice
+  async getBusinessesSimple(filters = {}) {
+    try {
+      let q = collection(db, 'businesses')
+      
+      // Solo filtrar por ownerId si está presente
+      if (filters.ownerId) {
+        q = query(q, where('ownerId', '==', filters.ownerId))
+      }
+      
+      const querySnapshot = await getDocs(q)
+      let businesses = []
+      
+      querySnapshot.forEach((doc) => {
+        businesses.push({
+          id: doc.id,
+          ...doc.data()
+        })
+      })
+      
+      // Aplicar filtros adicionales en JavaScript
+      if (filters.status) {
+        businesses = businesses.filter(b => b.status === filters.status)
+      }
+      
+      if (filters.category) {
+        businesses = businesses.filter(b => b.category === filters.category)
+      }
+      
+      // Ordenar por fecha de creación
+      businesses.sort((a, b) => {
+        if (!a.createdAt || !b.createdAt) return 0
+        const dateA = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)
+        const dateB = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)
+        return dateB - dateA
+      })
+      
+      // Aplicar límite si está especificado
+      if (filters.limit) {
+        businesses = businesses.slice(0, filters.limit)
+      }
+      
+      return businesses
+    } catch (error) {
+      console.error('Error in simplified query:', error)
       throw error
     }
   }
@@ -144,10 +210,49 @@ class DatabaseService {
     }
 
     try {
-      const result = await this.getBusinesses()
-      // Si llegamos aquí, los permisos están funcionando
-      this.permissionError = false
-      return result
+      // Intentar obtener todos los negocios sin filtros complejos
+      let q = collection(db, 'businesses')
+      
+      // Intentar ordenar, pero si falla usar consulta simple
+      try {
+        q = query(q, orderBy('createdAt', 'desc'))
+        const querySnapshot = await getDocs(q)
+        const businesses = []
+        
+        querySnapshot.forEach((doc) => {
+          businesses.push({
+            id: doc.id,
+            ...doc.data()
+          })
+        })
+        
+        this.permissionError = false
+        return businesses
+      } catch {
+        // Si hay error con orderBy, hacer consulta simple
+        console.log('⚠️ Error con orderBy, usando consulta simple')
+        const simpleQuery = collection(db, 'businesses')
+        const querySnapshot = await getDocs(simpleQuery)
+        const businesses = []
+        
+        querySnapshot.forEach((doc) => {
+          businesses.push({
+            id: doc.id,
+            ...doc.data()
+          })
+        })
+        
+        // Ordenar manualmente
+        businesses.sort((a, b) => {
+          if (!a.createdAt || !b.createdAt) return 0
+          const dateA = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)
+          const dateB = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)
+          return dateB - dateA
+        })
+        
+        this.permissionError = false
+        return businesses
+      }
     } catch (error) {
       // Si hay errores de permisos, marcar flag y usar datos mock
       if (error.code === 'permission-denied' || error.message.includes('permissions')) {
@@ -155,11 +260,60 @@ class DatabaseService {
         this.permissionError = true
         return this.getMockBusinesses()
       }
+      
+      // Si hay errores de índice u otros, también usar mock como fallback
+      if (error.message.includes('index') || error.message.includes('requires an index')) {
+        console.warn('⚠️ Error de índice, usando datos mock como fallback')
+        return this.getMockBusinesses()
+      }
+      
       throw error
     }
   }
 
-  // Función para retornar datos mock cuando hay problemas de permisos
+  // Función especial para obtener negocios del usuario sin problemas de índice
+  async getUserBusinesses(ownerId) {
+    try {
+      console.log('🔍 Obteniendo negocios para owner:', ownerId)
+      
+      // Consulta simple solo por ownerId
+      const q = query(
+        collection(db, 'businesses'),
+        where('ownerId', '==', ownerId)
+      )
+      
+      const querySnapshot = await getDocs(q)
+      const businesses = []
+      
+      querySnapshot.forEach((doc) => {
+        businesses.push({
+          id: doc.id,
+          ...doc.data()
+        })
+      })
+      
+      // Ordenar manualmente por fecha
+      businesses.sort((a, b) => {
+        if (!a.createdAt || !b.createdAt) return 0
+        const dateA = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)
+        const dateB = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)
+        return dateB - dateA
+      })
+      
+      console.log('✅ Negocios encontrados:', businesses.length)
+      return businesses
+    } catch (error) {
+      console.error('Error getting user businesses:', error)
+      
+      // Si hay problemas, devolver array vacío en lugar de lanzar error
+      if (error.message.includes('index') || error.code === 'permission-denied') {
+        console.log('⚠️ Usando fallback debido a error de índice/permisos')
+        return []
+      }
+      
+      throw error
+    }
+  }
   getMockBusinesses() {
     return [
       {
@@ -308,24 +462,45 @@ class DatabaseService {
     try {
       const uploadedImages = []
       
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        const fileName = `image-${Date.now()}-${i}.${file.name.split('.').pop()}`
-        
-        const result = await driveService.uploadImage(file, businessId, fileName)
-        uploadedImages.push(result.id)
+      // Validar que files es un array y tiene elementos válidos
+      if (!Array.isArray(files) || files.length === 0) {
+        console.log('No hay archivos válidos para subir')
+        return uploadedImages
       }
       
-      // Update business with new image IDs
-      const business = await this.getBusiness(businessId)
-      const allImages = [...(business.images || []), ...uploadedImages]
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        
+        // Validar que el archivo es válido
+        if (!file || !(file instanceof File) || file.size === 0) {
+          console.warn(`Archivo ${i} no es válido, saltando...`)
+          continue
+        }
+        
+        try {
+          const fileName = `image-${Date.now()}-${i}.${file.name.split('.').pop()}`
+          const result = await driveService.uploadImage(file, businessId, fileName)
+          uploadedImages.push(result.id)
+        } catch (fileError) {
+          console.error(`Error subiendo archivo ${i}:`, fileError)
+          // Continuar con el siguiente archivo en lugar de fallar todo
+          continue
+        }
+      }
       
-      await this.updateBusiness(businessId, { images: allImages })
+      // Solo actualizar si se subieron imágenes exitosamente
+      if (uploadedImages.length > 0) {
+        const business = await this.getBusiness(businessId)
+        const allImages = [...(business.images || []), ...uploadedImages]
+        await this.updateBusiness(businessId, { images: allImages })
+      }
       
       return uploadedImages
     } catch (error) {
       console.error('Error uploading business images:', error)
-      throw error
+      // No lanzar el error para no romper el flujo de creación del negocio
+      console.log('⚠️ Continuando sin imágenes debido a errores en la subida')
+      return []
     }
   }
 
@@ -554,6 +729,21 @@ class DatabaseService {
   }
 
   // ADMIN FUNCTIONS
+  async updateBusinessStatus(businessId, status, adminNotes = '') {
+    try {
+      await this.updateBusiness(businessId, {
+        status,
+        adminNotes,
+        reviewedAt: serverTimestamp()
+      })
+      
+      return true
+    } catch (error) {
+      console.error('Error updating business status:', error)
+      throw error
+    }
+  }
+
   async approveRejectBusiness(businessId, status, adminNotes = '') {
     try {
       await this.updateBusiness(businessId, {

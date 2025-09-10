@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -13,7 +13,7 @@ L.Icon.Default.mergeOptions({
 
 // Componente para manejar clics en el mapa
 function LocationMarker({ position, onLocationSelect }) {
-  const map = useMapEvents({
+  useMapEvents({
     click(e) {
       onLocationSelect(e.latlng)
     },
@@ -44,27 +44,57 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
         return
       }
 
-      // Usar Nominatim para reverse geocoding (gratuito)
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&accept-language=es`
-      )
-      const data = await response.json()
+      // Crear dirección por defecto con coordenadas
+      const defaultAddress = `Lat: ${latlng.lat.toFixed(6)}, Lng: ${latlng.lng.toFixed(6)}`
       
-      if (data.display_name) {
-        setAddress(data.display_name)
-        onLocationChange({
-          latitude: latlng.lat,
-          longitude: latlng.lng,
-          address: data.display_name
-        })
+      // Intentar obtener dirección usando diferentes servicios
+      let finalAddress = defaultAddress
+      
+      try {
+        // Timeout de 5 segundos para evitar bloqueos
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+        
+        // Intentar con el servicio de geocoding inverso
+        const response = await fetch(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latlng.lat}&longitude=${latlng.lng}&localityLanguage=es`,
+          { signal: controller.signal }
+        )
+        
+        clearTimeout(timeoutId)
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.locality || data.city) {
+            const addressParts = []
+            if (data.locality) addressParts.push(data.locality)
+            if (data.city && data.city !== data.locality) addressParts.push(data.city)
+            if (data.principalSubdivision) addressParts.push(data.principalSubdivision)
+            if (data.countryName) addressParts.push(data.countryName)
+            
+            if (addressParts.length > 0) {
+              finalAddress = addressParts.join(', ')
+            }
+          }
+        }
+      } catch {
+        console.log('No se pudo obtener la dirección automáticamente, usando coordenadas')
       }
+      
+      setAddress(finalAddress)
+      onLocationChange({
+        latitude: latlng.lat,
+        longitude: latlng.lng,
+        address: finalAddress
+      })
+      
     } catch (error) {
-      console.error('Error al obtener la dirección:', error)
+      console.error('Error al procesar la ubicación:', error)
       if (onLocationChange && typeof onLocationChange === 'function') {
         onLocationChange({
           latitude: latlng.lat,
           longitude: latlng.lng,
-          address: `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`
+          address: `Lat: ${latlng.lat.toFixed(6)}, Lng: ${latlng.lng.toFixed(6)}`
         })
       }
     } finally {

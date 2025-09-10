@@ -47,10 +47,40 @@ const BusinessDashboard = () => {
     try {
       if (!user) return
 
-      const data = await dbService.getBusinesses({ ownerId: user.uid })
+      console.log('🔍 Obteniendo negocios para usuario:', user.uid)
+      
+      // Usar la función específica para evitar problemas de índice
+      const data = await dbService.getUserBusinesses(user.uid)
+      console.log('✅ Negocios obtenidos:', data.length)
       setBusinesses(data || [])
     } catch (error) {
       console.error('Error fetching businesses:', error)
+      
+      // Si hay error de índice, mostrar mensaje informativo y usar datos vacíos
+      if (error.message && error.message.includes('index')) {
+        console.log('⚠️ Error de índice de Firebase, usando fallback')
+        setBusinesses([])
+        
+        // Mostrar mensaje informativo al usuario
+        setTimeout(() => {
+          alert(`
+🔧 Configuración de Firebase Pendiente
+
+El sistema necesita algunos índices adicionales en Firebase para funcionar correctamente.
+
+Mientras tanto:
+• Puedes crear nuevos negocios
+• Los datos se guardarán correctamente
+• La visualización se arreglará una vez configurados los índices
+
+Para el desarrollador:
+Visita la URL del error en la consola para crear los índices automáticamente.
+          `)
+        }, 1000)
+      } else {
+        // Para otros errores, usar array vacío como fallback
+        setBusinesses([])
+      }
     } finally {
       setLoading(false)
     }
@@ -77,12 +107,6 @@ const BusinessDashboard = () => {
         {badge.text}
       </span>
     )
-  }
-
-  const calculateAverageRating = (reviews) => {
-    if (!reviews || reviews.length === 0) return 0
-    const sum = reviews.reduce((acc, review) => acc + review.rating, 0)
-    return (sum / reviews.length).toFixed(1)
   }
 
   if (loading) {
@@ -355,9 +379,29 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       // Crear negocio
       const business = await dbService.createBusiness(businessData)
 
-      // Subir imágenes si las hay
+      // Intentar subir imágenes si las hay, pero no fallar si hay errores
       if (images.length > 0) {
-        await dbService.uploadBusinessImages(business.id, images)
+        try {
+          console.log('📸 Intentando subir imágenes...', images.length, 'archivos')
+          
+          // Extraer solo los archivos File del array de objetos imagen
+          const imageFiles = images.map(img => img.file).filter(file => file instanceof File)
+          console.log('📁 Archivos válidos extraídos:', imageFiles.length)
+          
+          if (imageFiles.length > 0) {
+            const uploadedImages = await dbService.uploadBusinessImages(business.id, imageFiles)
+            if (uploadedImages.length > 0) {
+              console.log('✅ Imágenes subidas exitosamente:', uploadedImages.length)
+            } else {
+              console.log('⚠️ No se pudieron subir las imágenes, pero el negocio se creó correctamente')
+            }
+          } else {
+            console.log('⚠️ No se encontraron archivos válidos para subir')
+          }
+        } catch (imageError) {
+          console.error('❌ Error subiendo imágenes:', imageError)
+          console.log('⚠️ El negocio se creó sin imágenes')
+        }
       }
 
       // Agregar productos si los hay
