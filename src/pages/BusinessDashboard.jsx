@@ -22,6 +22,35 @@ import {
   X
 } from 'lucide-react'
 
+// Helper function to format business hours for Firebase
+const formatBusinessHours = (hours) => {
+  if (!hours || typeof hours !== 'object') {
+    return null
+  }
+
+  const formatted = {}
+  const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+  validDays.forEach(day => {
+    if (hours[day] && typeof hours[day] === 'object') {
+      formatted[day] = {
+        open: hours[day].open || '09:00',
+        close: hours[day].close || '18:00',
+        closed: Boolean(hours[day].closed)
+      }
+    } else {
+      // Default values if day is missing
+      formatted[day] = {
+        open: '09:00',
+        close: '18:00',
+        closed: true
+      }
+    }
+  })
+
+  return formatted
+}
+
 const BusinessDashboard = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -303,6 +332,7 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
     setError('')
 
     try {
+      // Prepare business data with proper formatting
       const businessData = {
         ...formData,
         ownerId: user.uid,
@@ -310,7 +340,7 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
           lat: location.latitude,
           lng: location.longitude
         } : null,
-        businessHours: businessHours ? businessHours : null,
+        businessHours: businessHours ? formatBusinessHours(businessHours) : null,
         products: products.length > 0 ? products.join(', ') : ''
       }
 
@@ -318,6 +348,9 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       if (location?.address) {
         businessData.address = location.address
       }
+
+      console.log('📝 Datos del negocio a crear:', businessData)
+      console.log('📅 Horarios formateados:', businessData.businessHours)
 
       // Crear negocio
       const business = await dbService.createBusiness(businessData)
@@ -492,7 +525,7 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Horarios de Atención
             </label>
-            <BusinessHours onChange={setBusinessHours} />
+            <BusinessHours onHoursChange={setBusinessHours} />
           </div>
 
           {/* Products */}

@@ -1,18 +1,58 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Clock, Plus, X } from 'lucide-react'
 
 const BusinessHours = ({ onHoursChange, initialHours = null }) => {
-  const [hours, setHours] = useState(
-    initialHours || {
-      monday: { open: '09:00', close: '18:00', closed: false },
-      tuesday: { open: '09:00', close: '18:00', closed: false },
-      wednesday: { open: '09:00', close: '18:00', closed: false },
-      thursday: { open: '09:00', close: '18:00', closed: false },
-      friday: { open: '09:00', close: '18:00', closed: false },
-      saturday: { open: '09:00', close: '15:00', closed: false },
-      sunday: { open: '09:00', close: '15:00', closed: true }
+  // Default hours with proper structure
+  const getDefaultHours = () => ({
+    monday: { open: '09:00', close: '18:00', closed: false },
+    tuesday: { open: '09:00', close: '18:00', closed: false },
+    wednesday: { open: '09:00', close: '18:00', closed: false },
+    thursday: { open: '09:00', close: '18:00', closed: false },
+    friday: { open: '09:00', close: '18:00', closed: false },
+    saturday: { open: '09:00', close: '15:00', closed: false },
+    sunday: { open: '09:00', close: '15:00', closed: true }
+  })
+
+  const [hours, setHours] = useState(() => {
+    if (initialHours && typeof initialHours === 'object') {
+      // Validate and merge with defaults to ensure all days are present
+      const defaultHours = getDefaultHours()
+      const validatedHours = {}
+      
+      Object.keys(defaultHours).forEach(day => {
+        if (initialHours[day] && typeof initialHours[day] === 'object') {
+          validatedHours[day] = {
+            open: initialHours[day].open || defaultHours[day].open,
+            close: initialHours[day].close || defaultHours[day].close,
+            closed: Boolean(initialHours[day].closed)
+          }
+        } else {
+          validatedHours[day] = { ...defaultHours[day] }
+        }
+      })
+      
+      return validatedHours
     }
-  )
+    return getDefaultHours()
+  })
+
+  // Call onHoursChange whenever hours change and ensure it's properly formatted
+  useEffect(() => {
+    if (onHoursChange && typeof onHoursChange === 'function') {
+      // Create a clean copy with proper validation
+      const cleanedHours = {}
+      Object.keys(hours).forEach(day => {
+        cleanedHours[day] = {
+          open: hours[day].open || '09:00',
+          close: hours[day].close || '18:00',
+          closed: Boolean(hours[day].closed)
+        }
+      })
+      
+      console.log('📅 Enviando horarios actualizados:', cleanedHours)
+      onHoursChange(cleanedHours)
+    }
+  }, [hours, onHoursChange])
 
   const dayNames = {
     monday: 'Lunes',
@@ -25,6 +65,15 @@ const BusinessHours = ({ onHoursChange, initialHours = null }) => {
   }
 
   const handleDayChange = (day, field, value) => {
+    // Validate time format and logic
+    if (field === 'open' || field === 'close') {
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+      if (!timeRegex.test(value)) {
+        console.warn(`⚠️ Formato de hora inválido: ${value}`)
+        return
+      }
+    }
+
     const newHours = {
       ...hours,
       [day]: {
@@ -32,8 +81,20 @@ const BusinessHours = ({ onHoursChange, initialHours = null }) => {
         [field]: value
       }
     }
+    
+    // Validate that open time is before close time
+    if (field === 'open' || field === 'close') {
+      const openTime = field === 'open' ? value : newHours[day].open
+      const closeTime = field === 'close' ? value : newHours[day].close
+      
+      if (openTime >= closeTime) {
+        console.warn(`⚠️ Hora de apertura (${openTime}) debe ser anterior a hora de cierre (${closeTime})`)
+        // You could add user feedback here if needed
+      }
+    }
+    
+    console.log(`📅 Actualizando ${day} ${field}: ${value}`)
     setHours(newHours)
-    onHoursChange(newHours)
   }
 
   const toggleDayClosed = (day) => {
@@ -44,8 +105,9 @@ const BusinessHours = ({ onHoursChange, initialHours = null }) => {
         closed: !hours[day].closed
       }
     }
+    
+    console.log(`📅 Toggling ${day} cerrado: ${newHours[day].closed}`)
     setHours(newHours)
-    onHoursChange(newHours)
   }
 
   const copyToAllDays = (day) => {
@@ -53,11 +115,15 @@ const BusinessHours = ({ onHoursChange, initialHours = null }) => {
     const newHours = {}
     
     Object.keys(hours).forEach(d => {
-      newHours[d] = { ...dayHours }
+      newHours[d] = { 
+        open: dayHours.open,
+        close: dayHours.close,
+        closed: dayHours.closed
+      }
     })
     
+    console.log('📅 Copiando horarios a todos los días:', dayHours)
     setHours(newHours)
-    onHoursChange(newHours)
   }
 
   return (
@@ -126,9 +192,12 @@ const BusinessHours = ({ onHoursChange, initialHours = null }) => {
       </div>
 
       <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-3">
-        <p className="text-xs text-blue-300">
+        <p className="text-xs text-blue-300 mb-2">
           💡 <strong>Tip:</strong> Puedes copiar los horarios de un día a todos los demás usando el botón "Copiar a todos"
         </p>
+        <div className="text-xs text-gray-400">
+          Los horarios se actualizan automáticamente. Formato: 24 horas (ej: 14:30)
+        </div>
       </div>
     </div>
   )

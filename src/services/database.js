@@ -76,6 +76,13 @@ class DatabaseService {
   // BUSINESSES
   async createBusiness(businessData) {
     try {
+      // Validate and format business hours if provided
+      if (businessData.businessHours) {
+        businessData.businessHours = this.validateBusinessHours(businessData.businessHours)
+      }
+
+      console.log('💾 Guardando negocio con datos:', businessData)
+      
       const docRef = await addDoc(collection(db, 'businesses'), {
         ...businessData,
         status: 'pending',
@@ -86,11 +93,59 @@ class DatabaseService {
         updatedAt: serverTimestamp()
       })
       
+      console.log('✅ Negocio guardado con ID:', docRef.id)
       return { id: docRef.id, ...businessData }
     } catch (error) {
-      console.error('Error creating business:', error)
+      console.error('❌ Error creating business:', error)
       throw error
     }
+  }
+
+  // Validate and format business hours
+  validateBusinessHours(hours) {
+    if (!hours || typeof hours !== 'object') {
+      return null
+    }
+
+    const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    const validatedHours = {}
+
+    validDays.forEach(day => {
+      if (hours[day] && typeof hours[day] === 'object') {
+        // Validate time format
+        const openTime = hours[day].open || '09:00'
+        const closeTime = hours[day].close || '18:00'
+        const closed = Boolean(hours[day].closed)
+
+        // Basic time format validation
+        const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+        if (!timeRegex.test(openTime) || !timeRegex.test(closeTime)) {
+          console.warn(`⚠️ Formato de hora inválido para ${day}: ${openTime}-${closeTime}`)
+          // Use defaults if invalid
+          validatedHours[day] = {
+            open: '09:00',
+            close: '18:00',
+            closed: true
+          }
+        } else {
+          validatedHours[day] = {
+            open: openTime,
+            close: closeTime,
+            closed: closed
+          }
+        }
+      } else {
+        // Default values for missing days
+        validatedHours[day] = {
+          open: '09:00',
+          close: '18:00',
+          closed: true
+        }
+      }
+    })
+
+    console.log('📅 Horarios validados:', validatedHours)
+    return validatedHours
   }
 
   async getBusinesses(filters = {}) {
@@ -476,15 +531,45 @@ class DatabaseService {
 
   async updateBusiness(businessId, updates) {
     try {
+      // Validate and format business hours if being updated
+      if (updates.businessHours) {
+        updates.businessHours = this.validateBusinessHours(updates.businessHours)
+        console.log('📅 Actualizando horarios del negocio:', businessId, updates.businessHours)
+      }
+
       const docRef = doc(db, 'businesses', businessId)
       await updateDoc(docRef, {
         ...updates,
         updatedAt: serverTimestamp()
       })
       
+      console.log('✅ Negocio actualizado:', businessId)
       return { id: businessId, ...updates }
     } catch (error) {
-      console.error('Error updating business:', error)
+      console.error('❌ Error updating business:', error)
+      throw error
+    }
+  }
+
+  // Update business hours specifically
+  async updateBusinessHours(businessId, businessHours) {
+    try {
+      const validatedHours = this.validateBusinessHours(businessHours)
+      
+      if (!validatedHours) {
+        throw new Error('Horarios de negocio inválidos')
+      }
+
+      console.log('📅 Actualizando horarios específicamente para negocio:', businessId)
+      
+      const result = await this.updateBusiness(businessId, { 
+        businessHours: validatedHours 
+      })
+      
+      console.log('✅ Horarios actualizados exitosamente')
+      return result
+    } catch (error) {
+      console.error('❌ Error updating business hours:', error)
       throw error
     }
   }
