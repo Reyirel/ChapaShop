@@ -1,13 +1,13 @@
 // Utilidad para manejar errores de manera consistente en toda la aplicación
 
-export const handleSupabaseError = (error, context = '') => {
+export const handleDatabaseError = (error, context = '') => {
   if (!error) return null;
   
   const errorMessage = error.message || 'Error desconocido';
   const errorCode = error.code || 'UNKNOWN';
   
   // Registrar el error sin bloquearlo
-  console.warn(`⚠️ Supabase Error ${context ? `(${context})` : ''}:`, {
+  console.warn(`⚠️ Database Error ${context ? `(${context})` : ''}:`, {
     message: errorMessage,
     code: errorCode,
     details: error
@@ -18,7 +18,8 @@ export const handleSupabaseError = (error, context = '') => {
     'Failed to fetch',
     'NetworkError',
     'TypeError: Failed to fetch',
-    'Connection error'
+    'Connection error',
+    'Firebase: Error'
   ];
   
   if (connectivityErrors.some(err => errorMessage.includes(err))) {
@@ -37,16 +38,16 @@ export const handleSupabaseError = (error, context = '') => {
   };
 };
 
-export const withFallback = async (supabaseCall, fallbackData = null, context = '') => {
+export const withFallback = async (databaseCall, fallbackData = null, context = '') => {
   try {
-    const result = await supabaseCall();
+    const result = await databaseCall();
     return {
-      data: result.data,
-      error: result.error ? handleSupabaseError(result.error, context) : null,
+      data: result,
+      error: null,
       fromFallback: false
     };
   } catch (error) {
-    const handledError = handleSupabaseError(error, context);
+    const handledError = handleDatabaseError(error, context);
     return {
       data: fallbackData,
       error: handledError,

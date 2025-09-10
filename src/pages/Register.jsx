@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../services/supabase'
+import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '../services/firebase'
+import dbService from '../services/database'
 import { FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
 import { UserPlus, LogIn, ArrowLeft, Mail, Lock, CheckCircle, User, Store } from 'lucide-react'
 
@@ -40,39 +42,21 @@ const Register = () => {
     }
 
     try {
-      // Registrar usuario en Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            role: userType
-          }
-        }
-      })
+      // Registrar usuario en Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       
-      if (authError) throw authError
-
-      // Crear perfil de usuario
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: authData.user.id,
-            email: email,
-            full_name: fullName,
-            role: userType,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-
-        if (profileError) {
-          console.error('Error creando perfil:', profileError)
-        }
+      if (userCredential.user) {
+        // Crear perfil de usuario en Firebase
+        await dbService.createUserProfile(userCredential.user.uid, {
+          email: email,
+          full_name: fullName,
+          role: userType,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
       }
       
-      setMessage('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.')
+      setMessage('¡Registro exitoso! Ahora puedes iniciar sesión.')
       
       // Redirigir al login después de un breve delay
       setTimeout(() => {

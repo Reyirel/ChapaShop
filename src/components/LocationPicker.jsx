@@ -37,6 +37,13 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
     setLoading(true)
     
     try {
+      // Verificar que onLocationChange esté definido
+      if (!onLocationChange || typeof onLocationChange !== 'function') {
+        console.error('onLocationChange no está definido o no es una función')
+        setLoading(false)
+        return
+      }
+
       // Usar Nominatim para reverse geocoding (gratuito)
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&accept-language=es`
@@ -53,11 +60,13 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
       }
     } catch (error) {
       console.error('Error al obtener la dirección:', error)
-      onLocationChange({
-        latitude: latlng.lat,
-        longitude: latlng.lng,
-        address: `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`
-      })
+      if (onLocationChange && typeof onLocationChange === 'function') {
+        onLocationChange({
+          latitude: latlng.lat,
+          longitude: latlng.lng,
+          address: `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`
+        })
+      }
     } finally {
       setLoading(false)
     }

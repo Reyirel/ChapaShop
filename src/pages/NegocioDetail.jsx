@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { supabase } from '../services/supabase'
+import dbService from '../services/database'
 import { 
   ArrowLeft,
   MapPin, 
@@ -33,259 +33,38 @@ const NegocioDetail = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Datos de ejemplo para inicializar inmediatamente
-        const negociosEjemplo = [
-          {
-            id: '1',
-            name: 'Restaurante El Sabor',
-            description: 'El mejor restaurante de comida tradicional en la ciudad. Especialidades caseras con ingredientes frescos.',
-            category_id: '1',
-            image_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&h=300&fit=crop',
-            address: 'Calle Principal 123',
-            phone: '+1234567890',
-            website: 'https://restauranteelsabor.com',
-            email: 'info@restauranteelsabor.com',
-            avgRating: 4.8,
-            reviewCount: 127,
-            productCount: 25,
-            created_at: new Date().toISOString(),
-            business_categories: { name: 'Restaurantes', color: '#f59e0b' },
-            business_hours: [
-              { day_of_week: 1, open_time: '08:00', close_time: '22:00', is_closed: false },
-              { day_of_week: 2, open_time: '08:00', close_time: '22:00', is_closed: false },
-              { day_of_week: 3, open_time: '08:00', close_time: '22:00', is_closed: false },
-              { day_of_week: 4, open_time: '08:00', close_time: '22:00', is_closed: false },
-              { day_of_week: 5, open_time: '08:00', close_time: '23:00', is_closed: false },
-              { day_of_week: 6, open_time: '09:00', close_time: '23:00', is_closed: false },
-              { day_of_week: 0, open_time: '09:00', close_time: '21:00', is_closed: false }
-            ]
-          },
-          {
-            id: '2',
-            name: 'Tienda de Ropa Fashion',
-            description: 'Las últimas tendencias en moda para toda la familia. Ropa moderna y elegante.',
-            category_id: '2',
-            image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=500&h=300&fit=crop',
-            address: 'Avenida Central 456',
-            phone: '+1234567891',
-            website: 'https://fashionstore.com',
-            email: 'contacto@fashionstore.com',
-            avgRating: 4.5,
-            reviewCount: 89,
-            productCount: 150,
-            created_at: new Date().toISOString(),
-            business_categories: { name: 'Retail', color: '#3b82f6' },
-            business_hours: [
-              { day_of_week: 1, open_time: '09:00', close_time: '20:00', is_closed: false },
-              { day_of_week: 2, open_time: '09:00', close_time: '20:00', is_closed: false },
-              { day_of_week: 3, open_time: '09:00', close_time: '20:00', is_closed: false },
-              { day_of_week: 4, open_time: '09:00', close_time: '20:00', is_closed: false },
-              { day_of_week: 5, open_time: '09:00', close_time: '21:00', is_closed: false },
-              { day_of_week: 6, open_time: '10:00', close_time: '21:00', is_closed: false },
-              { day_of_week: 0, open_time: '00:00', close_time: '00:00', is_closed: true }
-            ]
-          },
-          {
-            id: '3',
-            name: 'Cafetería Central',
-            description: 'El mejor café de la ciudad con pasteles artesanales y ambiente acogedor.',
-            category_id: '3',
-            image_url: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500&h=300&fit=crop',
-            address: 'Plaza Mayor 789',
-            phone: '+1234567892',
-            website: 'https://cafeteriacentral.com',
-            email: 'hola@cafeteriacentral.com',
-            avgRating: 4.9,
-            reviewCount: 203,
-            productCount: 45,
-            created_at: new Date().toISOString(),
-            business_categories: { name: 'Restaurantes', color: '#f59e0b' },
-            business_hours: [
-              { day_of_week: 1, open_time: '06:00', close_time: '18:00', is_closed: false },
-              { day_of_week: 2, open_time: '06:00', close_time: '18:00', is_closed: false },
-              { day_of_week: 3, open_time: '06:00', close_time: '18:00', is_closed: false },
-              { day_of_week: 4, open_time: '06:00', close_time: '18:00', is_closed: false },
-              { day_of_week: 5, open_time: '06:00', close_time: '19:00', is_closed: false },
-              { day_of_week: 6, open_time: '07:00', close_time: '19:00', is_closed: false },
-              { day_of_week: 0, open_time: '08:00', close_time: '17:00', is_closed: false }
-            ]
-          },
-          {
-            id: '4',
-            name: 'Gimnasio PowerFit',
-            description: 'Centro de entrenamiento completo con equipos modernos y entrenadores certificados.',
-            category_id: '4',
-            image_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&h=300&fit=crop',
-            address: 'Avenida Deportiva 321',
-            phone: '+1234567893',
-            website: 'https://powerfit.com',
-            email: 'info@powerfit.com',
-            avgRating: 4.7,
-            reviewCount: 156,
-            productCount: 12,
-            created_at: new Date().toISOString(),
-            business_categories: { name: 'Deportes', color: '#06b6d4' },
-            business_hours: [
-              { day_of_week: 1, open_time: '05:00', close_time: '23:00', is_closed: false },
-              { day_of_week: 2, open_time: '05:00', close_time: '23:00', is_closed: false },
-              { day_of_week: 3, open_time: '05:00', close_time: '23:00', is_closed: false },
-              { day_of_week: 4, open_time: '05:00', close_time: '23:00', is_closed: false },
-              { day_of_week: 5, open_time: '05:00', close_time: '22:00', is_closed: false },
-              { day_of_week: 6, open_time: '06:00', close_time: '22:00', is_closed: false },
-              { day_of_week: 0, open_time: '07:00', close_time: '21:00', is_closed: false }
-            ]
-          },
-          {
-            id: '5',
-            name: 'Salón de Belleza Elegante',
-            description: 'Servicios de belleza profesionales con productos de primera calidad.',
-            category_id: '5',
-            image_url: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&h=300&fit=crop',
-            address: 'Calle Belleza 654',
-            phone: '+1234567894',
-            website: 'https://salonelegante.com',
-            email: 'citas@salonelegante.com',
-            avgRating: 4.6,
-            reviewCount: 98,
-            productCount: 30,
-            created_at: new Date().toISOString(),
-            business_categories: { name: 'Belleza', color: '#ec4899' },
-            business_hours: [
-              { day_of_week: 1, open_time: '09:00', close_time: '19:00', is_closed: false },
-              { day_of_week: 2, open_time: '09:00', close_time: '19:00', is_closed: false },
-              { day_of_week: 3, open_time: '09:00', close_time: '19:00', is_closed: false },
-              { day_of_week: 4, open_time: '09:00', close_time: '19:00', is_closed: false },
-              { day_of_week: 5, open_time: '09:00', close_time: '20:00', is_closed: false },
-              { day_of_week: 6, open_time: '09:00', close_time: '18:00', is_closed: false },
-              { day_of_week: 0, open_time: '00:00', close_time: '00:00', is_closed: true }
-            ]
-          }
-        ]
+        setLoading(true)
 
-        // Buscar negocio en datos de ejemplo
-        const negocioEjemplo = negociosEjemplo.find(n => n.id === id)
-        
-        if (negocioEjemplo) {
-          setNegocio(negocioEjemplo)
-          
-          // Reseñas de ejemplo
-          const reviewsEjemplo = [
-            {
-              id: '1',
-              rating: 5,
-              comment: 'Excelente servicio y calidad. Muy recomendado!',
-              created_at: new Date().toISOString(),
-              profiles: { full_name: 'María García', avatar_url: null }
-            },
-            {
-              id: '2',
-              rating: 4,
-              comment: 'Muy buena experiencia, volveré pronto.',
-              created_at: new Date().toISOString(),
-              profiles: { full_name: 'Carlos López', avatar_url: null }
-            }
-          ]
-          
-          // Productos de ejemplo
-          const productosEjemplo = [
-            {
-              id: '1',
-              name: 'Producto 1',
-              description: 'Descripción del producto 1',
-              price: 25.99,
-              image_url: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=200&h=200&fit=crop'
-            },
-            {
-              id: '2',
-              name: 'Producto 2',
-              description: 'Descripción del producto 2',
-              price: 35.50,
-              image_url: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=200&h=200&fit=crop'
-            }
-          ]
-          
-          setReviews(reviewsEjemplo)
-          setProducts(productosEjemplo)
-          setLoading(false)
+        // Obtener datos del negocio con relaciones
+        const negocioData = await dbService.getBusinessById(id)
+
+        if (!negocioData) {
+          throw new Error('Negocio no encontrado')
         }
 
-        // Intentar obtener datos reales de Supabase en segundo plano
-        try {
-          // Obtener datos del negocio
-          const { data: negocioData, error: negocioError } = await supabase
-            .from('businesses')
-            .select(`
-              *,
-              business_categories (name, icon, color),
-              business_hours (*),
-              profiles (full_name, avatar_url)
-            `)
-            .eq('id', id)
-            .eq('status', 'approved')
-            .single()
+        // Obtener reseñas
+        const reviewsData = await dbService.getBusinessReviews(id)
 
-          if (negocioError) {
-            console.warn('Warning fetching business:', negocioError.message)
-          }
+        // Obtener productos/servicios
+        const productsData = await dbService.getBusinessProducts(id)
 
-          // Obtener reseñas
-          const { data: reviewsData, error: reviewsError } = await supabase
-            .from('reviews')
-            .select(`
-              *,
-              profiles (full_name, avatar_url)
-            `)
-            .eq('business_id', id)
-            .order('created_at', { ascending: false })
+        // Calcular rating promedio
+        const avgRating = reviewsData?.length > 0 
+          ? reviewsData.reduce((sum, review) => sum + review.rating, 0) / reviewsData.length 
+          : 0
 
-          if (reviewsError) {
-            console.warn('Warning fetching reviews:', reviewsError.message)
-          }
+        // Establecer datos
+        setNegocio({
+          ...negocioData,
+          avgRating: parseFloat(avgRating.toFixed(1)),
+          reviewCount: reviewsData?.length || 0
+        })
+        setReviews(reviewsData || [])
+        setProducts(productsData || [])
+        setLoading(false)
 
-          // Obtener productos/servicios
-          const { data: productsData, error: productsError } = await supabase
-            .from('products')
-            .select('*')
-            .eq('business_id', id)
-            .eq('is_available', true)
-            .order('created_at', { ascending: false })
-
-          if (productsError) {
-            console.warn('Warning fetching products:', productsError.message)
-          }
-
-          // Si se obtuvieron datos reales, reemplazar los de ejemplo
-          if (negocioData) {
-            const avgRating = reviewsData?.length > 0 
-              ? reviewsData.reduce((sum, review) => sum + review.rating, 0) / reviewsData.length 
-              : 0
-
-            setNegocio({
-              ...negocioData,
-              avgRating: parseFloat(avgRating.toFixed(1)),
-              reviewCount: reviewsData?.length || 0
-            })
-          }
-
-          if (reviewsData) {
-            setReviews(reviewsData)
-          }
-
-          if (productsData) {
-            setProducts(productsData)
-          }
-
-        } catch (supabaseError) {
-          console.warn('Supabase connection error:', supabaseError.message)
-          // Mantener los datos de ejemplo que ya están cargados
-        }
-
-        if (!negocioEjemplo) {
-          setLoading(false)
-        }
-        
       } catch (error) {
-        console.error('Error general fetching negocio:', error)
+        console.error('Error fetching negocio:', error)
         setLoading(false)
       }
     }

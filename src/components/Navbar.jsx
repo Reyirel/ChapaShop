@@ -7,7 +7,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const location = useLocation()
-  const { user, profile, signOut, forceSignOut, isAdmin, isBusiness } = useAuth()
+  const { user, userProfile, logout, isAdmin, isBusiness } = useAuth()
   const userMenuRef = useRef(null)
 
   // Cerrar menú de usuario al hacer clic fuera
@@ -24,8 +24,8 @@ const Navbar = () => {
 
   // Función para obtener las iniciales del nombre o email
   const getInitials = () => {
-    if (profile?.full_name) {
-      return profile.full_name
+    if (userProfile?.full_name) {
+      return userProfile.full_name
         .split(' ')
         .map(name => name.charAt(0))
         .join('')
@@ -127,17 +127,17 @@ const Navbar = () => {
                   </div>
                   <div className="flex flex-col items-start">
                     <span className="text-sm text-white font-medium">
-                      {profile?.full_name || 'Usuario'}
+                      {userProfile?.full_name || 'Usuario'}
                     </span>
-                    {profile?.role && (
+                    {userProfile?.role && (
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        profile.role === 'admin' 
+                        userProfile.role === 'admin' 
                           ? 'bg-red-500/20 text-red-400' 
-                          : profile.role === 'business'
+                          : userProfile.role === 'business'
                           ? 'bg-blue-500/20 text-blue-400'
                           : 'bg-gray-500/20 text-gray-400'
                       }`}>
-                        {profile.role === 'admin' ? 'Admin' : profile.role === 'business' ? 'Negocio' : 'Usuario'}
+                        {userProfile.role === 'admin' ? 'Admin' : userProfile.role === 'business' ? 'Negocio' : 'Usuario'}
                       </span>
                     )}
                   </div>
@@ -202,14 +202,14 @@ const Navbar = () => {
                           try {
                             // Timeout para el logout
                             const logoutTimeout = setTimeout(() => {
-                              forceSignOut()
+                              logout()
                             }, 3000)
                             
-                            await signOut()
+                            await logout()
                             clearTimeout(logoutTimeout)
                           } catch (error) {
                             console.error('Error during logout, forcing logout:', error)
-                            forceSignOut()
+                            logout()
                           } finally {
                             // Restaurar botón (aunque probablemente la página se recargará)
                             button.textContent = originalText
@@ -227,7 +227,7 @@ const Navbar = () => {
                         onClick={() => {
                           setIsUserMenuOpen(false)
                           if (confirm('¿Estás seguro de que quieres forzar el cierre de sesión? Esto cerrará tu sesión inmediatamente.')) {
-                            forceSignOut()
+                            logout()
                           }
                         }}
                         className="flex items-center gap-3 px-4 py-1 text-xs text-gray-500 hover:text-gray-400 transition-colors w-full mt-1"
@@ -276,18 +276,18 @@ const Navbar = () => {
                   </div>
                   <div className="flex-1">
                     <p className="text-white font-medium text-sm">
-                      {profile?.full_name || 'Usuario'}
+                      {userProfile?.full_name || 'Usuario'}
                     </p>
                     <p className="text-gray-400 text-xs truncate">{user.email}</p>
-                    {profile?.role && (
+                    {userProfile?.role && (
                       <span className={`inline-block text-xs px-2 py-0.5 rounded-full mt-1 ${
-                        profile.role === 'admin' 
+                        userProfile.role === 'admin' 
                           ? 'bg-red-500/20 text-red-400' 
-                          : profile.role === 'business'
+                          : userProfile.role === 'business'
                           ? 'bg-blue-500/20 text-blue-400'
                           : 'bg-gray-500/20 text-gray-400'
                       }`}>
-                        {profile.role === 'admin' ? 'Admin' : profile.role === 'business' ? 'Negocio' : 'Usuario'}
+                        {userProfile.role === 'admin' ? 'Admin' : userProfile.role === 'business' ? 'Negocio' : 'Usuario'}
                       </span>
                     )}
                   </div>
@@ -330,7 +330,7 @@ const Navbar = () => {
                 {/* Logout */}
                 <button
                   onClick={() => {
-                    signOut()
+                    logout()
                     setIsMenuOpen(false)
                   }}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 w-full text-white hover:bg-red-400/20 hover:text-red-400"

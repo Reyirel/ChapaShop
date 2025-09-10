@@ -1,5 +1,4 @@
 ﻿import { Link } from 'react-router-dom'
-import ConfigNotification from '../components/ConfigNotification'
 import { FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
 import { Store, Star, Rocket, LogIn, UserPlus } from 'lucide-react'
 
@@ -72,9 +71,7 @@ const Home = () => {
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
       <HeroBackground />
       
-      <div className="relative z-10 min-h-screen flex flex-col">
-        <ConfigNotification />
-        
+      <div className="relative z-10 min-h-screen flex flex-col">        
         {/* Hero Section */}
         <div className="flex-1 flex items-center justify-center px-4 py-20">
           <div className="max-w-7xl mx-auto text-center">

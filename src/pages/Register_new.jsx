@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../services/supabase'
+import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '../services/firebase'
+import dbService from '../services/database'
 import { FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
 import { UserPlus, LogIn, ArrowLeft, Mail, Lock, CheckCircle } from 'lucide-react'
 
@@ -32,12 +34,14 @@ const Register = () => {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password
-      })
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       
-      if (error) throw error
+      // Crear perfil básico en Firebase
+      await dbService.createUserProfile(userCredential.user.uid, {
+        email: email,
+        full_name: '',
+        role: 'person'
+      })
       
       setMessage('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.')
       

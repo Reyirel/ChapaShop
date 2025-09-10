@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../services/supabase'
+import dbService from '../services/database'
 import { 
   Search, 
   Filter, 
@@ -30,23 +30,10 @@ const Negocios = () => {
   const fetchData = async () => {
     try {
       // Obtener categorías
-      const { data: categoriasData } = await supabase
-        .from('business_categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('name')
+      const categoriasData = await dbService.getBusinessCategories()
 
       // Obtener negocios aprobados con sus reseñas
-      const { data: negociosData } = await supabase
-        .from('businesses')
-        .select(`
-          *,
-          business_categories (name, icon, color),
-          reviews (rating),
-          products (count)
-        `)
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false })
+      const negociosData = await dbService.getApprovedBusinesses()
 
       // Calcular estadísticas para cada negocio
       const negociosConStats = negociosData?.map(negocio => {

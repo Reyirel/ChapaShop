@@ -1,7 +1,22 @@
-import { createContext, useContext, useEffect, useState, useRef } from 'react'
-import { supabase } from '../services/supabase'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from 'firebase/auth'
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  collection,
+  addDoc,
+  serverTimestamp,
+  getDocs
+} from 'firebase/firestore'
+import { auth, db } from '../services/firebase'
 
-const AuthContext = createContext()
+const AuthContext = createContext({})
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
@@ -13,291 +28,606 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [isInitialized, setIsInitialized] = useState(false)
-  
-  // Referencias para evitar operaciones duplicadas
-  const initializingRef = useRef(false)
-  const fetchingProfileRef = useRef(false)
-  const intervalRef = useRef(null)
+  const [userProfile, setUserProfile] = useState(null)
 
-  useEffect(() => {
-    // Evitar múltiples inicializaciones
-    if (initializingRef.current) return
-    initializingRef.current = true
-
-    // Función para inicializar la autenticación
-    const initializeAuth = async () => {
-      try {
-        
-        // Obtener sesión inicial
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
-        if (error) {
-          console.error('Error obteniendo sesión:', error)
-          setUser(null)
-          setProfile(null)
-          setLoading(false)
-          setIsInitialized(true)
-          return
-        }
-
-        if (session?.user) {
-          setUser(session.user)
-          await fetchProfile(session.user.id)
-        } else {
-          setUser(null)
-          setProfile(null)
-        }
-
-      } catch (error) {
-        console.error('Error inicializando autenticación:', error)
-        setUser(null)
-        setProfile(null)
-      } finally {
-        setLoading(false)
-        setIsInitialized(true)
-        initializingRef.current = false
-      }
-    }
-
-    initializeAuth()
-
-    // Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        
-        // Evitar procesar si aún estamos inicializando
-        if (initializingRef.current) return
-        
-        if (event === 'SIGNED_OUT' || !session) {
-          setUser(null)
-          setProfile(null)
-          cleanupStorage()
-        } else if (session?.user && event !== 'TOKEN_REFRESHED') {
-          // Solo actualizar en eventos significativos, no en refresh de token
-          setUser(session.user)
-          if (!fetchingProfileRef.current) {
-            await fetchProfile(session.user.id)
-          }
-        }
-      }
-    )
-
-    return () => {
-      subscription?.unsubscribe()
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [])
-
-  // Chequeo periódico de sesión más simple y menos frecuente
-  useEffect(() => {
-    if (!user || !isInitialized) return
-
-    // Limpiar intervalo anterior si existe
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-    }
-
-    intervalRef.current = setInterval(async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        
-        if (!session && user) {
-          setUser(null)
-          setProfile(null)
-          cleanupStorage()
-        }
-      } catch (error) {
-        console.error('Error verificando sesión:', error)
-      }
-    }, 120000) // Cada 2 minutos
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [user, isInitialized])
-
-  // Función para limpiar almacenamiento
-  const cleanupStorage = () => {
-    localStorage.removeItem('supabase.auth.token')
-    localStorage.removeItem('sb-auth-token')
-    sessionStorage.clear()
-  }
-
-  const fetchProfile = async (userId) => {
-    // Evitar múltiples peticiones simultáneas
-    if (fetchingProfileRef.current) {
-      return
-    }
-
-    fetchingProfileRef.current = true
-
+  // Initialize demo data on first load (mejorado para evitar errores de permisos)
+  const initializeDemoData = async () => {
     try {
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          setProfile(null)
-          return
-        }
-        
-        console.error('Error obteniendo perfil:', error)
-        setProfile(null)
+      // Check if we have proper Firebase configuration
+      if (!db || typeof db.collection !== 'function') {
+        console.log('🔧 Firebase no configurado correctamente, saltando inicialización de datos demo')
         return
       }
 
-      setProfile(data)
-    } catch (error) {
-      console.error('Error inesperado obteniendo perfil:', error)
-      setProfile(null)
-    } finally {
-      fetchingProfileRef.current = false
-    }
-  }
-
-  const signIn = async (email, password) => {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
-      return { data, error }
-    } catch (error) {
-      return { data: null, error }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const signUp = async (email, password, userData = {}) => {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: userData
-        }
-      })
-      return { data, error }
-    } catch (error) {
-      return { data: null, error }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const signOut = async () => {
-    try {
-      
-      // Limpiar estado local inmediatamente
-      setUser(null)
-      setProfile(null)
-      cleanupStorage()
-      
-      // Intentar cerrar sesión en Supabase con timeout
-      const logoutPromise = supabase.auth.signOut()
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Logout timeout')), 3000)
-      )
-      
-      try {
-        const { error } = await Promise.race([logoutPromise, timeoutPromise])
-        
-        if (error) {
-          console.error('Error cerrando sesión:', error)
-        }
-      } catch (timeoutError) {
-        console.error('Timeout en logout:', timeoutError)
+      // Check if demo data already exists
+      const businessesSnapshot = await getDocs(collection(db, 'businesses'))
+      if (!businessesSnapshot.empty) {
+        console.log('📦 Datos de demostración ya existen')
+        return
       }
-      
-      // Redireccionar siempre
-      setTimeout(() => {
-        window.location.replace('/')
-      }, 100)
-      
-      return { error: null }
+
+      // Only initialize demo data in development mode
+      if (import.meta.env.PROD) {
+        console.log('🚀 En modo producción, saltando inicialización de datos demo')
+        return
+      }
+
+      console.log('🔧 Inicializando datos de demostración...')
+
+      // Create demo business (sin usuarios ya que requieren autenticación)
+      const demoBusiness = {
+        ownerId: 'demo-business',
+        name: 'Restaurante Demo',
+        description: 'Un restaurante de ejemplo para mostrar las funcionalidades de ChapaShop',
+        category: 'Restaurante',
+        address: 'Calle Principal 123, Ciudad Demo',
+        location: {
+          lat: 19.4326,
+          lng: -99.1332
+        },
+        phone: '+52 55 1234 5678',
+        email: 'contacto@restaurantedemo.com',
+        status: 'approved',
+        images: [],
+        rating: 4.5,
+        totalReviews: 12,
+        businessHours: {
+          monday: { open: '09:00', close: '22:00', closed: false },
+          tuesday: { open: '09:00', close: '22:00', closed: false },
+          wednesday: { open: '09:00', close: '22:00', closed: false },
+          thursday: { open: '09:00', close: '22:00', closed: false },
+          friday: { open: '09:00', close: '23:00', closed: false },
+          saturday: { open: '10:00', close: '23:00', closed: false },
+          sunday: { open: '10:00', close: '21:00', closed: false }
+        },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+      await addDoc(collection(db, 'businesses'), demoBusiness)
+
+      // Create demo pending business
+      const pendingBusiness = {
+        ownerId: 'demo-business',
+        name: 'Tienda en Revisión',
+        description: 'Esta tienda está esperando aprobación del administrador',
+        category: 'Tienda',
+        address: 'Avenida Secundaria 456, Ciudad Demo',
+        location: {
+          lat: 19.4400,
+          lng: -99.1300
+        },
+        phone: '+52 55 9876 5432',
+        email: 'info@tiendademo.com',
+        status: 'pending',
+        images: [],
+        rating: 0,
+        totalReviews: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+      await addDoc(collection(db, 'businesses'), pendingBusiness)
+
+      console.log('✅ Datos de demostración creados exitosamente')
     } catch (error) {
-      console.error('Error inesperado en signOut:', error)
-      // Ejecutar logout forzado
-      forceSignOut()
-      return { error }
+      console.warn('⚠️ No se pudieron crear los datos de demostración:', error.message)
+      // No lanzar el error, solo loggearlo como advertencia
     }
   }
 
-  const forceSignOut = () => {
-    
-    setUser(null)
-    setProfile(null)
-    
-    // Limpiar todo
-    localStorage.clear()
-    sessionStorage.clear()
-    
-    // Redireccionar
-    window.location.replace('/')
-  }
-
-  const updateProfile = async (updates) => {
+  // Sign up with email and password
+  const signup = async (email, password, displayName, role = 'client') => {
     try {
-      if (!user) throw new Error('No hay usuario logueado')
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id)
-        .select()
-        .single()
+      // Create user profile in Firestore
+      const userProfile = {
+        email: user.email,
+        displayName: displayName,
+        role: role,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
 
-      if (error) throw error
-
-      setProfile(data)
-      return { data, error: null }
+      await setDoc(doc(db, 'users', user.uid), userProfile)
+      
+      return { user, profile: userProfile }
     } catch (error) {
-      return { data: null, error }
+      console.error('Error signing up:', error)
+      throw error
     }
   }
 
+  // Sign in with email and password
+  const signin = async (email, password) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      return userCredential.user
+    } catch (error) {
+      console.error('Error signing in:', error)
+      throw error
+    }
+  }
+
+  // Función para crear usuarios demo en Firebase Auth y Firestore (SIN auto-login)
+  const createDemoUsers = async () => {
+    try {
+      console.log('🔧 Creando usuarios demo en Firebase...')
+
+      const demoUsers = [
+        {
+          email: 'admin@chapashop.com',
+          password: 'admin123',
+          displayName: 'Administrador ChapaShop',
+          role: 'admin'
+        },
+        {
+          email: 'negocio@chapashop.com',
+          password: 'negocio123',
+          displayName: 'Dueño de Negocio',
+          role: 'business'
+        },
+        {
+          email: 'cliente@chapashop.com',
+          password: 'cliente123',
+          displayName: 'Cliente Demo',
+          role: 'client'
+        }
+      ]
+
+      const createdUsers = []
+
+      for (const userData of demoUsers) {
+        try {
+          // Crear usuario en Firebase Auth
+          const userCredential = await createUserWithEmailAndPassword(
+            auth, 
+            userData.email, 
+            userData.password
+          )
+          
+          const user = userCredential.user
+
+          // Crear perfil en Firestore
+          const userProfile = {
+            email: user.email,
+            displayName: userData.displayName,
+            role: userData.role,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }
+
+          await setDoc(doc(db, 'users', user.uid), userProfile)
+          
+          createdUsers.push({
+            email: userData.email,
+            role: userData.role,
+            uid: user.uid
+          })
+
+          console.log(`✅ Usuario creado: ${userData.email} (${userData.role})`)
+
+        } catch (error) {
+          if (error.code === 'auth/email-already-in-use') {
+            console.log(`ℹ️ Usuario ya existe: ${userData.email}`)
+          } else {
+            console.error(`❌ Error creando ${userData.email}:`, error.message)
+          }
+        }
+      }
+
+      console.log('✅ Proceso de creación de usuarios completado')
+      return { 
+        success: true, 
+        message: `Usuarios demo creados/verificados. Puedes iniciar sesión normalmente.`,
+        users: createdUsers
+      }
+
+    } catch (error) {
+      console.error('❌ Error general al crear usuarios demo:', error)
+      return { success: false, message: error.message }
+    }
+  }
+
+  // Sign out
+  const logout = async () => {
+    try {
+      await signOut(auth)
+      setUser(null)
+      setUserProfile(null)
+    } catch (error) {
+      console.error('Error signing out:', error)
+      throw error
+    }
+  }
+
+  // Get user profile from Firestore
+  const getUserProfile = async (userId) => {
+    try {
+      const docRef = doc(db, 'users', userId)
+      const docSnap = await getDoc(docRef)
+      
+      if (docSnap.exists()) {
+        return docSnap.data()
+      } else {
+        console.log('No user profile found')
+        return null
+      }
+    } catch (error) {
+      console.error('Error getting user profile:', error)
+      return null
+    }
+  }
+
+  // Update user profile
+  const updateProfile = async (userId, updates) => {
+    try {
+      const docRef = doc(db, 'users', userId)
+      await setDoc(docRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      }, { merge: true })
+      
+      // Update local state
+      setUserProfile(prev => ({ ...prev, ...updates }))
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      throw error
+    }
+  }
+
+  // Función para crear datos demo de manera segura (solo cuando el usuario esté autenticado como admin)
+  const createSafeDemoData = async () => {
+    try {
+      // Verificar que el usuario esté autenticado y sea admin
+      if (!user || !userProfile || userProfile.role !== 'admin') {
+        console.warn('⚠️ Solo los administradores pueden crear datos de demostración')
+        return { success: false, message: 'Permisos insuficientes' }
+      }
+
+      console.log('🔧 Creando datos de demostración de manera segura...')
+
+      // Crear negocios demo
+      const businesses = [
+        {
+          ownerId: user.uid,
+          name: 'Restaurante La Plaza',
+          description: 'Comida tradicional mexicana en el corazón de la ciudad',
+          category: 'Restaurante',
+          address: 'Plaza Principal 123, Centro',
+          location: { lat: 19.4326, lng: -99.1332 },
+          phone: '+52 55 1234 5678',
+          email: 'contacto@laplaza.com',
+          status: 'approved',
+          images: [],
+          rating: 4.5,
+          totalReviews: 25,
+          businessHours: {
+            monday: { open: '08:00', close: '22:00', closed: false },
+            tuesday: { open: '08:00', close: '22:00', closed: false },
+            wednesday: { open: '08:00', close: '22:00', closed: false },
+            thursday: { open: '08:00', close: '22:00', closed: false },
+            friday: { open: '08:00', close: '23:00', closed: false },
+            saturday: { open: '09:00', close: '23:00', closed: false },
+            sunday: { open: '09:00', close: '21:00', closed: false }
+          },
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        },
+        {
+          ownerId: user.uid,
+          name: 'Café & Books',
+          description: 'Librería café con ambiente acogedor',
+          category: 'Café',
+          address: 'Avenida Reforma 456, Roma Norte',
+          location: { lat: 19.4200, lng: -99.1650 },
+          phone: '+52 55 9876 5432',
+          email: 'hola@cafeandbooks.com',
+          status: 'pending',
+          images: [],
+          rating: 0,
+          totalReviews: 0,
+          businessHours: {
+            monday: { open: '07:00', close: '20:00', closed: false },
+            tuesday: { open: '07:00', close: '20:00', closed: false },
+            wednesday: { open: '07:00', close: '20:00', closed: false },
+            thursday: { open: '07:00', close: '20:00', closed: false },
+            friday: { open: '07:00', close: '21:00', closed: false },
+            saturday: { open: '08:00', close: '21:00', closed: false },
+            sunday: { open: '08:00', close: '19:00', closed: false }
+          },
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }
+      ]
+
+      // Crear los negocios en Firestore
+      for (const business of businesses) {
+        await addDoc(collection(db, 'businesses'), business)
+      }
+
+      console.log('✅ Datos de demostración creados exitosamente')
+      return { success: true, message: 'Datos demo creados correctamente' }
+
+    } catch (error) {
+      console.error('❌ Error al crear datos demo:', error)
+      return { success: false, message: error.message }
+    }
+  }
+
+  // Función temporal para crear datos de prueba básicos sin autenticación
+  const createBasicDemoData = async () => {
+    try {
+      console.log('🔧 Creando datos básicos de demostración...')
+
+      // Verificar si ya hay datos
+      const businessesSnapshot = await getDocs(collection(db, 'businesses'))
+      if (!businessesSnapshot.empty) {
+        console.log('📦 Ya existen datos de demostración')
+        return { success: true, message: 'Datos ya existen' }
+      }
+
+      // Crear algunos negocios de ejemplo
+      const sampleBusinesses = [
+        {
+          ownerId: 'demo-owner-1',
+          name: 'Restaurante El Buen Sabor',
+          description: 'Comida tradicional mexicana con los mejores ingredientes',
+          category: 'Restaurante',
+          address: 'Av. Juárez 123, Centro Histórico',
+          location: { lat: 19.4326, lng: -99.1332 },
+          phone: '+52 55 1234 5678',
+          email: 'contacto@elbuensabor.com',
+          status: 'approved',
+          images: [],
+          rating: 4.5,
+          totalReviews: 28,
+          businessHours: {
+            monday: { open: '08:00', close: '22:00', closed: false },
+            tuesday: { open: '08:00', close: '22:00', closed: false },
+            wednesday: { open: '08:00', close: '22:00', closed: false },
+            thursday: { open: '08:00', close: '22:00', closed: false },
+            friday: { open: '08:00', close: '23:00', closed: false },
+            saturday: { open: '09:00', close: '23:00', closed: false },
+            sunday: { open: '09:00', close: '21:00', closed: false }
+          },
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        },
+        {
+          ownerId: 'demo-owner-2',
+          name: 'Café Luna',
+          description: 'Café artesanal y postres caseros en ambiente acogedor',
+          category: 'Café',
+          address: 'Roma Norte 456, Colonia Roma',
+          location: { lat: 19.4200, lng: -99.1650 },
+          phone: '+52 55 8765 4321',
+          email: 'hola@cafeluna.com',
+          status: 'pending',
+          images: [],
+          rating: 0,
+          totalReviews: 0,
+          businessHours: {
+            monday: { open: '07:00', close: '19:00', closed: false },
+            tuesday: { open: '07:00', close: '19:00', closed: false },
+            wednesday: { open: '07:00', close: '19:00', closed: false },
+            thursday: { open: '07:00', close: '19:00', closed: false },
+            friday: { open: '07:00', close: '20:00', closed: false },
+            saturday: { open: '08:00', close: '20:00', closed: false },
+            sunday: { open: '08:00', close: '18:00', closed: false }
+          },
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        },
+        {
+          ownerId: 'demo-owner-3',
+          name: 'Librería & Té',
+          description: 'Librería independiente con una amplia selección de tés',
+          category: 'Librería',
+          address: 'Condesa 789, La Condesa',
+          location: { lat: 19.4100, lng: -99.1700 },
+          phone: '+52 55 2468 1357',
+          email: 'info@libreriayté.com',
+          status: 'approved',
+          images: [],
+          rating: 4.8,
+          totalReviews: 15,
+          businessHours: {
+            monday: { open: '09:00', close: '20:00', closed: false },
+            tuesday: { open: '09:00', close: '20:00', closed: false },
+            wednesday: { open: '09:00', close: '20:00', closed: false },
+            thursday: { open: '09:00', close: '20:00', closed: false },
+            friday: { open: '09:00', close: '21:00', closed: false },
+            saturday: { open: '10:00', close: '21:00', closed: false },
+            sunday: { open: '11:00', close: '19:00', closed: false }
+          },
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }
+      ]
+
+      // Crear los negocios en Firestore
+      for (const business of sampleBusinesses) {
+        await addDoc(collection(db, 'businesses'), business)
+      }
+
+      console.log('✅ Datos básicos de demostración creados exitosamente')
+      return { success: true, message: 'Datos demo creados correctamente' }
+
+    } catch (error) {
+      console.warn('⚠️ No se pudieron crear los datos básicos:', error.message)
+      return { success: false, message: error.message }
+    }
+  }
+
+  // Función para crear datos mock cuando hay problemas de permisos
+  const createMockData = () => {
+    const mockBusinesses = [
+      {
+        id: 'mock-1',
+        ownerId: 'demo-owner-1',
+        name: 'Restaurante El Buen Sabor',
+        description: 'Comida tradicional mexicana con los mejores ingredientes',
+        category: 'Restaurante',
+        address: 'Av. Juárez 123, Centro Histórico',
+        location: { lat: 19.4326, lng: -99.1332 },
+        phone: '+52 55 1234 5678',
+        email: 'contacto@elbuensabor.com',
+        status: 'approved',
+        images: [],
+        rating: 4.5,
+        totalReviews: 28,
+        businessHours: {
+          monday: { open: '08:00', close: '22:00', closed: false },
+          tuesday: { open: '08:00', close: '22:00', closed: false },
+          wednesday: { open: '08:00', close: '22:00', closed: false },
+          thursday: { open: '08:00', close: '22:00', closed: false },
+          friday: { open: '08:00', close: '23:00', closed: false },
+          saturday: { open: '09:00', close: '23:00', closed: false },
+          sunday: { open: '09:00', close: '21:00', closed: false }
+        },
+        createdAt: new Date('2024-01-15'),
+        updatedAt: new Date('2024-01-15')
+      },
+      {
+        id: 'mock-2',
+        ownerId: 'demo-owner-2',
+        name: 'Café Luna',
+        description: 'Café artesanal y postres caseros en ambiente acogedor',
+        category: 'Café',
+        address: 'Roma Norte 456, Colonia Roma',
+        location: { lat: 19.4200, lng: -99.1650 },
+        phone: '+52 55 8765 4321',
+        email: 'hola@cafeluna.com',
+        status: 'pending',
+        images: [],
+        rating: 0,
+        totalReviews: 0,
+        businessHours: {
+          monday: { open: '07:00', close: '19:00', closed: false },
+          tuesday: { open: '07:00', close: '19:00', closed: false },
+          wednesday: { open: '07:00', close: '19:00', closed: false },
+          thursday: { open: '07:00', close: '19:00', closed: false },
+          friday: { open: '07:00', close: '20:00', closed: false },
+          saturday: { open: '08:00', close: '20:00', closed: false },
+          sunday: { open: '08:00', close: '18:00', closed: false }
+        },
+        createdAt: new Date('2024-01-16'),
+        updatedAt: new Date('2024-01-16')
+      },
+      {
+        id: 'mock-3',
+        ownerId: 'demo-owner-3',
+        name: 'Librería & Té',
+        description: 'Librería independiente con una amplia selección de tés',
+        category: 'Librería',
+        address: 'Condesa 789, La Condesa',
+        location: { lat: 19.4100, lng: -99.1700 },
+        phone: '+52 55 2468 1357',
+        email: 'info@libreriayté.com',
+        status: 'approved',
+        images: [],
+        rating: 4.8,
+        totalReviews: 15,
+        businessHours: {
+          monday: { open: '09:00', close: '20:00', closed: false },
+          tuesday: { open: '09:00', close: '20:00', closed: false },
+          wednesday: { open: '09:00', close: '20:00', closed: false },
+          thursday: { open: '09:00', close: '20:00', closed: false },
+          friday: { open: '09:00', close: '21:00', closed: false },
+          saturday: { open: '10:00', close: '21:00', closed: false },
+          sunday: { open: '11:00', close: '19:00', closed: false }
+        },
+        createdAt: new Date('2024-01-17'),
+        updatedAt: new Date('2024-01-17')
+      }
+    ]
+
+    console.log('📦 Usando datos mock por problemas de permisos de Firebase')
+    return mockBusinesses
+  }
+
+  // Helper functions to check user roles
   const isAdmin = () => {
-    return profile?.role === 'admin'
+    return userProfile?.role === 'admin'
   }
 
   const isBusiness = () => {
-    return profile?.role === 'business'
+    return userProfile?.role === 'business'
   }
 
-  const isPerson = () => {
-    return profile?.role === 'person'
+  const isClient = () => {
+    return userProfile?.role === 'client'
+  }
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUser(user)
+        const profile = await getUserProfile(user.uid)
+        setUserProfile(profile)
+      } else {
+        setUser(null)
+        setUserProfile(null)
+      }
+      setLoading(false)
+    })
+
+    // Initialize demo data only if needed and user has permissions
+    // initializeDemoData() // Comentado para evitar errores de permisos
+
+    return unsubscribe
+  }, [])
+
+  // Función completa para inicializar toda la base de datos (usuarios + negocios)
+  const initializeCompleteDatabase = async () => {
+    try {
+      console.log('🚀 Iniciando configuración completa de la base de datos...')
+
+      // 1. Crear usuarios demo
+      const usersResult = await createDemoUsers()
+      
+      // 2. Crear datos de negocios
+      const businessResult = await createBasicDemoData()
+
+      if (usersResult.success && businessResult.success) {
+        console.log('🎉 Base de datos inicializada completamente')
+        return {
+          success: true,
+          message: 'Base de datos inicializada con usuarios y negocios demo. Ahora puedes iniciar sesión con:\n\n📧 admin@chapashop.com / admin123\n📧 negocio@chapashop.com / negocio123\n📧 cliente@chapashop.com / cliente123'
+        }
+      } else {
+        return {
+          success: false,
+          message: 'Error parcial en la inicialización. Revisa la consola para detalles.'
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Error en inicialización completa:', error)
+      return { success: false, message: error.message }
+    }
   }
 
   const value = {
     user,
-    profile,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-    forceSignOut,
+    userProfile,
+    signup,
+    signin,
+    logout,
+    createDemoUsers, // Crear usuarios demo (sin auto-login)
+    getUserProfile,
     updateProfile,
+    initializeDemoData, // Exponemos la función para uso manual si es necesario
+    createSafeDemoData, // Nueva función para crear datos demo de manera segura
+    createBasicDemoData, // Función para crear datos básicos sin autenticación estricta
+    createMockData, // Función para crear datos mock cuando hay problemas de permisos
+    initializeCompleteDatabase, // Función completa para inicializar todo
+    loading,
     isAdmin,
     isBusiness,
-    isPerson,
-    isInitialized
+    isClient
   }
 
   return (
@@ -306,3 +636,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   )
 }
+
+export default AuthContext

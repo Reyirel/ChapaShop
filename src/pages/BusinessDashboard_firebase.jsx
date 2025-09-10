@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/AuthContext_firebase'
 import dbService from '../services/database'
 import driveService from '../services/googleDrive'
 import LocationPicker from '../components/LocationPicker'
@@ -512,7 +512,7 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Ubicación
             </label>
-            <LocationPicker onLocationChange={setLocation} />
+            <LocationPicker onLocationSelect={setLocation} />
           </div>
 
           {/* Business Hours */}

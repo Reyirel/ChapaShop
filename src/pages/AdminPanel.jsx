@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../services/supabase'
+import { auth } from '../services/firebase'
+import dbService from '../services/database'
 import { 
   Shield, 
   Store, 
@@ -39,17 +40,12 @@ const AdminPanel = () => {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkAdmin = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    if (!auth.currentUser) {
       navigate('/login')
       return
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single()
+    const profile = await dbService.getUserProfile(auth.currentUser.uid)
 
     if (profile?.role !== 'admin') {
       navigate('/negocios')
@@ -62,18 +58,7 @@ const AdminPanel = () => {
   const fetchData = async () => {
     try {
       // Fetch all businesses
-      const { data: businessesData, error: businessesError } = await supabase
-        .from('businesses')
-        .select(`
-          *,
-          business_categories(name, color, icon),
-          profiles!businesses_owner_id_fkey(full_name, email),
-          reviews(rating, comment),
-          products(id, name)
-        `)
-        .order('created_at', { ascending: false })
-
-      if (businessesError) throw businessesError
+      const businessesData = await dbService.getAllBusinesses()
 
       // Fetch pending businesses
       const pendingData = businessesData.filter(b => b.status === 'pending')
@@ -104,16 +89,7 @@ const AdminPanel = () => {
 
   const handleBusinessAction = async (businessId, action, notes = '') => {
     try {
-      const { error } = await supabase
-        .from('businesses')
-        .update({
-          status: action,
-          admin_notes: notes,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', businessId)
-
-      if (error) throw error
+      await dbService.updateBusinessStatus(businessId, action, notes)
 
       // Refresh data
       fetchData()
@@ -128,44 +104,13 @@ const AdminPanel = () => {
   const handleDeleteBusiness = async (businessId) => {
     setDeleteLoading(true)
     try {
-      // Primero eliminar las referencias relacionadas
-      // Eliminar imágenes del negocio
-      const { error: imagesError } = await supabase
-        .from('business_images')
-        .delete()
-        .eq('business_id', businessId)
-
-      if (imagesError) {
-        console.error('Error eliminando imágenes:', imagesError)
-      }
-
-      // Eliminar productos del negocio
-      const { error: productsError } = await supabase
-        .from('products')
-        .delete()
-        .eq('business_id', businessId)
-
-      if (productsError) {
-        console.error('Error eliminando productos:', productsError)
-      }
-
-      // Eliminar reseñas del negocio
-      const { error: reviewsError } = await supabase
-        .from('reviews')
-        .delete()
+      // Eliminar negocio y sus relaciones usando el servicio de base de datos
+      await dbService.deleteBusiness(businessId)
         .eq('business_id', businessId)
 
       if (reviewsError) {
         console.error('Error eliminando reseñas:', reviewsError)
       }
-
-      // Finalmente eliminar el negocio
-      const { error: businessError } = await supabase
-        .from('businesses')
-        .delete()
-        .eq('id', businessId)
-
-      if (businessError) throw businessError
 
       // Actualizar datos
       fetchData()
