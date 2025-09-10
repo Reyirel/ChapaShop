@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import ErrorBoundary from './components/ErrorBoundary'
+import LoadingScreen from './components/LoadingScreen'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Negocios from './pages/Negocios'
@@ -13,25 +14,38 @@ import AdminPanel from './pages/AdminPanel'
 import Profile from './pages/Profile'
 import './App.css'
 
+// Componente interno que tiene acceso al contexto de auth
+const AppContent = () => {
+  const { loading } = useAuth()
+
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  return (
+    <div className="App">
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/negocios" element={<Negocios />} />
+        <Route path="/negocio/:id" element={<NegocioDetail />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/business-dashboard" element={<BusinessDashboard />} />
+        <Route path="/admin-panel" element={<AdminPanel />} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
+    </div>
+  )
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
         <Router>
-          <div className="App">
-            <Navbar />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/negocios" element={<Negocios />} />
-              <Route path="/negocio/:id" element={<NegocioDetail />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/business-dashboard" element={<BusinessDashboard />} />
-              <Route path="/admin-panel" element={<AdminPanel />} />
-              <Route path="/profile" element={<Profile />} />
-            </Routes>
-          </div>
+          <AppContent />
         </Router>
       </AuthProvider>
     </ErrorBoundary>

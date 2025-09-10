@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import AuthContext from '../context/AuthContext'
 import dbService from '../services/database'
 import { 
   ArrowLeft,
@@ -18,17 +19,26 @@ import {
   Camera,
   Users,
   Award,
-  CheckCircle
+  CheckCircle,
+  Send
 } from 'lucide-react'
 
 const NegocioDetail = () => {
   const { id } = useParams()
+  const { user } = useContext(AuthContext)
   const [negocio, setNegocio] = useState(null)
   const [reviews, setReviews] = useState([])
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [liked, setLiked] = useState(false)
   const [activeTab, setActiveTab] = useState('info')
+  
+  // Estados para nueva reseña
+  const [newReview, setNewReview] = useState({
+    rating: 0,
+    comment: ''
+  })
+  const [submittingReview, setSubmittingReview] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,11 +52,17 @@ const NegocioDetail = () => {
           throw new Error('Negocio no encontrado')
         }
 
-        // Obtener reseñas
-        const reviewsData = await dbService.getBusinessReviews(id)
+        // Obtener reseñas (manejar errores silenciosamente)
+        let reviewsData = []
+        try {
+          reviewsData = await dbService.getBusinessReviews(id)
+        } catch (error) {
+          console.warn('No se pudieron cargar las reseñas:', error.message)
+          reviewsData = []
+        }
 
-        // Obtener productos/servicios
-        const productsData = await dbService.getBusinessProducts(id)
+        // Los productos ahora están almacenados como cadena en el negocio
+        const productsData = negocioData.products ? negocioData.products.split(', ').filter(p => p.trim()) : []
 
         // Calcular rating promedio
         const avgRating = reviewsData?.length > 0 
@@ -73,13 +89,29 @@ const NegocioDetail = () => {
   }, [id])
 
   const formatBusinessHours = (hours) => {
-    if (!hours || hours.length === 0) return []
+    if (!hours || typeof hours !== 'object') return []
     
-    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-    return hours.map(hour => ({
-      day: days[hour.day_of_week],
-      time: hour.is_closed ? 'Cerrado' : `${hour.open_time} - ${hour.close_time}`
-    }))
+    const dayNames = {
+      monday: 'Lunes',
+      tuesday: 'Martes', 
+      wednesday: 'Miércoles',
+      thursday: 'Jueves',
+      friday: 'Viernes',
+      saturday: 'Sábado',
+      sunday: 'Domingo'
+    }
+
+    const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    
+    return dayOrder.map(day => {
+      const dayData = hours[day]
+      if (!dayData) return null
+      
+      return {
+        day: dayNames[day],
+        time: dayData.closed ? 'Cerrado' : `${dayData.open} - ${dayData.close}`
+      }
+    }).filter(Boolean)
   }
 
   const shareNegocio = () => {
@@ -89,6 +121,65 @@ const NegocioDetail = () => {
         text: negocio.description,
         url: window.location.href,
       })
+    }
+  }
+
+  const handleRatingClick = (rating) => {
+    setNewReview(prev => ({ ...prev, rating }))
+  }
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault()
+    
+    if (!user) {
+      alert('Debes iniciar sesión para escribir una reseña')
+      return
+    }
+
+    if (newReview.rating === 0) {
+      alert('Por favor selecciona una calificación')
+      return
+    }
+
+    if (!newReview.comment.trim()) {
+      alert('Por favor escribe un comentario')
+      return
+    }
+
+    setSubmittingReview(true)
+
+    try {
+      await dbService.createReview({
+        businessId: id,
+        userId: user.uid,
+        rating: newReview.rating,
+        comment: newReview.comment.trim()
+      })
+
+      // Recargar reseñas
+      const updatedReviews = await dbService.getBusinessReviews(id)
+      setReviews(updatedReviews || [])
+      
+      // Actualizar rating promedio
+      const avgRating = updatedReviews?.length > 0 
+        ? updatedReviews.reduce((sum, review) => sum + review.rating, 0) / updatedReviews.length 
+        : 0
+
+      setNegocio(prev => ({
+        ...prev,
+        avgRating: parseFloat(avgRating.toFixed(1)),
+        reviewCount: updatedReviews?.length || 0
+      }))
+
+      // Limpiar formulario
+      setNewReview({ rating: 0, comment: '' })
+      
+      alert('¡Reseña enviada exitosamente!')
+    } catch (error) {
+      console.error('Error submitting review:', error)
+      alert('Error al enviar la reseña. Por favor intenta de nuevo.')
+    } finally {
+      setSubmittingReview(false)
     }
   }
 
@@ -122,7 +213,7 @@ const NegocioDetail = () => {
     )
   }
 
-  const businessHours = formatBusinessHours(negocio.business_hours)
+  const businessHours = formatBusinessHours(negocio.businessHours || negocio.business_hours)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -299,23 +390,27 @@ const NegocioDetail = () => {
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
                       <Clock className="h-5 w-5 text-indigo-600" />
-                      Horarios
+                      Horarios de Atención
                     </h3>
                     
-                    <div className="space-y-2">
+                    <div className="bg-gray-50 rounded-lg p-4">
                       {businessHours.length === 0 ? (
-                        <p className="text-gray-500 italic">Horarios no disponibles</p>
+                        <p className="text-gray-500 italic text-center py-4">Horarios no disponibles</p>
                       ) : (
-                        businessHours.map((hour, index) => (
-                          <div key={index} className="flex justify-between items-center py-1">
-                            <span className="text-gray-600">{hour.day}</span>
-                            <span className={`font-medium ${
-                              hour.time === 'Cerrado' ? 'text-red-600' : 'text-green-600'
-                            }`}>
-                              {hour.time}
-                            </span>
-                          </div>
-                        ))
+                        <div className="grid gap-3">
+                          {businessHours.map((hour, index) => (
+                            <div key={index} className="flex justify-between items-center py-2 px-3 bg-white rounded-lg border border-gray-100">
+                              <span className="text-gray-700 font-medium">{hour.day}</span>
+                              <span className={`font-semibold px-3 py-1 rounded-full text-sm ${
+                                hour.time === 'Cerrado' 
+                                  ? 'bg-red-100 text-red-700' 
+                                  : 'bg-green-100 text-green-700'
+                              }`}>
+                                {hour.time}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -326,13 +421,95 @@ const NegocioDetail = () => {
             {/* Reseñas Tab */}
             {activeTab === 'reviews' && (
               <div className="space-y-6">
+                {/* Formulario para nueva reseña */}
+                {user && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Escribir una reseña</h3>
+                    <form onSubmit={handleSubmitReview} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Calificación
+                        </label>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => handleRatingClick(star)}
+                              className={`h-8 w-8 ${
+                                star <= newReview.rating 
+                                  ? 'text-yellow-400 fill-current' 
+                                  : 'text-gray-300'
+                              } hover:text-yellow-400 transition-colors`}
+                            >
+                              <Star className="h-full w-full" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Comentario
+                        </label>
+                        <textarea
+                          value={newReview.comment}
+                          onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
+                          placeholder="Comparte tu experiencia con este negocio..."
+                          rows={4}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          maxLength={500}
+                        />
+                        <div className="text-sm text-gray-500 mt-1">
+                          {newReview.comment.length}/500 caracteres
+                        </div>
+                      </div>
+                      
+                      <button
+                        type="submit"
+                        disabled={submittingReview || newReview.rating === 0 || !newReview.comment.trim()}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {submittingReview ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4" />
+                            Enviar reseña
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                {!user && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <p className="text-gray-600 mb-3">Inicia sesión para escribir una reseña</p>
+                    <Link 
+                      to="/login" 
+                      className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                      Iniciar Sesión
+                    </Link>
+                  </div>
+                )}
+
+                {/* Lista de reseñas existentes */}
                 {reviews.length === 0 ? (
                   <div className="text-center py-8">
                     <Star className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500">No hay reseñas disponibles</p>
+                    <p className="text-gray-400 text-sm mt-2">¡Sé el primero en escribir una reseña!</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Reseñas ({reviews.length})
+                    </h3>
                     {reviews.map((review) => (
                       <div key={review.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-start justify-between mb-2">
@@ -342,7 +519,7 @@ const NegocioDetail = () => {
                             </div>
                             <div>
                               <p className="font-medium text-gray-800">
-                                {review.profiles?.full_name || 'Usuario anónimo'}
+                                {review.userName || 'Usuario anónimo'}
                               </p>
                               <div className="flex items-center gap-1">
                                 {[...Array(5)].map((_, i) => (
@@ -357,7 +534,7 @@ const NegocioDetail = () => {
                             </div>
                           </div>
                           <span className="text-sm text-gray-500">
-                            {new Date(review.created_at).toLocaleDateString()}
+                            {new Date(review.createdAt?.toDate?.() || review.createdAt).toLocaleDateString()}
                           </span>
                         </div>
                         <p className="text-gray-700">{review.comment}</p>
@@ -377,25 +554,21 @@ const NegocioDetail = () => {
                     <p className="text-gray-500">No hay productos disponibles</p>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {products.map((product) => (
-                      <div key={product.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                        <img 
-                          src={product.image_url || 'https://via.placeholder.com/300x200?text=Sin+Imagen'} 
-                          alt={product.name}
-                          className="w-full h-32 object-cover"
-                        />
-                        <div className="p-4">
-                          <h4 className="font-semibold text-gray-800 mb-1">{product.name}</h4>
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{product.description}</p>
-                          {product.price && (
-                            <p className="text-lg font-bold text-indigo-600">
-                              ${product.price.toFixed(2)}
-                            </p>
-                          )}
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <Camera className="h-5 w-5 text-indigo-600" />
+                      Productos y Servicios
+                    </h3>
+                    <div className="grid gap-3">
+                      {products.map((product, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-sm font-medium text-indigo-600">{index + 1}</span>
+                          </div>
+                          <span className="text-gray-800 font-medium">{product}</span>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

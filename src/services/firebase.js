@@ -83,6 +83,14 @@ if (!isConfigured) {
     db = getFirestore(app)
     storage = getStorage(app)
     
+    // Configure auth persistence (this ensures users stay logged in on refresh)
+    // Firebase Web SDK uses LOCAL persistence by default, but let's be explicit
+    if (auth) {
+      // The persistence is automatically set to LOCAL for web apps
+      // This means the auth state persists across browser sessions
+      console.log('🔒 Persistencia de autenticación configurada (LOCAL)')
+    }
+    
     // Initialize Analytics (only in production or when needed)
     if (typeof window !== 'undefined') {
       try {

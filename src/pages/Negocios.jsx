@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import dbService from '../services/database'
 import { 
@@ -24,58 +24,39 @@ const Negocios = () => {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [sortBy, setSortBy] = useState('recent')
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
       
-      // Categorías predefinidas
-      const categoriasData = [
-        { id: 'restaurante', name: 'Restaurantes' },
-        { id: 'tienda', name: 'Tiendas' },
-        { id: 'servicio', name: 'Servicios' },
-        { id: 'entretenimiento', name: 'Entretenimiento' },
-        { id: 'salud', name: 'Salud y Belleza' },
-        { id: 'tecnologia', name: 'Tecnología' },
-        { id: 'educacion', name: 'Educación' },
-        { id: 'automotriz', name: 'Automotriz' },
-        { id: 'hogar', name: 'Hogar y Jardín' },
-        { id: 'otros', name: 'Otros' }
-      ]
+      // Obtener categorías de negocios
+      let categoriasData = []
+      try {
+        categoriasData = await dbService.getBusinessCategories()
+      } catch {
+        categoriasData = []
+      }
 
-      // Obtener negocios aprobados
-      const negociosData = await dbService.getBusinesses({ status: 'approved' })
+      // Obtener negocios aprobados con sus categorías y calcular ratings
+      let negociosData = []
+      try {
+        negociosData = await dbService.getApprovedBusinesses()
+      } catch {
+        negociosData = []
+      }
 
       // Procesar negocios para calcular ratings promedio
-      const negociosConRating = await Promise.all(
-        negociosData.map(async (negocio) => {
-          try {
-            // Obtener reseñas del negocio
-            const reviews = await dbService.getReviews(negocio.id)
-            const avgRating = reviews.length > 0 
-              ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
-              : 0
-            
-            return {
-              ...negocio,
-              avgRating: parseFloat(avgRating.toFixed(1)),
-              reviewCount: reviews.length,
-              reviews: reviews
-            }
-          } catch (error) {
-            console.error(`Error getting reviews for business ${negocio.id}:`, error)
-            return {
-              ...negocio,
-              avgRating: 0,
-              reviewCount: 0,
-              reviews: []
-            }
-          }
-        })
-      )
+      const negociosConRating = negociosData.map(negocio => {
+        const reviews = negocio.reviews || []
+        const avgRating = reviews.length > 0 
+          ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+          : 0
+        
+        return {
+          ...negocio,
+          avgRating: parseFloat(avgRating.toFixed(1)),
+          reviewCount: reviews.length
+        }
+      })
 
       // Establecer datos
       setNegocios(negociosConRating)
@@ -94,20 +75,37 @@ const Negocios = () => {
       setLoading(false)
 
     } catch (error) {
-      console.error('Error fetching data:', error)
+      console.error('Error al cargar datos:', error)
       setLoading(false)
       
-      // En caso de error, mostrar datos vacíos en lugar de datos de ejemplo
+      // En caso de error, mostrar datos vacíos
       setNegocios([])
       setCategorias([])
       setTopNegocios([])
     }
-  }
+  }, []) // Empty dependency array for useCallback
+
+  // Make debug functions available globally for testing
+  useEffect(() => {
+    window.debugFirebase = {
+      showAllBusinesses: () => dbService.debugAllBusinesses(),
+      approveAllPending: () => dbService.approveAllPendingBusinesses(),
+      refreshPage: () => fetchData()
+    }
+  }, [fetchData])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const filteredNegocios = negocios.filter(negocio => {
     const matchesSearch = negocio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          negocio.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = !selectedCategory || negocio.category === selectedCategory
+    // Fix: Check both category and category_id fields for compatibility
+    const matchesCategory = !selectedCategory || 
+                           negocio.category === selectedCategory || 
+                           negocio.category_id === selectedCategory ||
+                           negocio.category?.toLowerCase() === selectedCategory.toLowerCase()
     return matchesSearch && matchesCategory
   }).sort((a, b) => {
     switch (sortBy) {
@@ -117,8 +115,13 @@ const Negocios = () => {
         return b.reviewCount - a.reviewCount
       case 'name':
         return a.name.localeCompare(b.name)
-      default:
-        return new Date(b.createdAt) - new Date(a.createdAt)
+      default: {
+        // Fix: Handle both created_at and createdAt field names
+        const dateA = a.created_at || a.createdAt
+        const dateB = b.created_at || b.createdAt
+        if (!dateA || !dateB) return 0
+        return new Date(dateB) - new Date(dateA)
+      }
     }
   })
 
@@ -349,8 +352,13 @@ const BusinessCard = ({ negocio }) => {
         {/* Imagen del negocio */}
         <div className="relative h-48 overflow-hidden">
           <img 
-            src={negocio.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500&h=300&fit=crop'} 
-            alt={negocio.name}
+            src={
+              negocio.image_url || 
+              negocio.images?.[0] || 
+              negocio.imageUrl || 
+              'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500&h=300&fit=crop'
+            } 
+            alt={negocio.name || 'Imagen del negocio'}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
           
@@ -381,13 +389,10 @@ const BusinessCard = ({ negocio }) => {
           </div>
           
           {/* Badge de categoría */}
-          {negocio.business_categories && (
+          {(negocio.category || negocio.business_categories?.name) && (
             <div className="absolute top-4 left-4">
-              <span 
-                className="px-3 py-1 rounded-full text-xs font-semibold text-white backdrop-blur-sm"
-                style={{ backgroundColor: negocio.business_categories.color }}
-              >
-                {negocio.business_categories.name}
+              <span className="px-3 py-1 rounded-full text-xs font-semibold text-white bg-[#3ecf8e] backdrop-blur-sm">
+                {negocio.business_categories?.name || negocio.category || 'Categoría'}
               </span>
             </div>
           )}
@@ -409,7 +414,7 @@ const BusinessCard = ({ negocio }) => {
         <div className="p-6">
           <div className="mb-4">
             <h3 className="text-xl font-bold text-gray-800 group-hover:text-[#3ecf8e] transition-colors mb-2">
-              {negocio.name}
+              {negocio.name || 'Nombre no disponible'}
             </h3>
             <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">
               {negocio.description || 'Descripción no disponible'}
@@ -420,11 +425,15 @@ const BusinessCard = ({ negocio }) => {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-[#3ecf8e]" />
-              <span className="text-gray-600">{negocio.reviewCount} reseñas</span>
+              <span className="text-gray-600">
+                {negocio.reviewCount || 0} reseñas
+              </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <ShoppingBag className="h-4 w-4 text-[#3ecf8e]" />
-              <span className="text-gray-600">{negocio.productCount} productos</span>
+              <Store className="h-4 w-4 text-[#3ecf8e]" />
+              <span className="text-gray-600">
+                {negocio.status === 'approved' ? 'Verificado' : 'Pendiente'}
+              </span>
             </div>
           </div>
 
@@ -433,6 +442,24 @@ const BusinessCard = ({ negocio }) => {
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
               <MapPin className="h-4 w-4 text-[#3ecf8e]" />
               <span className="truncate">{negocio.address}</span>
+            </div>
+          )}
+
+          {/* Información adicional */}
+          {(negocio.phone || negocio.email) && (
+            <div className="space-y-2 mb-6">
+              {negocio.phone && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <span className="text-[#3ecf8e]">📞</span>
+                  <span>{negocio.phone}</span>
+                </div>
+              )}
+              {negocio.email && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <span className="text-[#3ecf8e]">✉️</span>
+                  <span className="truncate">{negocio.email}</span>
+                </div>
+              )}
             </div>
           )}
 

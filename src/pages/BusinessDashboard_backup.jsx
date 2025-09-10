@@ -18,8 +18,7 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Image,
-  X
+  Image
 } from 'lucide-react'
 
 const BusinessDashboard = () => {

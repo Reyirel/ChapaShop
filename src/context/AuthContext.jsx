@@ -562,22 +562,54 @@ export const AuthProvider = ({ children }) => {
   }
 
   useEffect(() => {
+    let mounted = true
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUser(user)
-        const profile = await getUserProfile(user.uid)
-        setUserProfile(profile)
-      } else {
-        setUser(null)
-        setUserProfile(null)
+      try {
+        if (user && mounted) {
+          // Usuario autenticado
+          console.log('✅ Usuario autenticado:', user.email)
+          setUser(user)
+          
+          // Obtener perfil del usuario
+          try {
+            const profile = await getUserProfile(user.uid)
+            if (mounted) {
+              setUserProfile(profile)
+              console.log('✅ Perfil de usuario cargado:', profile?.role)
+            }
+          } catch (error) {
+            console.warn('⚠️ Error cargando perfil:', error.message)
+            if (mounted) {
+              setUserProfile(null)
+            }
+          }
+        } else if (mounted) {
+          // Usuario no autenticado
+          console.log('❌ Usuario no autenticado')
+          setUser(null)
+          setUserProfile(null)
+        }
+      } catch (error) {
+        console.error('❌ Error en onAuthStateChanged:', error)
+        if (mounted) {
+          setUser(null)
+          setUserProfile(null)
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
       }
-      setLoading(false)
     })
 
     // Initialize demo data only if needed and user has permissions
     // initializeDemoData() // Comentado para evitar errores de permisos
 
-    return unsubscribe
+    return () => {
+      mounted = false
+      unsubscribe()
+    }
   }, [])
 
   // Función completa para inicializar toda la base de datos (usuarios + negocios)

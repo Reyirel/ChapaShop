@@ -7,7 +7,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const location = useLocation()
-  const { user, userProfile, logout, isAdmin, isBusiness } = useAuth()
+  const { user, userProfile, logout, isAdmin, isBusiness, loading } = useAuth()
   const userMenuRef = useRef(null)
 
   // Cerrar menú de usuario al hacer clic fuera
@@ -39,6 +39,30 @@ const Navbar = () => {
 
   const isActiveRoute = (path) => {
     return location.pathname === path
+  }
+
+  // Si está cargando, mostrar un estado de carga mínimo
+  if (loading) {
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-[#3ecf8e] to-[#2dd4bf] rounded-lg flex items-center justify-center">
+                <Store className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-800">ChapaShop</span>
+            </Link>
+            
+            {/* Loading indicator */}
+            <div className="flex items-center space-x-2">
+              <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    )
   }
 
   // Obtener elementos de navegación según el rol del usuario
