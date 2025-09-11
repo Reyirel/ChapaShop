@@ -29,8 +29,8 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
   const [address, setAddress] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Posición por defecto (Ciudad de México)
-  const defaultCenter = [19.4326, -99.1332]
+  // Posición por defecto (Chapantongo, Hidalgo)
+  const defaultCenter = [20.2833, -99.4167]
 
   const handleLocationSelect = async (latlng) => {
     setPosition(latlng)
@@ -103,22 +103,48 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
   }
 
   const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      setLoading(true)
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const latlng = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          }
-          handleLocationSelect(latlng)
-        },
-        (error) => {
-          console.error('Error al obtener ubicación:', error)
-          setLoading(false)
-        }
-      )
+    if (!navigator.geolocation) {
+      alert('La geolocalización no está soportada en este navegador.')
+      return
     }
+
+    setLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latlng = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        }
+        handleLocationSelect(latlng)
+      },
+      (error) => {
+        console.error('Error al obtener ubicación:', error)
+        setLoading(false)
+        
+        let errorMessage = 'No se pudo obtener tu ubicación.'
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Permiso denegado para acceder a tu ubicación. Por favor, habilita la geolocalización en la configuración de tu navegador.'
+            break
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'La ubicación no está disponible. Verifica que tengas señal GPS o intenta nuevamente.'
+            break
+          case error.TIMEOUT:
+            errorMessage = 'Tiempo de espera agotado al obtener la ubicación. Intenta nuevamente.'
+            break
+          default:
+            errorMessage = 'Error desconocido al obtener la ubicación.'
+            break
+        }
+        
+        alert(errorMessage)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutos
+      }
+    )
   }
 
   return (
