@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -29,8 +29,75 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
   const [address, setAddress] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Establecer posición inicial si existe
+  useEffect(() => {
+    if (initialPosition) {
+      setPosition(initialPosition)
+    }
+  }, [initialPosition])
+
   // Posición por defecto (Chapantongo, Hidalgo)
   const defaultCenter = [20.2833, -99.4167]
+  const mapCenter = position ? [position.lat, position.lng] : defaultCenter
+  const mapKey = position ? `${position.lat}-${position.lng}` : 'default'
+
+  // Notificar ubicación inicial si existe
+  useEffect(() => {
+    if (initialPosition && onLocationChange) {
+      // Si hay posición inicial, intentar obtener la dirección
+      const getInitialAddress = async () => {
+        try {
+          const response = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${initialPosition.lat}&longitude=${initialPosition.lng}&localityLanguage=es`
+          )
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.locality || data.city) {
+              const addressParts = []
+              if (data.locality) addressParts.push(data.locality)
+              if (data.city && data.city !== data.locality) addressParts.push(data.city)
+              if (data.principalSubdivision) addressParts.push(data.principalSubdivision)
+              if (data.countryName) addressParts.push(data.countryName)
+              
+              if (addressParts.length > 0) {
+                setAddress(addressParts.join(', '))
+                onLocationChange({
+                  latitude: initialPosition.lat,
+                  longitude: initialPosition.lng,
+                  address: addressParts.join(', ')
+                })
+                return
+              }
+            }
+          }
+        } catch (error) {
+          console.log('No se pudo obtener la dirección inicial')
+        }
+        
+        // Si no se pudo obtener dirección, usar coordenadas
+        const defaultAddress = `Lat: ${initialPosition.lat.toFixed(6)}, Lng: ${initialPosition.lng.toFixed(6)}`
+        setAddress(defaultAddress)
+        onLocationChange({
+          latitude: initialPosition.lat,
+          longitude: initialPosition.lng,
+          address: defaultAddress
+        })
+      }
+      
+      getInitialAddress()
+    }
+  }, []) // Solo ejecutar una vez al montar
+
+  useEffect(() => {
+    // Establecer la posición inicial si se proporciona
+    if (initialPosition) {
+      setPosition(initialPosition)
+    } else {
+      // Intentar obtener la ubicación actual del usuario
+      getCurrentLocation()
+    }
+  }, [initialPosition])
 
   const handleLocationSelect = async (latlng) => {
     setPosition(latlng)
@@ -176,10 +243,10 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
 
       <div className="h-64 rounded-xl overflow-hidden border border-gray-700/50">
         <MapContainer
-          center={position || defaultCenter}
+          center={mapCenter}
           zoom={13}
           style={{ height: '100%', width: '100%' }}
-          key={position ? `${position.lat}-${position.lng}` : 'default'}
+          key={mapKey}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

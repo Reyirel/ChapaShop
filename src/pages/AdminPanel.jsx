@@ -17,7 +17,9 @@ import {
   Mail,
   Globe,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Edit,
+  X
 } from 'lucide-react'
 
 const AdminPanel = () => {
@@ -32,6 +34,17 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [stats, setStats] = useState({})
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [businessToEdit, setBusinessToEdit] = useState(null)
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    description: '',
+    address: '',
+    phone: '',
+    email: '',
+    website: ''
+  })
+  const [editLoading, setEditLoading] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -130,6 +143,40 @@ const AdminPanel = () => {
     setSelectedBusiness(business)
     setAdminNotes(business.admin_notes || '')
     setShowModal(true)
+  }
+
+  const openEditModal = (business) => {
+    setBusinessToEdit(business)
+    setEditFormData({
+      name: business.name || '',
+      description: business.description || '',
+      address: business.address || '',
+      phone: business.phone || '',
+      email: business.email || '',
+      website: business.website || ''
+    })
+    setShowEditModal(true)
+  }
+
+  const handleEditBusiness = async (e) => {
+    e.preventDefault()
+    if (!businessToEdit) return
+
+    setEditLoading(true)
+    try {
+      await dbService.updateBusiness(businessToEdit.id, editFormData)
+      
+      // Refresh data
+      fetchData()
+      setShowEditModal(false)
+      setBusinessToEdit(null)
+      alert('Negocio actualizado exitosamente')
+    } catch (error) {
+      console.error('Error updating business:', error)
+      alert('Error al actualizar el negocio. Por favor, inténtalo de nuevo.')
+    } finally {
+      setEditLoading(false)
+    }
   }
 
   const getStatusBadge = (status) => {
@@ -422,6 +469,13 @@ const AdminPanel = () => {
                       <Eye size={18} />
                     </button>
                     <button
+                      onClick={() => openEditModal(business)}
+                      className="p-3 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-blue-500/30"
+                      title="Editar negocio"
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button
                       onClick={() => openDeleteModal(business)}
                       className="p-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-red-500/30"
                       title="Eliminar negocio"
@@ -554,6 +608,31 @@ const AdminPanel = () => {
                   Eliminar
                 </button>
                 
+                {selectedBusiness.status === 'approved' && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowModal(false)
+                        openEditModal(selectedBusiness)
+                      }}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleBusinessAction(selectedBusiness.id, 'rejected', adminNotes)}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 transition-all"
+                    >
+                      Rechazar
+                    </button>
+                    <button
+                      onClick={() => handleBusinessAction(selectedBusiness.id, 'pending', adminNotes)}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white rounded-xl hover:from-yellow-700 hover:to-yellow-600 transition-all"
+                    >
+                      Marcar como Pendiente
+                    </button>
+                  </>
+                )}
                 {selectedBusiness.status === 'pending' && (
                   <>
                     <button
@@ -570,7 +649,7 @@ const AdminPanel = () => {
                     </button>
                   </>
                 )}
-                {selectedBusiness.status !== 'pending' && (
+                {selectedBusiness.status === 'rejected' && (
                   <button
                     onClick={() => handleBusinessAction(selectedBusiness.id, 'pending', adminNotes)}
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white rounded-xl hover:from-yellow-700 hover:to-yellow-600 transition-all"
@@ -646,6 +725,148 @@ const AdminPanel = () => {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Business Modal */}
+      {showEditModal && businessToEdit && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 border border-gray-700/50 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-8">
+                <div>
+                  <h2 className="text-3xl font-bold text-white mb-2">Editar Negocio</h2>
+                  <p className="text-gray-400">Modificar la información del negocio</p>
+                </div>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800/50 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleEditBusiness} className="space-y-6">
+                <div>
+                  <label className="block text-lg font-bold text-white mb-3">
+                    Información del Negocio
+                  </label>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Nombre del Negocio *
+                      </label>
+                      <input
+                        type="text"
+                        value={editFormData.name}
+                        onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                        placeholder="Ej: Mi Tienda de Abarrotes"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Descripción *
+                      </label>
+                      <textarea
+                        value={editFormData.description}
+                        onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                        rows={4}
+                        placeholder="Describe tu negocio, productos o servicios..."
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Teléfono
+                        </label>
+                        <input
+                          type="tel"
+                          value={editFormData.phone}
+                          onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})}
+                          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                          placeholder="Ej: +52 55 1234 5678"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Correo Electrónico
+                        </label>
+                        <input
+                          type="email"
+                          value={editFormData.email}
+                          onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                          placeholder="Ej: contacto@mitienda.com"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Dirección
+                      </label>
+                      <input
+                        type="text"
+                        value={editFormData.address}
+                        onChange={(e) => setEditFormData({...editFormData, address: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                        placeholder="Ej: Calle Principal 123, Centro, Ciudad"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Sitio Web
+                      </label>
+                      <input
+                        type="url"
+                        value={editFormData.website}
+                        onChange={(e) => setEditFormData({...editFormData, website: e.target.value})}
+                        className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                        placeholder="Ej: https://www.mitienda.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors"
+                    disabled={editLoading}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editLoading}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {editLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+                        Actualizando...
+                      </>
+                    ) : (
+                      <>
+                        <Edit size={16} />
+                        Actualizar Negocio
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

@@ -57,6 +57,8 @@ const BusinessDashboard = () => {
   const [businesses, setBusinesses] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [businessToEdit, setBusinessToEdit] = useState(null)
 
   const fetchBusinesses = useCallback(async () => {
     try {
@@ -260,7 +262,14 @@ Para configurar los índices, ve a Firebase Console > Firestore Database > Index
                     </div>
                     
                     <div className="flex gap-2">
-                      <button className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 transition-colors">
+                      <button 
+                        onClick={() => {
+                          setBusinessToEdit(business)
+                          setShowEditForm(true)
+                        }}
+                        className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 transition-colors"
+                        title="Editar negocio"
+                      >
                         <Edit size={16} className="text-gray-300" />
                       </button>
                     </div>
@@ -298,6 +307,22 @@ Para configurar los índices, ve a Firebase Console > Firestore Database > Index
           onClose={() => setShowCreateForm(false)}
           onSuccess={() => {
             setShowCreateForm(false)
+            fetchBusinesses()
+          }}
+        />
+      )}
+
+      {/* Edit Business Modal */}
+      {showEditForm && businessToEdit && (
+        <EditBusinessModal 
+          business={businessToEdit}
+          onClose={() => {
+            setShowEditForm(false)
+            setBusinessToEdit(null)
+          }}
+          onSuccess={() => {
+            setShowEditForm(false)
+            setBusinessToEdit(null)
             fetchBusinesses()
           }}
         />
@@ -562,6 +587,281 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
                 </div>
               ) : (
                 'Crear Negocio'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// Componente para editar negocio
+const EditBusinessModal = ({ business, onClose, onSuccess }) => {
+  const { user } = useAuth()
+  const [formData, setFormData] = useState({
+    name: business.name || '',
+    description: business.description || '',
+    category: business.category || '',
+    address: business.address || '',
+    phone: business.phone || '',
+    email: business.email || '',
+    website: business.website || ''
+  })
+  const [location, setLocation] = useState(business.location ? {
+    latitude: business.location.lat,
+    longitude: business.location.lng,
+    address: business.address
+  } : null)
+  const [initialMapPosition, setInitialMapPosition] = useState(
+    business.location ? [business.location.lat, business.location.lng] : [20.2833, -99.4167]
+  )
+  const [businessHours, setBusinessHours] = useState(business.businessHours || null)
+  const [products, setProducts] = useState(business.products ? business.products.split(', ') : [])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!user) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      // Prepare business data with proper formatting
+      const businessData = {
+        ...formData,
+        location: location ? {
+          lat: location.latitude,
+          lng: location.longitude
+        } : null,
+        businessHours: businessHours ? formatBusinessHours(businessHours) : null,
+        products: products.length > 0 ? products.join(', ') : ''
+      }
+
+      // Si hay ubicación, usar esa dirección
+      if (location?.address) {
+        businessData.address = location.address
+      }
+
+      console.log('📝 Datos del negocio a actualizar:', businessData)
+
+      // Actualizar negocio
+      await dbService.updateBusiness(business.id, businessData)
+
+      // Si el negocio estaba aprobado, cambiar a pendiente para nueva aprobación
+      if (business.status === 'approved') {
+        await dbService.updateBusinessStatus(business.id, 'pending', 'Actualización pendiente de aprobación')
+        
+        alert(`
+🎉 ¡Negocio actualizado exitosamente!
+
+📋 Nombre: ${businessData.name}
+📍 Estado: Pendiente de aprobación
+
+ℹ️ Información importante:
+• Tu negocio ha sido actualizado y enviado para nueva revisión
+• Un administrador lo revisará en las próximas 24-48 horas  
+• Recibirás una notificación cuando sea aprobado nuevamente
+• Los cambios no serán visibles públicamente hasta nueva aprobación
+
+¡Gracias por mantener tu información actualizada! 🚀
+        `)
+      } else {
+        alert('Negocio actualizado exitosamente')
+      }
+      
+      onSuccess()
+    } catch (error) {
+      console.error('Error completo:', error)
+      
+      let errorMessage = error.message
+      if (error.code === 'permission-denied') {
+        errorMessage = `
+          🚨 Error de permisos detectado
+          
+          Esto significa que las reglas de Firebase no están configuradas correctamente.
+          
+          Para solucionarlo:
+          1. Ve a tu proyecto de Firebase
+          2. Configura las reglas de Firestore según la documentación
+          3. Asegúrate de que los usuarios autenticados puedan escribir en la colección 'businesses'
+          
+          Error técnico: ${error.message}
+        `
+      }
+      
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 p-6 border-b border-gray-700/50 rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white">Editar Negocio</h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
+            >
+              <X className="text-gray-400 hover:text-white" size={24} />
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Basic Info */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Nombre del Negocio *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                placeholder="Ej: Restaurante El Buen Sabor"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Categoría *
+              </label>
+              <select
+                required
+                value={formData.category}
+                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+              >
+                <option value="">Selecciona una categoría</option>
+                <option value="restaurante">Restaurante</option>
+                <option value="tienda">Tienda</option>
+                <option value="servicios">Servicios</option>
+                <option value="tecnologia">Tecnología</option>
+                <option value="salud">Salud</option>
+                <option value="educacion">Educación</option>
+                <option value="entretenimiento">Entretenimiento</option>
+                <option value="otros">Otros</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Descripción *
+            </label>
+            <textarea
+              required
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              rows={4}
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+              placeholder="Describe tu negocio, qué ofreces, qué te hace especial..."
+            />
+          </div>
+
+          {/* Contact Info */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Teléfono
+              </label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                placeholder="Ej: +1 234 567 8900"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                placeholder="contacto@negocio.com"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Sitio Web
+            </label>
+            <input
+              type="url"
+              value={formData.website}
+              onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+              placeholder="https://www.negocio.com"
+            />
+          </div>
+
+          {/* Location Picker */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Ubicación
+            </label>
+            <LocationPicker 
+              onLocationChange={setLocation} 
+              {...(business.location ? { initialPosition: { lat: business.location.lat, lng: business.location.lng } } : {})} 
+            />
+          </div>
+
+          {/* Business Hours */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Horarios de Atención
+            </label>
+            <BusinessHours onHoursChange={setBusinessHours} initialHours={business.businessHours} />
+          </div>
+
+          {/* Products */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Productos/Servicios
+            </label>
+            <ProductList onProductsChange={setProducts} initialProducts={products} />
+          </div>
+
+          {error && (
+            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+              <p className="text-red-400 text-sm whitespace-pre-line">{error}</p>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700/50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-lg hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
+                  Actualizando...
+                </div>
+              ) : (
+                'Actualizar Negocio'
               )}
             </button>
           </div>
