@@ -6,17 +6,65 @@
 1. Ve a [Firebase Console](https://console.firebase.google.com/)
 2. Selecciona tu proyecto: **chapashop-80392**
 
-### 2. 🔒 Configurar Reglas de Firestore (Temporalmente para Desarrollo)
+### 2. 🔒 Configurar Reglas de Firestore (SOLUCIÓN PARA REVIEWS)
 
 1. En el menú lateral, ve a **Firestore Database**
 2. Haz clic en la pestaña **Reglas**
-3. Reemplaza las reglas actuales con estas reglas de desarrollo:
+3. **Copia y pega estas reglas exactas:**
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Reglas temporales para desarrollo - CAMBIAR EN PRODUCCIÓN
+    // Usuarios pueden leer/escribir su propio perfil
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Negocios - lectura pública para todos, escritura solo para dueños/admin
+    match /businesses/{businessId} {
+      allow read: if true; // Lectura pública
+      allow create: if request.auth != null; // Solo usuarios autenticados pueden crear
+      allow update, delete: if request.auth != null && 
+        (resource.data.ownerId == request.auth.uid || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Reviews - usuarios autenticados pueden crear, todos pueden leer
+    match /reviews/{reviewId} {
+      allow read: if true; // Lectura pública
+      allow create: if request.auth != null; // Solo usuarios autenticados pueden crear
+      allow update, delete: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Favorites - solo el dueño puede leer/escribir sus favoritos
+    match /favorites/{favoriteId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Products - lectura pública, escritura solo admin
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
+```
+
+4. Haz clic en **Publicar**
+
+### 2.1. 🔒 Reglas Simplificadas (Si las anteriores no funcionan)
+
+Si las reglas anteriores dan error, usa estas reglas más simples temporalmente:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas temporales para desarrollo - PERMITEN ACCESO COMPLETO
     match /{document=**} {
       allow read, write: if true;
     }
@@ -92,6 +140,57 @@ Mientras configuras Firebase, puedes usar el botón **"Usar Datos Mock"** en la 
 
 ### Error: Firestore Bad Request 400
 ⚠️ **Pendiente**: Necesitas publicar las reglas de Firestore (ver arriba).
+
+## 🚨 SOLUCIÓN PARA ERRORES DE PERMISOS EN REVIEWS
+
+### Problema Detectado
+Los usuarios están obteniendo errores "Missing or insufficient permissions" al intentar:
+- Crear comentarios/reviews
+- Leer comentarios existentes
+
+### ✅ Solución Rápida
+
+1. **Ve a Firebase Console**: https://console.firebase.google.com/
+2. **Selecciona tu proyecto**: chapashop-80392
+3. **Ve a Firestore Database** → **Reglas**
+4. **Reemplaza todo el contenido** con estas reglas:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // PERMITE ACCESO COMPLETO TEMPORALMENTE PARA DESARROLLO
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+5. **Haz clic en "Publicar"**
+6. **Espera 30 segundos** para que las reglas se propaguen
+7. **Recarga la página** de tu aplicación
+
+### 🔧 Verificación
+
+Después de aplicar las reglas, puedes verificar que funcionen:
+
+1. Inicia sesión como usuario normal (no admin)
+2. Ve a cualquier negocio
+3. Intenta crear un comentario
+4. Verifica que aparezca en la lista de comentarios
+
+### ⚠️ Importante para Producción
+
+**Estas reglas permiten acceso completo y son SOLO para desarrollo/testing.**
+
+Para producción, usa reglas más restrictivas como las que están documentadas más arriba en este archivo.
+
+### 🐛 Si el problema persiste
+
+1. **Verifica que estés autenticado**: Asegúrate de haber iniciado sesión
+2. **Revisa la consola del navegador**: Busca errores de red o autenticación
+3. **Verifica las variables de entorno**: Asegúrate de que `.env` tenga las credenciales correctas de Firebase
 
 ## 🔧 Estado de los Servicios
 

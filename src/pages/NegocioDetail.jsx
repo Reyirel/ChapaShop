@@ -356,7 +356,15 @@ const NegocioDetail = () => {
                       {negocio.address && (
                         <div className="flex items-center gap-3">
                           <MapPin className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-700">{negocio.address}</span>
+                          <a 
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(negocio.address)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-indigo-600 hover:underline flex items-center gap-1"
+                          >
+                            {negocio.address}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
                         </div>
                       )}
                     </div>
@@ -457,7 +465,7 @@ const NegocioDetail = () => {
                           onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
                           placeholder="Comparte tu experiencia con este negocio..."
                           rows={4}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                           maxLength={500}
                         />
                         <div className="text-sm text-gray-500 mt-1">
@@ -595,18 +603,10 @@ const NegocioDetail = () => {
               rel="noopener noreferrer"
               className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-3 px-6 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center gap-2"
             >
-              <MessageCircle className="h-5 w-5" />
+              <img src="/whatsapp-icon.svg" alt="WhatsApp" className="h-5 w-5" />
               WhatsApp
             </a>
           )}
-          
-          <button
-            onClick={shareNegocio}
-            className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center py-3 px-6 rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            <Share2 className="h-5 w-5" />
-            Compartir
-          </button>
         </div>
       </div>
     </div>

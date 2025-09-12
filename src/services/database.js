@@ -210,75 +210,43 @@ class DatabaseService {
   // Función simplificada para evitar problemas de índice
   async getBusinessesSimple(filters = {}) {
     try {
-      console.log('🔍 Usando consulta simplificada para evitar errores de índice')
-      
-      let q = collection(db, 'businesses')
-      
-      // Solo filtrar por ownerId si está presente para evitar problemas de índice
-      if (filters.ownerId) {
-        q = query(q, where('ownerId', '==', filters.ownerId))
-      }
+      const q = query(
+        collection(db, 'businesses'),
+        orderBy('createdAt', 'desc'),
+        limit(filters.limit || 50)
+      )
       
       const querySnapshot = await getDocs(q)
-      let businesses = []
+      const businesses = []
       
       querySnapshot.forEach((doc) => {
-        businesses.push({
+        const businessData = {
           id: doc.id,
           ...doc.data()
-        })
+        }
+        
+        // Apply filters in JavaScript
+        if (filters.status && businessData.status !== filters.status) return
+        if (filters.ownerId && businessData.ownerId !== filters.ownerId) return
+        if (filters.category && businessData.category !== filters.category) return
+        
+        businesses.push(businessData)
       })
       
-      // Aplicar filtros adicionales en JavaScript
-      if (filters.status) {
-        businesses = businesses.filter(b => b.status === filters.status)
-        console.log(`📊 Filtrados por status '${filters.status}':`, businesses.length)
-      }
-      
-      if (filters.category) {
-        businesses = businesses.filter(b => b.category === filters.category)
-      }
-      
-      // Ordenar por fecha de creación
-      businesses.sort((a, b) => {
-        if (!a.createdAt || !b.createdAt) return 0
-        const dateA = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)
-        const dateB = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)
-        return dateB - dateA
-      })
-      
-      // Aplicar límite si está especificado
-      if (filters.limit) {
-        businesses = businesses.slice(0, filters.limit)
-      }
-      
-      console.log('✅ Consulta simplificada exitosa:', businesses.length, 'negocios')
       return businesses
     } catch (error) {
-      console.error('Error in simplified query:', error)
-      
-      // Si hay errores de permisos o índice, usar datos mock
-      if (error.code === 'permission-denied' || error.message.includes('index')) {
-        console.warn('⚠️ Error de permisos/índice, usando datos mock')
-        let mockBusinesses = this.getMockBusinesses()
-        
-        // Aplicar los mismos filtros a los datos mock
-        if (filters.status) {
-          mockBusinesses = mockBusinesses.filter(b => b.status === filters.status)
-        }
-        
-        if (filters.category) {
-          mockBusinesses = mockBusinesses.filter(b => b.category === filters.category)
-        }
-        
-        if (filters.ownerId) {
-          mockBusinesses = mockBusinesses.filter(b => b.ownerId === filters.ownerId)
-        }
-        
-        return mockBusinesses
-      }
-      
+      console.error('Error getting businesses simple:', error)
       throw error
+    }
+  }
+
+  // Get only approved businesses for public display
+  async getApprovedBusinesses() {
+    try {
+      return await this.getBusinesses({ status: 'approved' })
+    } catch (error) {
+      console.error('Error getting approved businesses:', error)
+      return []
     }
   }
 
@@ -907,188 +875,115 @@ class DatabaseService {
     }
   }
 
-  // Helper function to approve all pending businesses (for development)
-  async approveAllPendingBusinesses() {
+  // FAVORITES
+  async addToFavorites(userId, businessId) {
     try {
-      const q = collection(db, 'businesses')
-      const querySnapshot = await getDocs(q)
-      const pendingBusinesses = []
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data()
-        if (data.status === 'pending') {
-          pendingBusinesses.push({ id: doc.id, name: data.name })
-        }
+      // Check if already in favorites
+      const existingFavorite = await this.getFavorite(userId, businessId)
+      if (existingFavorite) {
+        return existingFavorite
+      }
+
+      const docRef = await addDoc(collection(db, 'favorites'), {
+        userId,
+        businessId,
+        createdAt: serverTimestamp()
       })
       
-      for (const business of pendingBusinesses) {
-        await updateDoc(doc(db, 'businesses', business.id), {
-          status: 'approved',
-          updatedAt: serverTimestamp()
-        })
-      }
-      
-      return pendingBusinesses.length
+      return { id: docRef.id, userId, businessId }
     } catch (error) {
-      console.error('❌ Error aprobando negocios:', error)
+      console.error('Error adding to favorites:', error)
       throw error
     }
   }
 
-  // Debug function to see all businesses in Firebase
-  async debugAllBusinesses() {
+  async removeFromFavorites(userId, businessId) {
     try {
-      const q = collection(db, 'businesses')
+      const favorite = await this.getFavorite(userId, businessId)
+      if (favorite) {
+        const docRef = doc(db, 'favorites', favorite.id)
+        await deleteDoc(docRef)
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Error removing from favorites:', error)
+      throw error
+    }
+  }
+
+  async getFavorite(userId, businessId) {
+    try {
+      const q = query(
+        collection(db, 'favorites'),
+        where('userId', '==', userId),
+        where('businessId', '==', businessId)
+      )
+      
       const querySnapshot = await getDocs(q)
-      const businesses = []
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0]
+        return {
+          id: doc.id,
+          ...doc.data()
+        }
+      }
+      return null
+    } catch (error) {
+      console.error('Error getting favorite:', error)
+      return null
+    }
+  }
+
+  async getUserFavorites(userId) {
+    try {
+      const q = query(
+        collection(db, 'favorites'),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+      )
+      
+      const querySnapshot = await getDocs(q)
+      const favorites = []
       
       querySnapshot.forEach((doc) => {
-        const data = doc.data()
-        businesses.push({
+        favorites.push({
           id: doc.id,
-          name: data.name,
-          status: data.status,
-          category: data.category,
-          createdAt: data.createdAt,
-          created_at: data.created_at
+          ...doc.data()
         })
       })
       
-      return businesses
+      // Get business details for each favorite
+      const favoritesWithBusinesses = await Promise.all(
+        favorites.map(async (favorite) => {
+          try {
+            const business = await this.getBusiness(favorite.businessId)
+            return {
+              ...favorite,
+              business
+            }
+          } catch (error) {
+            // If business is not found or not approved, return null
+            return null
+          }
+        })
+      )
+      
+      // Filter out null values (businesses that are not approved or don't exist)
+      return favoritesWithBusinesses.filter(favorite => favorite !== null)
     } catch (error) {
-      console.error('❌ Error en debug:', error)
+      console.error('Error getting user favorites:', error)
       return []
     }
   }
 
-  // Get only approved businesses for public display
-  async getApprovedBusinesses(filters = {}) {
+  async isFavorite(userId, businessId) {
     try {
-      // Get all businesses from Firebase collection
-      let q = collection(db, 'businesses')
-      const querySnapshot = await getDocs(q)
-      let businesses = []
-      
-      querySnapshot.forEach((doc) => {
-        const businessData = {
-          id: doc.id,
-          ...doc.data()
-        }
-        businesses.push(businessData)
-      })
-      
-      // Filter only approved businesses
-      const approvedBusinesses = businesses.filter(business => {
-        return business.status === 'approved'
-      })
-      
-      // Apply additional filters if provided
-      let filteredBusinesses = approvedBusinesses
-      
-      if (filters.category) {
-        filteredBusinesses = filteredBusinesses.filter(b => 
-          b.category === filters.category || 
-          b.category_id === filters.category
-        )
-      }
-      
-      // Sort by creation date (newest first)
-      filteredBusinesses.sort((a, b) => {
-        const dateA = a.createdAt || a.created_at
-        const dateB = b.createdAt || b.created_at
-        
-        if (!dateA || !dateB) return 0
-        
-        const timeA = dateA.toDate ? dateA.toDate().getTime() : new Date(dateA).getTime()
-        const timeB = dateB.toDate ? dateB.toDate().getTime() : new Date(dateB).getTime()
-        
-        return timeB - timeA
-      })
-      
-      if (filters.limit) {
-        filteredBusinesses = filteredBusinesses.slice(0, filters.limit)
-      }
-      
-      return filteredBusinesses
-      
+      const favorite = await this.getFavorite(userId, businessId)
+      return favorite !== null
     } catch (error) {
-      console.error('❌ Error obteniendo negocios aprobados:', error)
-      
-      // Only use mock data if it's a permission error
-      if (error.code === 'permission-denied') {
-        console.warn('⚠️ Sin permisos, usando datos mock como fallback')
-        const mockBusinesses = this.getMockBusinesses()
-        return mockBusinesses.filter(business => business.status === 'approved')
-      }
-      
-      throw error
-    }
-  }
-
-  // Get business categories
-  async getBusinessCategories() {
-    try {
-      // Try to get categories from Firebase
-      const querySnapshot = await getDocs(collection(db, 'categories'))
-      const categories = []
-      
-      querySnapshot.forEach((doc) => {
-        categories.push({
-          id: doc.id,
-          ...doc.data()
-        })
-      })
-
-      // If no categories found, return default ones
-      if (categories.length === 0) {
-        return this.getDefaultCategories()
-      }
-
-      return categories
-    } catch (error) {
-      console.error('Error getting categories:', error)
-      // Return default categories as fallback
-      return this.getDefaultCategories()
-    }
-  }
-
-  // Default categories for when Firebase is not available
-  getDefaultCategories() {
-    return [
-      { id: 'restaurante', name: 'Restaurante', description: 'Comida y bebidas' },
-      { id: 'cafe', name: 'Café', description: 'Cafeterías y panaderías' },
-      { id: 'libreria', name: 'Librería', description: 'Libros y material de lectura' },
-      { id: 'tienda', name: 'Tienda', description: 'Comercio al por menor' },
-      { id: 'servicio', name: 'Servicio', description: 'Servicios profesionales' },
-      { id: 'salud', name: 'Salud', description: 'Servicios de salud y bienestar' },
-      { id: 'belleza', name: 'Belleza', description: 'Salones y spas' },
-      { id: 'tecnologia', name: 'Tecnología', description: 'Servicios tecnológicos' },
-      { id: 'entretenimiento', name: 'Entretenimiento', description: 'Diversión y ocio' },
-      { id: 'otros', name: 'Otros', description: 'Otros tipos de negocio' }
-    ]
-  }
-
-  // SEARCH AND FILTERS
-  async searchBusinesses(searchTerm, filters = {}) {
-    try {
-      // Note: Firestore doesn't support full-text search natively
-      // This is a simple implementation. For production, consider using Algolia or similar
-      let businesses = await this.getBusinesses({ status: 'approved', ...filters })
-      
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase()
-        businesses = businesses.filter(business => 
-          business.name.toLowerCase().includes(term) ||
-          business.description?.toLowerCase().includes(term) ||
-          business.category?.toLowerCase().includes(term) ||
-          business.address?.toLowerCase().includes(term)
-        )
-      }
-      
-      return businesses
-    } catch (error) {
-      console.error('Error searching businesses:', error)
-      throw error
+      console.error('Error checking if favorite:', error)
+      return false
     }
   }
 

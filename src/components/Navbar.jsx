@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
-import { Menu, X, Home, Store, LogIn, UserPlus, Shield, LogOut, Settings, User, ChevronDown } from 'lucide-react'
+import { Menu, X, Home, Store, LogIn, UserPlus, Shield, LogOut, Settings, User, ChevronDown, Heart } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const Navbar = () => {
@@ -212,6 +212,18 @@ const Navbar = () => {
                       </Link>
                     )}
 
+                    {/* Mis Favoritos - solo para usuarios normales */}
+                    {!isAdmin() && !isBusiness() && (
+                      <Link
+                        to="/favorites"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-gray-700/50 transition-colors"
+                      >
+                        <Heart size={16} className="text-red-400" />
+                        <span>Mis Favoritos</span>
+                      </Link>
+                    )}
+
                     <div className="border-t border-gray-700/50 mt-2 pt-2">
                       <button
                         onClick={async () => {
@@ -348,6 +360,18 @@ const Navbar = () => {
                   >
                     <Settings size={20} />
                     <span>Mi Dashboard</span>
+                  </Link>
+                )}
+
+                {/* Mis Favoritos Link for Mobile - solo para usuarios normales */}
+                {!isAdmin() && !isBusiness() && (
+                  <Link
+                    to="/favorites"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-white hover:bg-red-400/20 hover:text-red-400"
+                  >
+                    <Heart size={20} />
+                    <span>Mis Favoritos</span>
                   </Link>
                 )}
 

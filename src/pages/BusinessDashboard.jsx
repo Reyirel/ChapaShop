@@ -217,6 +217,17 @@ Para configurar los índices, ve a Firebase Console > Firestore Database > Index
                         {getStatusBadge(business.status)}
                       </div>
                       
+                      {/* Admin Notes */}
+                      {business.admin_notes && (
+                        <div className="mt-3 p-3 bg-yellow-900/20 border border-yellow-700/50 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <AlertCircle size={14} className="text-yellow-400" />
+                            <span className="text-sm font-medium text-yellow-400">Comentarios del Administrador:</span>
+                          </div>
+                          <p className="text-yellow-200 text-sm">{business.admin_notes}</p>
+                        </div>
+                      )}
+                      
                       <p className="text-gray-300 mb-4">{business.description}</p>
                       
                       <div className="flex items-center gap-6 text-sm text-gray-400">
@@ -650,8 +661,8 @@ const EditBusinessModal = ({ business, onClose, onSuccess }) => {
       // Actualizar negocio
       await dbService.updateBusiness(business.id, businessData)
 
-      // Si el negocio estaba aprobado, cambiar a pendiente para nueva aprobación
-      if (business.status === 'approved') {
+      // Si el negocio estaba aprobado o rechazado, cambiar a pendiente para nueva aprobación
+      if (business.status === 'approved' || business.status === 'rejected') {
         await dbService.updateBusinessStatus(business.id, 'pending', 'Actualización pendiente de aprobación')
         
         alert(`

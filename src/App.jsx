@@ -12,6 +12,7 @@ import Admin from './pages/Admin'
 import BusinessDashboard from './pages/BusinessDashboard'
 import AdminPanel from './pages/AdminPanel'
 import Profile from './pages/Profile'
+import Favorites from './pages/Favorites'
 import './App.css'
 
 // Componente interno que tiene acceso al contexto de auth
@@ -35,6 +36,7 @@ const AppContent = () => {
         <Route path="/business-dashboard" element={<BusinessDashboard />} />
         <Route path="/admin-panel" element={<AdminPanel />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/favorites" element={<Favorites />} />
       </Routes>
     </div>
   )

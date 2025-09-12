@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import dbService from '../services/database'
+import { useAuth } from '../context/AuthContext'
 import { 
   Search, 
   Filter, 
@@ -12,7 +13,9 @@ import {
   Store,
   ShoppingBag,
   Award,
-  Sparkles
+  Sparkles,
+  MessageSquare,
+  ThumbsUp
 } from 'lucide-react'
 
 const Negocios = () => {
@@ -44,26 +47,42 @@ const Negocios = () => {
         negociosData = []
       }
 
+      // Cargar reviews para cada negocio y calcular ratings
+      const negociosConReviews = await Promise.all(
+        negociosData.map(async (negocio) => {
+          try {
+            const reviews = await dbService.getReviews(negocio.id)
+            const avgRating = reviews.length > 0 
+              ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+              : 0
+            
+            return {
+              ...negocio,
+              reviews,
+              avgRating: parseFloat(avgRating.toFixed(1)),
+              reviewCount: reviews.length
+            }
+          } catch (error) {
+            console.error('Error loading reviews for business:', negocio.id, error)
+            return {
+              ...negocio,
+              reviews: [],
+              avgRating: 0,
+              reviewCount: 0
+            }
+          }
+        })
+      )
+
       // Procesar negocios para calcular ratings promedio
-      const negociosConRating = negociosData.map(negocio => {
-        const reviews = negocio.reviews || []
-        const avgRating = reviews.length > 0 
-          ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
-          : 0
-        
-        return {
-          ...negocio,
-          avgRating: parseFloat(avgRating.toFixed(1)),
-          reviewCount: reviews.length
-        }
-      })
+      const negociosConRating = negociosConReviews
 
       // Establecer datos
       setNegocios(negociosConRating)
       setCategorias(categoriasData || [])
 
       // Top 10 negocios con mejor rating
-      const topRated = [...negociosConRating]
+      const topRated = [...negociosConReviews]
         .filter(n => n.reviewCount > 0)
         .sort((a, b) => {
           if (a.avgRating !== b.avgRating) return b.avgRating - a.avgRating
@@ -332,7 +351,99 @@ const Negocios = () => {
 
 // Componente para cada tarjeta de negocio
 const BusinessCard = ({ negocio }) => {
-  const [liked, setLiked] = useState(false)
+  const { user } = useAuth()
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [loadingFavorite, setLoadingFavorite] = useState(false)
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [userReview, setUserReview] = useState(null)
+  const [userRating, setUserRating] = useState(0)
+  const [reviewComment, setReviewComment] = useState('')
+  const [submittingReview, setSubmittingReview] = useState(false)
+
+  // Check if business is in user's favorites
+  useEffect(() => {
+    if (user && negocio.id) {
+      checkIfFavorite()
+    }
+  }, [user, negocio.id])
+
+  const checkIfFavorite = async () => {
+    if (!user || !negocio.id) return
+    
+    try {
+      const favorite = await dbService.isFavorite(user.uid, negocio.id)
+      setIsFavorite(favorite)
+    } catch (error) {
+      console.error('Error checking favorite status:', error)
+    }
+  }
+
+  const handleFavoriteToggle = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!user) {
+      alert('Debes iniciar sesión para guardar favoritos')
+      return
+    }
+
+    setLoadingFavorite(true)
+    try {
+      if (isFavorite) {
+        await dbService.removeFromFavorites(user.uid, negocio.id)
+        setIsFavorite(false)
+      } else {
+        await dbService.addToFavorites(user.uid, negocio.id)
+        setIsFavorite(true)
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+      alert('Error al actualizar favoritos. Inténtalo de nuevo.')
+    } finally {
+      setLoadingFavorite(false)
+    }
+  }
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!user) {
+      alert('Debes iniciar sesión para dejar reseñas')
+      return
+    }
+
+    if (userRating === 0) {
+      alert('Por favor selecciona una calificación')
+      return
+    }
+
+    setSubmittingReview(true)
+    try {
+      const reviewData = {
+        businessId: negocio.id,
+        userId: user.uid,
+        userName: user.displayName || user.email || 'Usuario anónimo',
+        rating: userRating,
+        comment: reviewComment.trim(),
+        createdAt: new Date()
+      }
+
+      await dbService.createReview(reviewData)
+      
+      alert('¡Reseña enviada exitosamente!')
+      setShowReviewModal(false)
+      setUserRating(0)
+      setReviewComment('')
+      
+      // Refresh the page to update ratings
+      window.location.reload()
+    } catch (error) {
+      console.error('Error submitting review:', error)
+      alert('Error al enviar la reseña. Inténtalo de nuevo.')
+    } finally {
+      setSubmittingReview(false)
+    }
+  }
 
   const handleCardClick = (e) => {
     // Evitar navegación si se hace clic en botones de acción
@@ -364,25 +475,52 @@ const BusinessCard = ({ negocio }) => {
           
           {/* Action buttons */}
           <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                setLiked(!liked)
-              }}
-              className={`action-button p-2 rounded-full backdrop-blur-sm transition-all ${
-                liked ? 'bg-red-500 text-white' : 'bg-white/90 text-gray-700 hover:bg-red-500 hover:text-white'
-              }`}
-            >
-              <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
-            </button>
+            {user && (
+              <button
+                onClick={handleFavoriteToggle}
+                disabled={loadingFavorite}
+                className={`action-button p-2 rounded-full backdrop-blur-sm transition-all ${
+                  isFavorite ? 'bg-red-500 text-white' : 'bg-white/90 text-gray-700 hover:bg-red-500 hover:text-white'
+                }`}
+                title={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+              >
+                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+              </button>
+            )}
+            {user && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  // Reset form state when opening modal
+                  setUserRating(0)
+                  setReviewComment('')
+                  setShowReviewModal(true)
+                }}
+                className="action-button p-2 rounded-full bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-[#3ecf8e] hover:text-white transition-all"
+                title="Dejar reseña"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </button>
+            )}
             <button 
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                // Funcionalidad de compartir
+                if (navigator.share) {
+                  navigator.share({
+                    title: negocio.name,
+                    text: negocio.description,
+                    url: window.location.origin + `/negocio/${negocio.id}`
+                  })
+                } else {
+                  // Fallback: copy to clipboard
+                  navigator.clipboard.writeText(window.location.origin + `/negocio/${negocio.id}`)
+                  alert('Enlace copiado al portapapeles')
+                }
               }}
               className="action-button p-2 rounded-full bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-[#3ecf8e] hover:text-white transition-all"
+              title="Compartir"
             >
               <Share2 className="h-4 w-4" />
             </button>
@@ -463,12 +601,126 @@ const BusinessCard = ({ negocio }) => {
             </div>
           )}
 
+          {/* Login prompt for non-authenticated users */}
+          {!user && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-[#3ecf8e]/10 to-[#2dd4bf]/10 border border-[#3ecf8e]/20 rounded-xl">
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <ThumbsUp className="h-4 w-4 text-[#3ecf8e]" />
+                <span>
+                  <Link to="/login" className="text-[#3ecf8e] hover:underline font-medium">
+                    Inicia sesión
+                  </Link>
+                  {' '}para guardar favoritos y dejar reseñas
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Botón de acción */}
           <div className="bg-gradient-to-r from-[#3ecf8e] to-[#2dd4bf] text-white text-center py-3 rounded-xl font-semibold group-hover:from-[#2dd4bf] group-hover:to-[#3ecf8e] transition-all duration-200 shadow-md">
             Ver Detalles
           </div>
         </div>
       </div>
+
+      {/* Review Modal */}
+      {showReviewModal && user && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-800">Dejar Reseña</h3>
+                <button
+                  onClick={() => {
+                    setShowReviewModal(false)
+                    setUserRating(0)
+                    setReviewComment('')
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-500 text-2xl">×</span>
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-800 mb-2">{negocio.name}</h4>
+                <p className="text-sm text-gray-600">{negocio.description}</p>
+              </div>
+
+              <form onSubmit={handleReviewSubmit}>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Calificación *
+                  </label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setUserRating(star)}
+                        className="p-1 hover:scale-110 transition-transform"
+                      >
+                        <Star
+                          className={`h-8 w-8 ${
+                            star <= userRating
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Comentario (opcional)
+                  </label>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      console.log('Comment changed:', value, 'Length:', value.length) // Debug log
+                      setReviewComment(value)
+                      // Force re-render by updating state
+                      setTimeout(() => {
+                        if (e.target.value !== value) {
+                          setReviewComment(e.target.value)
+                        }
+                      }, 0)
+                    }}
+                    onInput={(e) => {
+                      const value = e.target.value
+                      setReviewComment(value)
+                    }}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#3ecf8e] focus:border-[#3ecf8e] outline-none resize-none transition-colors"
+                    placeholder="Comparte tu experiencia con este negocio..."
+                    name="reviewComment"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowReviewModal(false)}
+                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingReview || userRating === 0}
+                    className="flex-1 px-4 py-3 bg-[#3ecf8e] text-white rounded-xl hover:bg-[#2dd4bf] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submittingReview ? 'Enviando...' : 'Enviar Reseña'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </Link>
   )
 }
