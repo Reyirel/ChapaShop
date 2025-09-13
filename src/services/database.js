@@ -1141,6 +1141,77 @@ class DatabaseService {
       return 0
     }
   }
+
+  // Get unique categories from existing businesses
+  async getBusinessCategories() {
+    try {
+      const businesses = await this.getApprovedBusinesses()
+      
+      // Extract unique categories from businesses
+      const categoryMap = new Map()
+      
+      // Add default categories first
+      const defaultCategories = [
+        { id: 'restaurante', name: 'Restaurante', color: '#FF6B6B' },
+        { id: 'cafe', name: 'Café', color: '#4ECDC4' },
+        { id: 'tienda', name: 'Tienda', color: '#45B7D1' },
+        { id: 'servicio', name: 'Servicio', color: '#96CEB4' },
+        { id: 'entretenimiento', name: 'Entretenimiento', color: '#FFEAA7' },
+        { id: 'salud', name: 'Salud y Belleza', color: '#DDA0DD' },
+        { id: 'educacion', name: 'Educación', color: '#98D8C8' },
+        { id: 'transporte', name: 'Transporte', color: '#F7DC6F' }
+      ]
+      
+      defaultCategories.forEach(cat => categoryMap.set(cat.name, cat))
+      
+      // Add categories from existing businesses
+      businesses.forEach(business => {
+        const categoryName = business.category || business.category_name || 'Sin Categoría'
+        if (!categoryMap.has(categoryName) && categoryName !== 'Sin Categoría') {
+          // Normalize category name to avoid duplicates
+          const normalizedName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1).toLowerCase()
+          const categoryId = normalizedName.toLowerCase().replace(/\s+/g, '-')
+          
+          categoryMap.set(normalizedName, {
+            id: categoryId,
+            name: normalizedName,
+            color: this.getCategoryColor(normalizedName)
+          })
+        }
+      })
+      
+      return Array.from(categoryMap.values())
+    } catch (error) {
+      console.error('Error getting business categories:', error)
+      // Return default categories as fallback
+      return [
+        { id: 'restaurante', name: 'Restaurante', color: '#FF6B6B' },
+        { id: 'cafe', name: 'Café', color: '#4ECDC4' },
+        { id: 'tienda', name: 'Tienda', color: '#45B7D1' },
+        { id: 'servicio', name: 'Servicio', color: '#96CEB4' },
+        { id: 'entretenimiento', name: 'Entretenimiento', color: '#FFEAA7' },
+        { id: 'salud', name: 'Salud y Belleza', color: '#DDA0DD' },
+        { id: 'educacion', name: 'Educación', color: '#98D8C8' },
+        { id: 'transporte', name: 'Transporte', color: '#F7DC6F' }
+      ]
+    }
+  }
+
+  // Helper function to assign colors to categories
+  getCategoryColor(categoryName) {
+    const colors = [
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', 
+      '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+    ]
+    
+    // Simple hash function to get consistent color for same category
+    let hash = 0
+    for (let i = 0; i < categoryName.length; i++) {
+      hash = categoryName.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    
+    return colors[Math.abs(hash) % colors.length]
+  }
 }
 
 // Create and export a singleton instance

@@ -15,8 +15,101 @@ import {
   Award,
   Sparkles,
   MessageSquare,
-  ThumbsUp
+  ThumbsUp,
+  Phone,
+  Mail,
+  Layers,
+  Utensils,
+  Coffee,
+  BookOpen,
+  Scissors,
+  Car,
+  GraduationCap,
+  Heart as HeartIcon,
+  Gamepad2,
+  Briefcase,
+  ChevronDown,
+  ChevronUp,
+  BarChart3
 } from 'lucide-react'
+
+// Function to get appropriate icon for each category
+const getCategoryIcon = (categoryName) => {
+  const categoryIcons = {
+    'Restaurante': Utensils,
+    'Café': Coffee,
+    'Tienda': ShoppingBag,
+    'Servicio': Briefcase,
+    'Entretenimiento': Gamepad2,
+    'Salud y Belleza': HeartIcon,
+    'Educación': GraduationCap,
+    'Transporte': Car,
+    'Librería': BookOpen,
+    'Peluquería': Scissors,
+    'Bar': Coffee,
+    'Hotel': Store,
+    'Gimnasio': HeartIcon,
+    'Consultoría': Briefcase,
+    'Tecnología': Store,
+    'Arte': Sparkles,
+    'Deporte': Award,
+    'Viajes': MapPin,
+    'Música': MessageSquare,
+    'Fotografía': Store
+  }
+  
+  return categoryIcons[categoryName] || Store // Default to Store icon if category not found
+}
+
+// Function to get appropriate image for each category
+const getCategoryImage = (categoryName) => {
+  const categoryImages = {
+    'Restaurante': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Imagen personalizada de comida
+    'Café': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Imagen personalizada de comida
+    'Tienda': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Imagen personalizada de tienda
+    'Servicio': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Imagen personalizada de servicio
+    'Entretenimiento': 'https://i.pinimg.com/1200x/2a/b7/d4/2ab7d413230af01e379488186e03a2fe.jpg', // Imagen personalizada de entretenimiento
+    'Salud y Belleza': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Imagen personalizada de salud y belleza
+    'Educación': 'https://i.pinimg.com/736x/6a/b0/4d/6ab04d7cee29ee80a53b84bc6ecd8d6d.jpg', // Imagen personalizada de educación
+    'Transporte': 'https://i.pinimg.com/736x/c3/c4/03/c3c403673f9e4ab5ec3c5b5d6e0a1279.jpg', // Imagen personalizada de transporte
+    'Librería': 'https://i.pinimg.com/736x/6a/b0/4d/6ab04d7cee29ee80a53b84bc6ecd8d6d.jpg', // Usar imagen de educación
+    'Peluquería': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Bar': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Usar imagen de comida
+    'Hotel': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Gimnasio': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Consultoría': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Tecnología': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Arte': 'https://i.pinimg.com/1200x/2a/b7/d4/2ab7d413230af01e379488186e03a2fe.jpg', // Usar imagen de entretenimiento
+    'Deporte': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Viajes': 'https://i.pinimg.com/736x/c3/c4/03/c3c403673f9e4ab5ec3c5b5d6e0a1279.jpg', // Usar imagen de transporte
+    'Música': 'https://i.pinimg.com/1200x/2a/b7/d4/2ab7d413230af01e379488186e03a2fe.jpg', // Usar imagen de entretenimiento
+    'Fotografía': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Farmacia': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Automotriz': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Construcción': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Inmobiliaria': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Financiero': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Legal': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Veterinaria': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Florería': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Joyería': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Panadería': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Usar imagen de comida
+    'Supermercado': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Ropa': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Electrónicos': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Muebles': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Jardín': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Mascotas': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Libros': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Zapatos': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Juguetes': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Deportes': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Cocina': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Limpieza': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg' // Usar imagen de tienda
+  }
+  
+  return categoryImages[categoryName] || 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg'
+}
 
 const Negocios = () => {
   const [negocios, setNegocios] = useState([])
@@ -26,6 +119,11 @@ const Negocios = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [sortBy, setSortBy] = useState('recent')
+  
+  // Estados para controlar la expansión en móvil
+  const [isStatsExpanded, setIsStatsExpanded] = useState(false)
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(false)
+  const [isTopBusinessExpanded, setIsTopBusinessExpanded] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
@@ -35,7 +133,9 @@ const Negocios = () => {
       let categoriasData = []
       try {
         categoriasData = await dbService.getBusinessCategories()
-      } catch {
+        console.log('Categories loaded:', categoriasData)
+      } catch (error) {
+        console.error('Error loading categories:', error)
         categoriasData = []
       }
 
@@ -43,7 +143,9 @@ const Negocios = () => {
       let negociosData = []
       try {
         negociosData = await dbService.getApprovedBusinesses()
-      } catch {
+        console.log('Businesses loaded:', negociosData.length)
+      } catch (error) {
+        console.error('Error loading businesses:', error)
         negociosData = []
       }
 
@@ -109,7 +211,8 @@ const Negocios = () => {
     window.debugFirebase = {
       showAllBusinesses: () => dbService.debugAllBusinesses(),
       approveAllPending: () => dbService.approveAllPendingBusinesses(),
-      refreshPage: () => fetchData()
+      refreshPage: () => fetchData(),
+      debugCategories: () => debugCategories()
     }
   }, [fetchData])
 
@@ -117,14 +220,33 @@ const Negocios = () => {
     fetchData()
   }, [fetchData])
 
+  const debugCategories = () => {
+    console.log('=== DEBUG CATEGORIES ===')
+    console.log('Total businesses:', negocios?.length || 0)
+    console.log('Categories:', categorias)
+    console.log('Selected category:', selectedCategory)
+    
+    if (negocios) {
+      const categoryCounts = {}
+      negocios.forEach(negocio => {
+        const cat = negocio.category || negocio.category_name || negocio.business_categories?.name || 'Sin Categoría'
+        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1
+      })
+      console.log('Businesses by category:', categoryCounts)
+    }
+    console.log('=======================')
+  }
+
   const filteredNegocios = negocios.filter(negocio => {
     const matchesSearch = negocio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          negocio.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    // Fix: Check both category and category_id fields for compatibility
+    
+    // Improved category matching - check multiple possible fields
+    const negocioCategory = negocio.category || negocio.category_name || negocio.business_categories?.name || ''
     const matchesCategory = !selectedCategory || 
-                           negocio.category === selectedCategory || 
-                           negocio.category_id === selectedCategory ||
-                           negocio.category?.toLowerCase() === selectedCategory.toLowerCase()
+                           negocioCategory.toLowerCase() === selectedCategory.toLowerCase() ||
+                           negocioCategory === selectedCategory
+    
     return matchesSearch && matchesCategory
   }).sort((a, b) => {
     switch (sortBy) {
@@ -163,7 +285,7 @@ const Negocios = () => {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-800 to-[#3ecf8e] bg-clip-text text-transparent">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-800">
               Descubre Negocios
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -197,31 +319,54 @@ const Negocios = () => {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mt-8">
-            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
-                {negocios.length}+
-              </div>
-              <div className="text-gray-500 text-sm">Negocios</div>
+          {/* Stats - Ahora colapsibles en móvil */}
+          <div className="max-w-4xl mx-auto mt-8">
+            {/* Header colapsible para móvil */}
+            <div className="md:hidden mb-4">
+              <button
+                onClick={() => setIsStatsExpanded(!isStatsExpanded)}
+                className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <BarChart3 className="h-5 w-5 text-[#3ecf8e]" />
+                  <span className="font-semibold text-gray-800">Estadísticas</span>
+                </div>
+                {isStatsExpanded ? (
+                  <ChevronUp className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                )}
+              </button>
             </div>
-            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
-                {topNegocios.reduce((acc, neg) => acc + neg.reviewCount, 0)}+
+
+            {/* Contenido de estadísticas */}
+            <div className={`grid grid-cols-2 md:grid-cols-4 gap-6 transition-all duration-300 overflow-hidden ${
+              !isStatsExpanded ? 'md:grid hidden' : 'grid'
+            }`}>
+              <div className="text-center bg-white rounded-xl p-4 shadow-sm">
+                <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
+                  {negocios.length}+
+                </div>
+                <div className="text-gray-500 text-sm">Negocios</div>
               </div>
-              <div className="text-gray-500 text-sm">Reseñas</div>
-            </div>
-            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
-                {categorias.length}+
+              <div className="text-center bg-white rounded-xl p-4 shadow-sm">
+                <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
+                  {topNegocios.reduce((acc, neg) => acc + neg.reviewCount, 0)}+
+                </div>
+                <div className="text-gray-500 text-sm">Reseñas</div>
               </div>
-              <div className="text-gray-500 text-sm">Categorías</div>
-            </div>
-            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
-                {topNegocios.length > 0 ? Math.round(topNegocios.reduce((acc, neg) => acc + neg.avgRating, 0) / topNegocios.length * 10) / 10 : 0}★
+              <div className="text-center bg-white rounded-xl p-4 shadow-sm">
+                <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
+                  {categorias.length}+
+                </div>
+                <div className="text-gray-500 text-sm">Categorías</div>
               </div>
-              <div className="text-gray-500 text-sm">Promedio</div>
+              <div className="text-center bg-white rounded-xl p-4 shadow-sm">
+                <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
+                  {topNegocios.length > 0 ? Math.round(topNegocios.reduce((acc, neg) => acc + neg.avgRating, 0) / topNegocios.length * 10) / 10 : 0}★
+                </div>
+                <div className="text-gray-500 text-sm">Promedio</div>
+              </div>
             </div>
           </div>
         </div>
@@ -232,15 +377,44 @@ const Negocios = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar izquierdo - Categorías */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            {/* Versión móvil colapsible */}
+            <div className="lg:hidden mb-6">
+              <button
+                onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+                className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Filter className="h-5 w-5 text-[#3ecf8e]" />
+                  <span className="font-semibold text-gray-800">
+                    Filtrar por Categoría
+                    {selectedCategory && (
+                      <span className="text-sm text-[#3ecf8e] ml-2">({selectedCategory})</span>
+                    )}
+                  </span>
+                </div>
+                {isCategoriesExpanded ? (
+                  <ChevronUp className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                )}
+              </button>
+            </div>
+
+            {/* Contenido de categorías */}
+            <div className={`bg-white rounded-xl shadow-sm border p-6 sticky top-6 transition-all duration-300 overflow-hidden ${
+              !isCategoriesExpanded ? 'lg:block hidden' : 'block'
+            }`}>
+              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3 hidden lg:flex">
                 <Filter className="h-6 w-6 text-[#3ecf8e]" />
-                Categorías
+                Categorías ({categorias.length})
               </h2>
               
               <div className="space-y-2">
                 <button
-                  onClick={() => setSelectedCategory('')}
+                  onClick={() => {
+                    setSelectedCategory('')
+                    setIsCategoriesExpanded(false)
+                  }}
                   className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
                     !selectedCategory 
                       ? 'bg-[#3ecf8e] text-white font-semibold shadow-md' 
@@ -248,30 +422,33 @@ const Negocios = () => {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Sparkles className="h-4 w-4" />
+                    <Layers className="h-4 w-4" />
                     Todas las categorías
                   </div>
                 </button>
                 
-                {categorias.map((categoria) => (
-                  <button
-                    key={categoria.id}
-                    onClick={() => setSelectedCategory(categoria.id)}
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
-                      selectedCategory === categoria.id
-                        ? 'bg-[#3ecf8e] text-white font-semibold shadow-md'
-                        : 'hover:bg-gray-50 text-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: categoria.color }}
-                      ></div>
-                      {categoria.name}
-                    </div>
-                  </button>
-                ))}
+                {categorias.map((categoria) => {
+                  const CategoryIcon = getCategoryIcon(categoria.name)
+                  return (
+                    <button
+                      key={categoria.id}
+                      onClick={() => {
+                        setSelectedCategory(categoria.name)
+                        setIsCategoriesExpanded(false)
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
+                        selectedCategory === categoria.name
+                          ? 'bg-[#3ecf8e] text-white font-semibold shadow-md'
+                          : 'hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <CategoryIcon className="h-4 w-4 text-[#3ecf8e]" />
+                        {categoria.name}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -281,12 +458,11 @@ const Negocios = () => {
             <div className="space-y-6">
               {filteredNegocios.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-                  <div className="text-6xl mb-6">🏪</div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                    No se encontraron negocios
+                    {selectedCategory ? 'No hay negocios en esta categoría' : 'No se encontraron negocios'}
                   </h3>
                   <p className="text-gray-600 text-lg">
-                    Intenta cambiar tus filtros de búsqueda
+                    {selectedCategory ? 'Prueba seleccionando otra categoría o cambiando tus filtros de búsqueda' : 'Intenta cambiar tus filtros de búsqueda'}
                   </p>
                 </div>
               ) : (
@@ -299,8 +475,29 @@ const Negocios = () => {
 
           {/* Sidebar derecho - Top negocios */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            {/* Versión móvil colapsible */}
+            <div className="lg:hidden mb-6">
+              <button
+                onClick={() => setIsTopBusinessExpanded(!isTopBusinessExpanded)}
+                className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Award className="h-5 w-5 text-yellow-500" />
+                  <span className="font-semibold text-gray-800">Top Calificados</span>
+                </div>
+                {isTopBusinessExpanded ? (
+                  <ChevronUp className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                )}
+              </button>
+            </div>
+
+            {/* Contenido de top negocios */}
+            <div className={`bg-white rounded-xl shadow-sm border p-6 sticky top-6 transition-all duration-300 overflow-hidden ${
+              !isTopBusinessExpanded ? 'lg:block hidden' : 'block'
+            }`}>
+              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3 hidden lg:flex">
                 <Award className="h-6 w-6 text-yellow-500" />
                 Top Calificados
               </h2>
@@ -311,6 +508,7 @@ const Negocios = () => {
                     key={negocio.id}
                     to={`/negocio/${negocio.id}`}
                     className="block p-3 rounded-xl hover:bg-gray-50 transition-all group border border-gray-100"
+                    onClick={() => setIsTopBusinessExpanded(false)}
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex-shrink-0">
@@ -467,7 +665,7 @@ const BusinessCard = ({ negocio }) => {
               negocio.image_url || 
               negocio.images?.[0] || 
               negocio.imageUrl || 
-              'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500&h=300&fit=crop'
+              getCategoryImage(negocio.business_categories?.name || negocio.category || 'Servicio')
             } 
             alt={negocio.name || 'Imagen del negocio'}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -588,13 +786,13 @@ const BusinessCard = ({ negocio }) => {
             <div className="space-y-2 mb-6">
               {negocio.phone && (
                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <span className="text-[#3ecf8e]">📞</span>
+                  <Phone className="h-4 w-4 text-[#3ecf8e]" />
                   <span>{negocio.phone}</span>
                 </div>
               )}
               {negocio.email && (
                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <span className="text-[#3ecf8e]">✉️</span>
+                  <Mail className="h-4 w-4 text-[#3ecf8e]" />
                   <span className="truncate">{negocio.email}</span>
                 </div>
               )}

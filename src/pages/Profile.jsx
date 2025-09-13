@@ -5,13 +5,14 @@ import { useAuth } from '../context/AuthContext'
 import { FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
 
 const Profile = () => {
-  const { user, profile, updateProfile, loading } = useAuth()
+  const { user, userProfile: profile, updateProfile, loading } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
     business_name: '',
-    business_description: ''
+    business_description: '',
+    role: 'person' // Agregamos el campo role
   })
   const [saveLoading, setSaveLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -23,7 +24,8 @@ const Profile = () => {
         full_name: profile.full_name || '',
         phone: profile.phone || '',
         business_name: profile.business_name || '',
-        business_description: profile.business_description || ''
+        business_description: profile.business_description || '',
+        role: profile.role || 'person'
       })
     }
   }, [profile])
@@ -42,15 +44,19 @@ const Profile = () => {
     setMessage('')
 
     try {
-      const { error } = await updateProfile(formData)
-      
-      if (error) throw error
+      if (!user?.uid) {
+        throw new Error('Usuario no autenticado')
+      }
+
+      // Llamar updateProfile con userId y updates
+      await updateProfile(user.uid, formData)
       
       setMessage('Perfil actualizado exitosamente')
       setIsEditing(false)
       
       setTimeout(() => setMessage(''), 3000)
     } catch (error) {
+      console.error('Error updating profile:', error)
       setError(`Error al actualizar perfil: ${error.message}`)
     } finally {
       setSaveLoading(false)
@@ -62,6 +68,7 @@ const Profile = () => {
       case 'admin': return 'Administrador'
       case 'business': return 'Negocio'
       case 'person': return 'Usuario'
+      case 'client': return 'Cliente'
       default: return 'Usuario'
     }
   }
@@ -70,6 +77,8 @@ const Profile = () => {
     switch (role) {
       case 'admin': return 'bg-red-500/20 text-red-400 border-red-500/30'
       case 'business': return 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+      case 'person': return 'bg-green-500/20 text-green-400 border-green-500/30'
+      case 'client': return 'bg-purple-500/20 text-purple-400 border-purple-500/30'
       default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
     }
   }
@@ -207,6 +216,31 @@ const Profile = () => {
                     ) : (
                       <div className="px-4 py-3 bg-gray-900/30 border border-gray-700 rounded-xl text-gray-300">
                         {profile?.phone || 'No especificado'}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-white text-sm font-semibold mb-2">
+                      Tipo de Usuario
+                    </label>
+                    {isEditing ? (
+                      <select
+                        name="role"
+                        value={formData.role}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                      >
+                        <option value="person">Usuario</option>
+                        <option value="client">Cliente</option>
+                        <option value="business">Negocio</option>
+                        <option value="admin">Administrador</option>
+                      </select>
+                    ) : (
+                      <div className="px-4 py-3 bg-gray-900/30 border border-gray-700 rounded-xl">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeClass(profile?.role || 'person')}`}>
+                          {getRoleDisplayName(profile?.role || 'person')}
+                        </span>
                       </div>
                     )}
                   </div>

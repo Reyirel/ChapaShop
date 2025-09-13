@@ -15,6 +15,7 @@ import {
   getDocs
 } from 'firebase/firestore'
 import { auth, db } from '../services/firebase'
+import dbService from '../services/database'
 
 const AuthContext = createContext({})
 
@@ -244,15 +245,7 @@ export const AuthProvider = ({ children }) => {
   // Get user profile from Firestore
   const getUserProfile = async (userId) => {
     try {
-      const docRef = doc(db, 'users', userId)
-      const docSnap = await getDoc(docRef)
-      
-      if (docSnap.exists()) {
-        return docSnap.data()
-      } else {
-        
-        return null
-      }
+      return await dbService.getUserProfile(userId)
     } catch (error) {
       console.error('Error getting user profile:', error)
       return null
@@ -262,14 +255,12 @@ export const AuthProvider = ({ children }) => {
   // Update user profile
   const updateProfile = async (userId, updates) => {
     try {
-      const docRef = doc(db, 'users', userId)
-      await setDoc(docRef, {
-        ...updates,
-        updatedAt: serverTimestamp()
-      }, { merge: true })
+      await dbService.updateUserProfile(userId, updates)
       
       // Update local state
       setUserProfile(prev => ({ ...prev, ...updates }))
+      
+      return { success: true }
     } catch (error) {
       console.error('Error updating profile:', error)
       throw error

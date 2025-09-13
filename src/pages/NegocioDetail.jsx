@@ -23,6 +23,56 @@ import {
   Send
 } from 'lucide-react'
 
+// Function to get appropriate image for each category
+const getCategoryImage = (categoryName) => {
+  const categoryImages = {
+    'Restaurante': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Imagen personalizada de comida
+    'Café': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Imagen personalizada de comida
+    'Tienda': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Imagen personalizada de tienda
+    'Servicio': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Imagen personalizada de servicio
+    'Entretenimiento': 'https://i.pinimg.com/1200x/2a/b7/d4/2ab7d413230af01e379488186e03a2fe.jpg', // Imagen personalizada de entretenimiento
+    'Salud y Belleza': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Imagen personalizada de salud y belleza
+    'Educación': 'https://i.pinimg.com/736x/6a/b0/4d/6ab04d7cee29ee80a53b84bc6ecd8d6d.jpg', // Imagen personalizada de educación
+    'Transporte': 'https://i.pinimg.com/736x/c3/c4/03/c3c403673f9e4ab5ec3c5b5d6e0a1279.jpg', // Imagen personalizada de transporte
+    'Librería': 'https://i.pinimg.com/736x/6a/b0/4d/6ab04d7cee29ee80a53b84bc6ecd8d6d.jpg', // Usar imagen de educación
+    'Peluquería': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Bar': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Usar imagen de comida
+    'Hotel': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Gimnasio': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Consultoría': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Tecnología': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Arte': 'https://i.pinimg.com/1200x/2a/b7/d4/2ab7d413230af01e379488186e03a2fe.jpg', // Usar imagen de entretenimiento
+    'Deporte': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Viajes': 'https://i.pinimg.com/736x/c3/c4/03/c3c403673f9e4ab5ec3c5b5d6e0a1279.jpg', // Usar imagen de transporte
+    'Música': 'https://i.pinimg.com/1200x/2a/b7/d4/2ab7d413230af01e379488186e03a2fe.jpg', // Usar imagen de entretenimiento
+    'Fotografía': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Farmacia': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Automotriz': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Construcción': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Inmobiliaria': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Financiero': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Legal': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Veterinaria': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Florería': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Joyería': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Panadería': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Usar imagen de comida
+    'Supermercado': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Ropa': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Electrónicos': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Muebles': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Jardín': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Mascotas': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Libros': 'https://i.pinimg.com/736x/6a/b0/4d/6ab04d7cee29ee80a53b84bc6ecd8d6d.jpg', // Usar imagen de educación
+    'Zapatos': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Juguetes': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Deportes': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Cocina': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Limpieza': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg' // Usar imagen de tienda
+  }
+  
+  return categoryImages[categoryName] || 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg' // Imagen por defecto de servicio
+}
+
 const NegocioDetail = () => {
   const { id } = useParams()
   const { user } = useContext(AuthContext)
@@ -253,7 +303,12 @@ const NegocioDetail = () => {
       {/* Hero Section */}
       <div className="relative h-96 bg-white shadow-sm">
         <img 
-          src={negocio.image_url || 'https://via.placeholder.com/1200x400?text=Sin+Imagen'} 
+          src={
+            negocio.image_url || 
+            negocio.images?.[0] || 
+            negocio.imageUrl || 
+            getCategoryImage(negocio.business_categories?.name || negocio.category || 'Servicio')
+          } 
           alt={negocio.name}
           className="w-full h-full object-cover"
         />

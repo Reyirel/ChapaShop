@@ -361,17 +361,15 @@ const Navbar = () => {
                   </Link>
                 )}
 
-                {/* Mis Favoritos Link for Mobile - solo para usuarios normales */}
-                {!isAdmin() && !isBusiness() && (
-                  <Link
-                    to="/favorites"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-white hover:bg-red-400/20 hover:text-red-400"
-                  >
-                    <Heart size={20} />
-                    <span>Mis Favoritos</span>
-                  </Link>
-                )}
+                {/* Mis Favoritos Link for Mobile - para todos los usuarios autenticados */}
+                <Link
+                  to="/favorites"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-white hover:bg-red-400/20 hover:text-red-400"
+                >
+                  <Heart size={20} />
+                  <span>Mis Favoritos</span>
+                </Link>
 
                 {/* Logout */}
                 <button

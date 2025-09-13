@@ -220,29 +220,29 @@ const AdminPanel = () => {
       {/* Header */}
       <div className="bg-gray-900/50 backdrop-blur-sm border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-8">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-gradient-to-br from-[#3ecf8e]/20 to-[#3ecf8e]/5 border border-[#3ecf8e]/20">
-                <Shield size={32} className="text-[#3ecf8e]" />
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 py-6 lg:py-8">
+            <div className="flex items-center gap-3 lg:gap-4">
+              <div className="p-2 lg:p-3 rounded-2xl bg-gradient-to-br from-[#3ecf8e]/20 to-[#3ecf8e]/5 border border-[#3ecf8e]/20">
+                <Shield size={24} className="text-[#3ecf8e] lg:w-8 lg:h-8" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                <h1 className="text-xl md:text-2xl lg:text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                   Panel de Administración
                 </h1>
-                <p className="text-gray-400 text-lg">Gestión de negocios y usuarios</p>
+                <p className="text-gray-400 text-xs md:text-sm lg:text-lg">Gestión de negocios y usuarios</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
               <Link
                 to="/favorites"
-                className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl border border-gray-700/50 transition-colors text-white"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl border border-gray-700/50 transition-colors text-white text-sm"
               >
-                <Heart size={16} className="text-red-400" />
+                <Heart size={16} className="text-red-400 flex-shrink-0" />
                 <span>Mis Favoritos</span>
               </Link>
-              <div className="bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-700/50">
-                <span className="text-sm text-gray-400">Admin:</span>
-                <span className="text-[#3ecf8e] font-medium ml-2">{user?.full_name}</span>
+              <div className="bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-700/50 text-center text-sm">
+                <span className="text-gray-400">Admin:</span>
+                <span className="text-[#3ecf8e] font-medium ml-2 break-words">{user?.full_name}</span>
               </div>
             </div>
           </div>
@@ -250,64 +250,64 @@ const AdminPanel = () => {
       </div>
 
       {/* Stats */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 rounded-2xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-4 lg:p-6 rounded-2xl">
             <div className="flex items-center">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/20">
-                <Store className="text-blue-400" size={24} />
+              <div className="p-2 lg:p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/20">
+                <Store className="text-blue-400" size={20} />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Total Negocios</p>
-                <p className="text-3xl font-bold text-white">{stats.total}</p>
+              <div className="ml-3 lg:ml-4">
+                <p className="text-xs lg:text-sm font-medium text-gray-400">Total Negocios</p>
+                <p className="text-2xl lg:text-3xl font-bold text-white">{stats.total}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 rounded-2xl">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-4 lg:p-6 rounded-2xl">
             <div className="flex items-center">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-500/5 border border-yellow-500/20">
-                <Clock className="text-yellow-400" size={24} />
+              <div className="p-2 lg:p-3 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-500/5 border border-yellow-500/20">
+                <Clock className="text-yellow-400" size={20} />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Pendientes</p>
-                <p className="text-3xl font-bold text-white">{stats.pending}</p>
+              <div className="ml-3 lg:ml-4">
+                <p className="text-xs lg:text-sm font-medium text-gray-400">Pendientes</p>
+                <p className="text-2xl lg:text-3xl font-bold text-white">{stats.pending}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 rounded-2xl">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-4 lg:p-6 rounded-2xl">
             <div className="flex items-center">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/20">
-                <CheckCircle className="text-green-400" size={24} />
+              <div className="p-2 lg:p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/20">
+                <CheckCircle className="text-green-400" size={20} />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Aprobados</p>
-                <p className="text-3xl font-bold text-white">{stats.approved}</p>
+              <div className="ml-3 lg:ml-4">
+                <p className="text-xs lg:text-sm font-medium text-gray-400">Aprobados</p>
+                <p className="text-2xl lg:text-3xl font-bold text-white">{stats.approved}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 rounded-2xl">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-4 lg:p-6 rounded-2xl">
             <div className="flex items-center">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-red-500/5 border border-red-500/20">
-                <XCircle className="text-red-400" size={24} />
+              <div className="p-2 lg:p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-red-500/5 border border-red-500/20">
+                <XCircle className="text-red-400" size={20} />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Rechazados</p>
-                <p className="text-3xl font-bold text-white">{stats.rejected}</p>
+              <div className="ml-3 lg:ml-4">
+                <p className="text-xs lg:text-sm font-medium text-gray-400">Rechazados</p>
+                <p className="text-2xl lg:text-3xl font-bold text-white">{stats.rejected}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 rounded-2xl">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-4 lg:p-6 rounded-2xl">
             <div className="flex items-center">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#3ecf8e]/20 to-[#3ecf8e]/5 border border-[#3ecf8e]/20">
-                <Star className="text-[#3ecf8e]" size={24} />
+              <div className="p-2 lg:p-3 rounded-xl bg-gradient-to-br from-[#3ecf8e]/20 to-[#3ecf8e]/5 border border-[#3ecf8e]/20">
+                <Star className="text-[#3ecf8e]" size={20} />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-400">Total Reseñas</p>
-                <p className="text-3xl font-bold text-white">{stats.reviews}</p>
+              <div className="ml-3 lg:ml-4">
+                <p className="text-xs lg:text-sm font-medium text-gray-400">Total Reseñas</p>
+                <p className="text-2xl lg:text-3xl font-bold text-white">{stats.reviews}</p>
               </div>
             </div>
           </div>
@@ -315,13 +315,15 @@ const AdminPanel = () => {
 
         {/* Pending Businesses Section */}
         {pendingBusinesses.length > 0 && (
-          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl mb-8">
-            <div className="px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-yellow-900/20 to-yellow-800/10">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-500/5 border border-yellow-500/20">
-                  <Clock className="text-yellow-400" size={20} />
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl mb-6 lg:mb-8">
+            <div className="px-4 lg:px-6 py-4 border-b border-gray-700/50 bg-gradient-to-r from-yellow-900/20 to-yellow-800/10">
+              <h2 className="text-lg lg:text-2xl font-bold text-white flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-500/5 border border-yellow-500/20">
+                    <Clock className="text-yellow-400" size={18} />
+                  </div>
+                  <span className="break-words">Negocios Pendientes de Aprobación</span>
                 </div>
-                Negocios Pendientes de Aprobación 
                 <span className="bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full text-sm font-medium">
                   {pendingBusinesses.length}
                 </span>
@@ -330,51 +332,53 @@ const AdminPanel = () => {
             
             <div className="divide-y divide-gray-700/50">
               {pendingBusinesses.map((business) => (
-                <div key={business.id} className="p-6 hover:bg-gray-700/20 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-xl font-bold text-white">{business.name}</h3>
-                        {business.business_categories && (
-                          <span 
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white"
-                            style={{ backgroundColor: business.business_categories.color || '#3ecf8e' }}
-                          >
-                            {business.business_categories.name}
-                          </span>
-                        )}
-                        {getStatusBadge(business.status)}
+                <div key={business.id} className="p-4 lg:p-6 hover:bg-gray-700/20 transition-colors">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                        <h3 className="text-lg lg:text-xl font-bold text-white break-words">{business.name}</h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {business.business_categories && (
+                            <span 
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white"
+                              style={{ backgroundColor: business.business_categories.color || '#3ecf8e' }}
+                            >
+                              {business.business_categories.name}
+                            </span>
+                          )}
+                          {getStatusBadge(business.status)}
+                        </div>
                       </div>
                       
-                      <p className="text-gray-300 mb-4 leading-relaxed">{business.description}</p>
+                      <p className="text-gray-300 mb-4 leading-relaxed break-words">{business.description}</p>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-400 mb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-4 text-sm text-gray-400 mb-4">
                         <div className="flex items-center gap-2">
-                          <Users size={14} className="text-[#3ecf8e]" />
-                          <span>Propietario: {business.profiles?.full_name}</span>
+                          <Users size={14} className="text-[#3ecf8e] flex-shrink-0" />
+                          <span className="truncate">Propietario: {business.profiles?.full_name}</span>
                         </div>
                         {business.phone && (
                           <div className="flex items-center gap-2">
-                            <Phone size={14} className="text-[#3ecf8e]" />
-                            <span>{business.phone}</span>
+                            <Phone size={14} className="text-[#3ecf8e] flex-shrink-0" />
+                            <span className="break-all">{business.phone}</span>
                           </div>
                         )}
                         {business.email && (
                           <div className="flex items-center gap-2">
-                            <Mail size={14} className="text-[#3ecf8e]" />
-                            <span>{business.email}</span>
+                            <Mail size={14} className="text-[#3ecf8e] flex-shrink-0" />
+                            <span className="break-all">{business.email}</span>
                           </div>
                         )}
                         {business.address && (
-                          <div className="flex items-center gap-2">
-                            <MapPin size={14} className="text-[#3ecf8e]" />
-                            <span>{business.address}</span>
+                          <div className="flex items-start gap-2">
+                            <MapPin size={14} className="text-[#3ecf8e] flex-shrink-0 mt-0.5" />
+                            <span className="break-words">{business.address}</span>
                           </div>
                         )}
                         {business.website && (
                           <div className="flex items-center gap-2">
-                            <Globe size={14} className="text-[#3ecf8e]" />
-                            <span>{business.website}</span>
+                            <Globe size={14} className="text-[#3ecf8e] flex-shrink-0" />
+                            <span className="break-all">{business.website}</span>
                           </div>
                         )}
                         <div className="text-xs text-gray-500">
@@ -383,20 +387,22 @@ const AdminPanel = () => {
                       </div>
                     </div>
                     
-                    <div className="flex gap-3 ml-6">
+                    <div className="flex flex-row lg:flex-col gap-2 lg:gap-3 lg:ml-6">
                       <button
                         onClick={() => openBusinessModal(business)}
-                        className="p-3 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-blue-500/30"
+                        className="flex items-center justify-center gap-2 lg:gap-0 p-2 lg:p-3 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-blue-500/30 flex-1 lg:flex-initial"
                         title="Ver detalles"
                       >
-                        <Eye size={18} />
+                        <Eye size={16} />
+                        <span className="lg:hidden text-sm">Ver</span>
                       </button>
                       <button
                         onClick={() => handleBusinessAction(business.id, 'approved')}
-                        className="p-3 text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-green-500/30"
+                        className="flex items-center justify-center gap-2 lg:gap-0 p-2 lg:p-3 text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-green-500/30 flex-1 lg:flex-initial"
                         title="Aprobar"
                       >
-                        <CheckCircle size={18} />
+                        <CheckCircle size={16} />
+                        <span className="lg:hidden text-sm">Aprobar</span>
                       </button>
                       <button
                         onClick={() => openBusinessModal(business)}

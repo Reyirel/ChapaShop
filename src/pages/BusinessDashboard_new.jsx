@@ -29,6 +29,46 @@ const BusinessDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
 
+  // Función para obtener placeholders específicos por categoría
+  const getCategoryPlaceholders = (category) => {
+    const placeholders = {
+      restaurante: {
+        name: "Ej: La Trattoria Italiana, Sushi Master, Tacos El Mexicano",
+        description: "Describe tu menú, especialidades culinarias, ambiente, capacidad, tipo de cocina (italiana, mexicana, asiática), opciones vegetarianas/veganas, precios aproximados, y qué te hace único en la zona."
+      },
+      tienda: {
+        name: "Ej: Boutique de Ropa, Ferretería Central, Librería del Saber",
+        description: "Describe qué productos vendes, marcas que manejas, servicios adicionales (entrega a domicilio, instalación), horarios extendidos, descuentos especiales, y por qué los clientes deberían elegir tu tienda."
+      },
+      servicios: {
+        name: "Ej: Consultoría Empresarial, Servicio de Limpieza, Reparaciones Técnicas",
+        description: "Describe los servicios que ofreces, tu experiencia, certificaciones, áreas de cobertura, precios aproximados, garantías, y cómo puedes ayudar a tus clientes."
+      },
+      tecnologia: {
+        name: "Ej: Tech Solutions, Reparación de Celulares, Desarrollo Web",
+        description: "Describe tus servicios tecnológicos, especialidades (hardware, software, desarrollo), marcas que soportas, experiencia, precios, y soluciones innovadoras que ofreces."
+      },
+      salud: {
+        name: "Ej: Clínica Dental, Spa & Wellness, Gimnasio Fitness",
+        description: "Describe tus servicios de salud/belleza, especialidades médicas, tratamientos disponibles, profesionales certificados, instalaciones, y enfoque en el bienestar de tus pacientes/clientes."
+      },
+      educacion: {
+        name: "Ej: Academia de Idiomas, Centro de Capacitación, Escuela de Música",
+        description: "Describe los cursos/programas que ofreces, metodologías de enseñanza, certificaciones, niveles disponibles, duración de cursos, y resultados que logran tus estudiantes."
+      },
+      entretenimiento: {
+        name: "Ej: Cine Independiente, Bolera Familiar, Centro de Juegos",
+        description: "Describe las actividades de entretenimiento que ofreces, edades objetivo, instalaciones, eventos especiales, precios, y experiencias únicas que proporcionas."
+      },
+      otros: {
+        name: "Ej: Agencia de Viajes, Lavandería Express, Servicio de Mensajería",
+        description: "Describe tu negocio, productos o servicios principales, público objetivo, ventajas competitivas, y por qué los clientes deberían elegirte."
+      }
+    }
+    
+    return placeholders[category] || placeholders.otros
+  }
+
   const fetchBusinesses = useCallback(async () => {
     try {
       if (!user) return
@@ -391,7 +431,7 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
-                placeholder="Ej: Restaurante El Buen Sabor"
+                placeholder={getCategoryPlaceholders(formData.category).name}
               />
             </div>
 
@@ -405,16 +445,32 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
                 onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                 className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
               >
-                <option value="">Selecciona una categoría</option>
-                <option value="restaurante">Restaurante</option>
-                <option value="tienda">Tienda</option>
-                <option value="servicios">Servicios</option>
-                <option value="tecnologia">Tecnología</option>
-                <option value="salud">Salud</option>
-                <option value="educacion">Educación</option>
-                <option value="entretenimiento">Entretenimiento</option>
-                <option value="otros">Otros</option>
+                <option value="">
+                  {formData.category ? 'Cambiar categoría...' : '👆 Selecciona la categoría de tu negocio'}
+                </option>
+                <option value="restaurante">🍽️ Restaurante - Bares, cafés, comida rápida</option>
+                <option value="tienda">🛍️ Tienda - Retail, boutiques, comercios</option>
+                <option value="servicios">🔧 Servicios - Profesionales, técnicos, mantenimiento</option>
+                <option value="tecnologia">💻 Tecnología - IT, reparaciones, desarrollo</option>
+                <option value="salud">🏥 Salud y Belleza - Clínicas, spas, gimnasios</option>
+                <option value="educacion">📚 Educación - Academias, cursos, capacitación</option>
+                <option value="entretenimiento">🎮 Entretenimiento - Cines, juegos, actividades</option>
+                <option value="otros">📦 Otros - Cualquier otro tipo de negocio</option>
               </select>
+              {formData.category && (
+                <p className="text-xs text-gray-400 mt-2">
+                  📋 Categoría seleccionada: {
+                    formData.category === 'restaurante' ? 'Restaurante 🍽️' :
+                    formData.category === 'tienda' ? 'Tienda 🛍️' :
+                    formData.category === 'servicios' ? 'Servicios 🔧' :
+                    formData.category === 'tecnologia' ? 'Tecnología 💻' :
+                    formData.category === 'salud' ? 'Salud y Belleza 🏥' :
+                    formData.category === 'educacion' ? 'Educación 📚' :
+                    formData.category === 'entretenimiento' ? 'Entretenimiento 🎮' :
+                    'Otros 📦'
+                  }
+                </p>
+              )}
             </div>
           </div>
 
@@ -428,8 +484,20 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               rows={4}
               className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
-              placeholder="Describe tu negocio, qué ofreces, qué te hace especial..."
+              placeholder={getCategoryPlaceholders(formData.category).description}
             />
+            <p className="text-xs text-gray-400 mt-2">
+              💡 {formData.category ? `Consejo: Incluye información específica sobre tu ${
+                formData.category === 'restaurante' ? 'menú y especialidades' : 
+                formData.category === 'tienda' ? 'productos y servicios' : 
+                formData.category === 'servicios' ? 'servicios ofrecidos' : 
+                formData.category === 'tecnologia' ? 'soluciones tecnológicas' : 
+                formData.category === 'salud' ? 'tratamientos y servicios' : 
+                formData.category === 'educacion' ? 'cursos y programas' : 
+                formData.category === 'entretenimiento' ? 'actividades y experiencias' : 
+                'productos o servicios'
+              }` : 'Selecciona una categoría para ver consejos específicos'}
+            </p>
           </div>
 
           {/* Contact Info */}
@@ -443,7 +511,10 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
                 value={formData.phone}
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
-                placeholder="Ej: +1 234 567 8900"
+                placeholder={formData.category === 'restaurante' ? 'Ej: +52 55 1234 5678 (reservaciones)' : 
+                           formData.category === 'tienda' ? 'Ej: +52 55 1234 5678 (ventas)' : 
+                           formData.category === 'servicios' ? 'Ej: +52 55 1234 5678 (atención al cliente)' : 
+                           'Ej: +52 55 1234 5678'}
               />
             </div>
 
@@ -456,7 +527,10 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
-                placeholder="contacto@negocio.com"
+                placeholder={formData.category === 'restaurante' ? 'reservaciones@restaurante.com' : 
+                           formData.category === 'tienda' ? 'ventas@tienda.com' : 
+                           formData.category === 'servicios' ? 'contacto@servicio.com' : 
+                           'contacto@negocio.com'}
               />
             </div>
           </div>
@@ -470,7 +544,10 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
               value={formData.website}
               onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
               className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
-              placeholder="https://www.negocio.com"
+              placeholder={formData.category === 'restaurante' ? 'https://www.restaurante.com/menu' : 
+                         formData.category === 'tienda' ? 'https://www.tienda.com/productos' : 
+                         formData.category === 'servicios' ? 'https://www.servicio.com/servicios' : 
+                         'https://www.negocio.com'}
             />
           </div>
 

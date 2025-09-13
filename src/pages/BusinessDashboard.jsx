@@ -166,25 +166,26 @@ Para configurar los índices, ve a Firebase Console > Firestore Database > Index
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Panel de Negocios</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Panel de Negocios</h1>
               <p className="text-gray-300">Gestiona tus negocios y su información</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <Link
                 to="/favorites"
-                className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl border border-gray-700/50 transition-colors text-white"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl border border-gray-700/50 transition-colors text-white text-center"
               >
                 <Heart size={16} className="text-red-400" />
                 <span>Mis Favoritos</span>
               </Link>
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 font-medium"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 font-medium"
               >
                 <Plus size={20} />
-                Crear Negocio
+                <span className="hidden sm:inline">Crear Negocio</span>
+                <span className="sm:hidden">Crear</span>
               </button>
             </div>
           </div>
@@ -213,55 +214,57 @@ Para configurar los índices, ve a Firebase Console > Firestore Database > Index
           ) : (
             <div className="divide-y divide-gray-700/50">
               {businesses.map((business) => (
-                <div key={business.id} className="p-6 hover:bg-gray-700/20 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-xl font-bold text-white">{business.name}</h3>
-                        {business.category && (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-[#3ecf8e]/20 border border-[#3ecf8e]/30">
-                            {business.category}
-                          </span>
-                        )}
-                        {getStatusBadge(business.status)}
+                <div key={business.id} className="p-4 md:p-6 hover:bg-gray-700/20 transition-colors">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                        <h3 className="text-lg md:text-xl font-bold text-white break-words">{business.name}</h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {business.category && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white bg-[#3ecf8e]/20 border border-[#3ecf8e]/30">
+                              {business.category}
+                            </span>
+                          )}
+                          {getStatusBadge(business.status)}
+                        </div>
                       </div>
                       
                       {/* Admin Notes */}
                       {business.admin_notes && (
                         <div className="mt-3 p-3 bg-yellow-900/20 border border-yellow-700/50 rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
-                            <AlertCircle size={14} className="text-yellow-400" />
+                            <AlertCircle size={14} className="text-yellow-400 flex-shrink-0" />
                             <span className="text-sm font-medium text-yellow-400">Comentarios del Administrador:</span>
                           </div>
-                          <p className="text-yellow-200 text-sm">{business.admin_notes}</p>
+                          <p className="text-yellow-200 text-sm break-words">{business.admin_notes}</p>
                         </div>
                       )}
                       
-                      <p className="text-gray-300 mb-4">{business.description}</p>
+                      <p className="text-gray-300 mb-4 break-words">{business.description}</p>
                       
-                      <div className="flex items-center gap-6 text-sm text-gray-400">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-sm text-gray-400">
                         {business.address && (
-                          <div className="flex items-center gap-1">
-                            <MapPin size={16} />
-                            <span>{business.address}</span>
+                          <div className="flex items-start gap-1">
+                            <MapPin size={16} className="flex-shrink-0 mt-0.5" />
+                            <span className="break-words">{business.address}</span>
                           </div>
                         )}
                         {business.phone && (
                           <div className="flex items-center gap-1">
-                            <Phone size={16} />
+                            <Phone size={16} className="flex-shrink-0" />
                             <span>{business.phone}</span>
                           </div>
                         )}
                       </div>
 
-                      {/* Business Hours */}
+                      {/* Business Hours - Improved responsive */}
                       {business.businessHours && (
                         <div className="mt-4 p-3 bg-gray-700/30 rounded-lg">
                           <div className="flex items-center gap-2 mb-3">
-                            <Clock size={14} className="text-[#3ecf8e]" />
+                            <Clock size={14} className="text-[#3ecf8e] flex-shrink-0" />
                             <span className="text-sm font-medium text-gray-300">Horarios de Atención:</span>
                           </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                             {Object.entries(business.businessHours).map(([day, hours]) => {
                               const dayNames = {
                                 monday: 'Lun', tuesday: 'Mar', wednesday: 'Mié',
@@ -281,32 +284,33 @@ Para configurar los índices, ve a Firebase Console > Firestore Database > Index
                       )}
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex lg:flex-col gap-2 lg:flex-shrink-0">
                       <button 
                         onClick={() => {
                           setBusinessToEdit(business)
                           setShowEditForm(true)
                         }}
-                        className="p-2 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 transition-colors"
+                        className="flex items-center justify-center gap-2 p-2 lg:p-3 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 transition-colors text-gray-300 hover:text-white flex-1 lg:flex-initial"
                         title="Editar negocio"
                       >
-                        <Edit size={16} className="text-gray-300" />
+                        <Edit size={16} />
+                        <span className="lg:hidden">Editar</span>
                       </button>
                     </div>
                   </div>
                   
-                  {/* Business Products */}
+                  {/* Business Products - Improved responsive */}
                   {business.products && (
                     <div className="mt-4 p-3 bg-gray-700/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-3">
-                        <Package size={14} className="text-[#3ecf8e]" />
+                        <Package size={14} className="text-[#3ecf8e] flex-shrink-0" />
                         <span className="text-sm font-medium text-gray-300">Productos/Servicios:</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {business.products.split(', ').map((product, index) => (
                           <span 
                             key={index}
-                            className="px-2 py-1 bg-gray-600/50 text-gray-300 text-xs rounded-lg border border-gray-600/30"
+                            className="px-2 py-1 bg-gray-600/50 text-gray-300 text-xs rounded-lg border border-gray-600/30 break-words"
                           >
                             {product.trim()}
                           </span>
@@ -444,9 +448,9 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 p-6 border-b border-gray-700/50 rounded-t-2xl">
+        <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 p-4 md:p-6 border-b border-gray-700/50 rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Crear Nuevo Negocio</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-white">Crear Nuevo Negocio</h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
@@ -456,9 +460,9 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-6">
           {/* Basic Info */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Nombre del Negocio *
@@ -582,23 +586,23 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
             </div>
           )}
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700/50 transition-colors"
+              className="flex-1 px-4 py-3 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700/50 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-lg hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-lg hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {loading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
-                  Creando...
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                  <span>Creando...</span>
                 </div>
               ) : (
                 'Crear Negocio'
@@ -714,9 +718,9 @@ const EditBusinessModal = ({ business, onClose, onSuccess }) => {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 p-6 border-b border-gray-700/50 rounded-t-2xl">
+        <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-900 p-4 md:p-6 border-b border-gray-700/50 rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Editar Negocio</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-white">Editar Negocio</h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
@@ -726,9 +730,9 @@ const EditBusinessModal = ({ business, onClose, onSuccess }) => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-6">
           {/* Basic Info */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Nombre del Negocio *
@@ -855,23 +859,23 @@ const EditBusinessModal = ({ business, onClose, onSuccess }) => {
             </div>
           )}
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700/50 transition-colors"
+              className="flex-1 px-4 py-3 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700/50 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-lg hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-lg hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {loading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
-                  Actualizando...
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                  <span>Actualizando...</span>
                 </div>
               ) : (
                 'Actualizar Negocio'
