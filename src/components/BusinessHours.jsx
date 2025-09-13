@@ -49,7 +49,6 @@ const BusinessHours = ({ onHoursChange, initialHours = null }) => {
         }
       })
       
-      console.log('📅 Enviando horarios actualizados:', cleanedHours)
       onHoursChange(cleanedHours)
     }
   }, [hours, onHoursChange])
@@ -93,7 +92,6 @@ const BusinessHours = ({ onHoursChange, initialHours = null }) => {
       }
     }
     
-    console.log(`📅 Actualizando ${day} ${field}: ${value}`)
     setHours(newHours)
   }
 
@@ -106,7 +104,6 @@ const BusinessHours = ({ onHoursChange, initialHours = null }) => {
       }
     }
     
-    console.log(`📅 Toggling ${day} cerrado: ${newHours[day].closed}`)
     setHours(newHours)
   }
 
@@ -122,7 +119,6 @@ const BusinessHours = ({ onHoursChange, initialHours = null }) => {
       }
     })
     
-    console.log('📅 Copiando horarios a todos los días:', dayHours)
     setHours(newHours)
   }
 

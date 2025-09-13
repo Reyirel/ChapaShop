@@ -36,11 +36,11 @@ export const AuthProvider = ({ children }) => {
       // Check if demo data already exists
       const adminDoc = await getDoc(doc(db, 'users', 'demo-admin'))
       if (adminDoc.exists()) {
-        console.log('Demo data already exists')
+        
         return
       }
 
-      console.log('🔧 Inicializando datos de demostración...')
+      
 
       // Create demo admin user
       const adminProfile = {
@@ -125,7 +125,7 @@ export const AuthProvider = ({ children }) => {
       }
       await addDoc(collection(db, 'businesses'), pendingBusiness)
 
-      console.log('✅ Datos de demostración creados exitosamente')
+      
     } catch (error) {
       console.error('Error creating demo data:', error)
     }
@@ -222,7 +222,7 @@ export const AuthProvider = ({ children }) => {
       if (docSnap.exists()) {
         return docSnap.data()
       } else {
-        console.log('No user profile found')
+        
         return null
       }
     } catch (error) {

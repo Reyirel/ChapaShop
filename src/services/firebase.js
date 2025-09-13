@@ -88,7 +88,7 @@ if (!isConfigured) {
     if (auth) {
       // The persistence is automatically set to LOCAL for web apps
       // This means the auth state persists across browser sessions
-      console.log('🔒 Persistencia de autenticación configurada (LOCAL)')
+      
     }
     
     // Initialize Analytics (only in production or when needed)
@@ -99,9 +99,6 @@ if (!isConfigured) {
         console.warn('⚠️ Analytics no se pudo inicializar:', analyticsError.message)
       }
     }
-    
-    console.log('🔥 Firebase inicializado correctamente')
-    console.log('📊 Proyecto:', firebaseConfig.projectId)
   } catch (error) {
     console.error('❌ Error inicializando Firebase:', error)
     throw error

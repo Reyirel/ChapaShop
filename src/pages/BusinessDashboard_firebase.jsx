@@ -371,8 +371,6 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       }
 
       // Mostrar mensaje de éxito con información sobre el proceso de aprobación
-      console.log('✅ Negocio creado exitosamente:', business)
-      
       alert(`
 🎉 ¡Negocio creado exitosamente!
 

@@ -72,7 +72,6 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
             }
           }
         } catch (error) {
-          console.log('No se pudo obtener la dirección inicial')
         }
         
         // Si no se pudo obtener dirección, usar coordenadas
@@ -145,7 +144,6 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
           }
         }
       } catch {
-        console.log('No se pudo obtener la dirección automáticamente, usando coordenadas')
       }
       
       setAddress(finalAddress)

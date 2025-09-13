@@ -93,7 +93,7 @@ const Login = () => {
   const handleUseMockData = () => {
     const mockData = createMockData()
     setMessage(`✅ Usando ${mockData.length} negocios de ejemplo (datos mock)`)
-    console.log('📦 Datos mock creados:', mockData)
+    
   }
 
   const getErrorMessage = (errorCode) => {

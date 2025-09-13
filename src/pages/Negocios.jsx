@@ -680,7 +680,6 @@ const BusinessCard = ({ negocio }) => {
                     value={reviewComment}
                     onChange={(e) => {
                       const value = e.target.value
-                      console.log('Comment changed:', value, 'Length:', value.length) // Debug log
                       setReviewComment(value)
                       // Force re-render by updating state
                       setTimeout(() => {

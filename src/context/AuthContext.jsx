@@ -36,79 +36,80 @@ export const AuthProvider = ({ children }) => {
     try {
       // Check if we have proper Firebase configuration
       if (!db || typeof db.collection !== 'function') {
-        console.log('🔧 Firebase no configurado correctamente, saltando inicialización de datos demo')
+        
         return
       }
 
       // Check if demo data already exists
       const businessesSnapshot = await getDocs(collection(db, 'businesses'))
       if (!businessesSnapshot.empty) {
-        console.log('📦 Datos de demostración ya existen')
+        
         return
       }
 
       // Only initialize demo data in development mode
       if (import.meta.env.PROD) {
-        console.log('🚀 En modo producción, saltando inicialización de datos demo')
+        
         return
       }
 
-      console.log('🔧 Inicializando datos de demostración...')
+      
 
-      // Create demo business (sin usuarios ya que requieren autenticación)
-      const demoBusiness = {
-        ownerId: 'demo-business',
-        name: 'Restaurante Demo',
-        description: 'Un restaurante de ejemplo para mostrar las funcionalidades de ChapaShop',
-        category: 'Restaurante',
-        address: 'Calle Principal 123, Ciudad Demo',
-        location: {
-          lat: 19.4326,
-          lng: -99.1332
+      // Crear negocios demo
+      const businesses = [
+        {
+          ownerId: 'demo-business',
+          name: 'Restaurante Demo',
+          description: 'Un restaurante de ejemplo para mostrar las funcionalidades de ChapaShop',
+          category: 'Restaurante',
+          address: 'Calle Principal 123, Ciudad Demo',
+          location: {
+            lat: 19.4326,
+            lng: -99.1332
+          },
+          phone: '+52 55 1234 5678',
+          email: 'contacto@restaurantedemo.com',
+          status: 'approved',
+          images: [],
+          rating: 4.5,
+          totalReviews: 12,
+          businessHours: {
+            monday: { open: '09:00', close: '22:00', closed: false },
+            tuesday: { open: '09:00', close: '22:00', closed: false },
+            wednesday: { open: '09:00', close: '22:00', closed: false },
+            thursday: { open: '09:00', close: '22:00', closed: false },
+            friday: { open: '09:00', close: '23:00', closed: false },
+            saturday: { open: '10:00', close: '23:00', closed: false },
+            sunday: { open: '10:00', close: '21:00', closed: false }
+          },
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         },
-        phone: '+52 55 1234 5678',
-        email: 'contacto@restaurantedemo.com',
-        status: 'approved',
-        images: [],
-        rating: 4.5,
-        totalReviews: 12,
-        businessHours: {
-          monday: { open: '09:00', close: '22:00', closed: false },
-          tuesday: { open: '09:00', close: '22:00', closed: false },
-          wednesday: { open: '09:00', close: '22:00', closed: false },
-          thursday: { open: '09:00', close: '22:00', closed: false },
-          friday: { open: '09:00', close: '23:00', closed: false },
-          saturday: { open: '10:00', close: '23:00', closed: false },
-          sunday: { open: '10:00', close: '21:00', closed: false }
-        },
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        {
+          ownerId: 'demo-business',
+          name: 'Tienda en Revisión',
+          description: 'Esta tienda está esperando aprobación del administrador',
+          category: 'Tienda',
+          address: 'Avenida Secundaria 456, Ciudad Demo',
+          location: {
+            lat: 19.4400,
+            lng: -99.1300
+          },
+          phone: '+52 55 9876 5432',
+          email: 'info@tiendademo.com',
+          status: 'pending',
+          images: [],
+          rating: 0,
+          totalReviews: 0,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }
+      ]
+      for (const business of businesses) {
+        await addDoc(collection(db, 'businesses'), business)
       }
-      await addDoc(collection(db, 'businesses'), demoBusiness)
 
-      // Create demo pending business
-      const pendingBusiness = {
-        ownerId: 'demo-business',
-        name: 'Tienda en Revisión',
-        description: 'Esta tienda está esperando aprobación del administrador',
-        category: 'Tienda',
-        address: 'Avenida Secundaria 456, Ciudad Demo',
-        location: {
-          lat: 19.4400,
-          lng: -99.1300
-        },
-        phone: '+52 55 9876 5432',
-        email: 'info@tiendademo.com',
-        status: 'pending',
-        images: [],
-        rating: 0,
-        totalReviews: 0,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      }
-      await addDoc(collection(db, 'businesses'), pendingBusiness)
-
-      console.log('✅ Datos de demostración creados exitosamente')
+      
     } catch (error) {
       console.warn('⚠️ No se pudieron crear los datos de demostración:', error.message)
       // No lanzar el error, solo loggearlo como advertencia
@@ -153,7 +154,7 @@ export const AuthProvider = ({ children }) => {
   // Función para crear usuarios demo en Firebase Auth y Firestore (SIN auto-login)
   const createDemoUsers = async () => {
     try {
-      console.log('🔧 Creando usuarios demo en Firebase...')
+      
 
       const demoUsers = [
         {
@@ -206,18 +207,16 @@ export const AuthProvider = ({ children }) => {
             uid: user.uid
           })
 
-          console.log(`✅ Usuario creado: ${userData.email} (${userData.role})`)
-
         } catch (error) {
           if (error.code === 'auth/email-already-in-use') {
-            console.log(`ℹ️ Usuario ya existe: ${userData.email}`)
+            
           } else {
             console.error(`❌ Error creando ${userData.email}:`, error.message)
           }
         }
       }
 
-      console.log('✅ Proceso de creación de usuarios completado')
+      
       return { 
         success: true, 
         message: `Usuarios demo creados/verificados. Puedes iniciar sesión normalmente.`,
@@ -251,7 +250,7 @@ export const AuthProvider = ({ children }) => {
       if (docSnap.exists()) {
         return docSnap.data()
       } else {
-        console.log('No user profile found')
+        
         return null
       }
     } catch (error) {
@@ -286,7 +285,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, message: 'Permisos insuficientes' }
       }
 
-      console.log('🔧 Creando datos de demostración de manera segura...')
+      
 
       // Crear negocios demo
       const businesses = [
@@ -347,7 +346,6 @@ export const AuthProvider = ({ children }) => {
         await addDoc(collection(db, 'businesses'), business)
       }
 
-      console.log('✅ Datos de demostración creados exitosamente')
       return { success: true, message: 'Datos demo creados correctamente' }
 
     } catch (error) {
@@ -359,12 +357,11 @@ export const AuthProvider = ({ children }) => {
   // Función temporal para crear datos de prueba básicos sin autenticación
   const createBasicDemoData = async () => {
     try {
-      console.log('🔧 Creando datos básicos de demostración...')
 
       // Verificar si ya hay datos
       const businessesSnapshot = await getDocs(collection(db, 'businesses'))
       if (!businessesSnapshot.empty) {
-        console.log('📦 Ya existen datos de demostración')
+        
         return { success: true, message: 'Datos ya existen' }
       }
 
@@ -452,7 +449,7 @@ export const AuthProvider = ({ children }) => {
         await addDoc(collection(db, 'businesses'), business)
       }
 
-      console.log('✅ Datos básicos de demostración creados exitosamente')
+      
       return { success: true, message: 'Datos demo creados correctamente' }
 
     } catch (error) {
@@ -544,7 +541,6 @@ export const AuthProvider = ({ children }) => {
       }
     ]
 
-    console.log('📦 Usando datos mock por problemas de permisos de Firebase')
     return mockBusinesses
   }
 
@@ -568,7 +564,7 @@ export const AuthProvider = ({ children }) => {
       try {
         if (user && mounted) {
           // Usuario autenticado
-          console.log('✅ Usuario autenticado:', user.email)
+          
           setUser(user)
           
           // Obtener perfil del usuario
@@ -576,7 +572,6 @@ export const AuthProvider = ({ children }) => {
             const profile = await getUserProfile(user.uid)
             if (mounted) {
               setUserProfile(profile)
-              console.log('✅ Perfil de usuario cargado:', profile?.role)
             }
           } catch (error) {
             console.warn('⚠️ Error cargando perfil:', error.message)
@@ -586,7 +581,6 @@ export const AuthProvider = ({ children }) => {
           }
         } else if (mounted) {
           // Usuario no autenticado
-          console.log('❌ Usuario no autenticado')
           setUser(null)
           setUserProfile(null)
         }
@@ -615,7 +609,6 @@ export const AuthProvider = ({ children }) => {
   // Función completa para inicializar toda la base de datos (usuarios + negocios)
   const initializeCompleteDatabase = async () => {
     try {
-      console.log('🚀 Iniciando configuración completa de la base de datos...')
 
       // 1. Crear usuarios demo
       const usersResult = await createDemoUsers()
@@ -624,7 +617,6 @@ export const AuthProvider = ({ children }) => {
       const businessResult = await createBasicDemoData()
 
       if (usersResult.success && businessResult.success) {
-        console.log('🎉 Base de datos inicializada completamente')
         return {
           success: true,
           message: 'Base de datos inicializada con usuarios y negocios demo. Ahora puedes iniciar sesión con:\n\n📧 admin@chapashop.com / admin123\n📧 negocio@chapashop.com / negocio123\n📧 cliente@chapashop.com / cliente123'

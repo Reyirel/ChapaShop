@@ -81,7 +81,6 @@ class DatabaseService {
         businessData.businessHours = this.validateBusinessHours(businessData.businessHours)
       }
 
-      console.log('💾 Guardando negocio con datos:', businessData)
       
       const docRef = await addDoc(collection(db, 'businesses'), {
         ...businessData,
@@ -92,8 +91,8 @@ class DatabaseService {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       })
+
       
-      console.log('✅ Negocio guardado con ID:', docRef.id)
       return { id: docRef.id, ...businessData }
     } catch (error) {
       console.error('❌ Error creating business:', error)
@@ -144,7 +143,6 @@ class DatabaseService {
       }
     })
 
-    console.log('📅 Horarios validados:', validatedHours)
     return validatedHours
   }
 
@@ -199,7 +197,7 @@ class DatabaseService {
       
       // Si es un error de índice y tenemos filtros, intentar una consulta más simple
       if (error.message.includes('index') && filters.ownerId) {
-        console.log('⚠️ Error de índice detectado, usando consulta simplificada')
+        
         return this.getBusinessesSimple(filters)
       }
       
@@ -254,7 +252,7 @@ class DatabaseService {
   async getAllBusinesses() {
     // Si ya sabemos que hay errores de permisos, usar datos mock directamente
     if (this.permissionError) {
-      console.log('📦 Usando datos mock (permisos previamente denegados)')
+      
       return this.getMockBusinesses()
     }
 
@@ -279,7 +277,6 @@ class DatabaseService {
         return businesses
       } catch {
         // Si hay error con orderBy, hacer consulta simple
-        console.log('⚠️ Error con orderBy, usando consulta simple')
         const simpleQuery = collection(db, 'businesses')
         const querySnapshot = await getDocs(simpleQuery)
         const businesses = []
@@ -323,7 +320,6 @@ class DatabaseService {
   // Función especial para obtener negocios del usuario sin problemas de índice
   async getUserBusinesses(ownerId) {
     try {
-      console.log('🔍 Obteniendo negocios para owner:', ownerId)
       
       // Consulta simple solo por ownerId
       const q = query(
@@ -349,14 +345,13 @@ class DatabaseService {
         return dateB - dateA
       })
       
-      console.log('✅ Negocios encontrados:', businesses.length)
       return businesses
     } catch (error) {
       console.error('Error getting user businesses:', error)
       
       // Si hay problemas, devolver array vacío en lugar de lanzar error
       if (error.message.includes('index') || error.code === 'permission-denied') {
-        console.log('⚠️ Usando fallback debido a error de índice/permisos')
+        
         return []
       }
       
@@ -502,7 +497,7 @@ class DatabaseService {
       // Validate and format business hours if being updated
       if (updates.businessHours) {
         updates.businessHours = this.validateBusinessHours(updates.businessHours)
-        console.log('📅 Actualizando horarios del negocio:', businessId, updates.businessHours)
+        
       }
 
       const docRef = doc(db, 'businesses', businessId)
@@ -511,7 +506,6 @@ class DatabaseService {
         updatedAt: serverTimestamp()
       })
       
-      console.log('✅ Negocio actualizado:', businessId)
       return { id: businessId, ...updates }
     } catch (error) {
       console.error('❌ Error updating business:', error)
@@ -528,13 +522,11 @@ class DatabaseService {
         throw new Error('Horarios de negocio inválidos')
       }
 
-      console.log('📅 Actualizando horarios específicamente para negocio:', businessId)
       
       const result = await this.updateBusiness(businessId, { 
         businessHours: validatedHours 
       })
       
-      console.log('✅ Horarios actualizados exitosamente')
       return result
     } catch (error) {
       console.error('❌ Error updating business hours:', error)
@@ -575,7 +567,7 @@ class DatabaseService {
       
       // Validar que files es un array y tiene elementos válidos
       if (!Array.isArray(files) || files.length === 0) {
-        console.log('No hay archivos válidos para subir')
+        
         return uploadedImages
       }
       
@@ -610,7 +602,7 @@ class DatabaseService {
     } catch (error) {
       console.error('Error uploading business images:', error)
       // No lanzar el error para no romper el flujo de creación del negocio
-      console.log('⚠️ Continuando sin imágenes debido a errores en la subida')
+      
       return []
     }
   }
@@ -747,7 +739,6 @@ class DatabaseService {
 
   async getReviews(businessId, includeUserData = true) {
     try {
-      console.log(`🔍 Buscando reseñas para negocio: ${businessId}`)
       
       // Usar consulta simple primero para evitar problemas de índice
       const q = query(
@@ -763,7 +754,7 @@ class DatabaseService {
           id: doc.id,
           ...doc.data()
         }
-        console.log(`📄 Reseña encontrada: ${reviewData.id}, usuario: ${reviewData.userId}, rating: ${reviewData.rating}`)
+        
         reviews.push(reviewData)
       })
       
@@ -799,7 +790,6 @@ class DatabaseService {
         await Promise.all(reviewPromises)
       }
       
-      console.log(`📝 Encontradas ${reviews.length} reseñas para negocio ${businessId}`)
       return reviews
     } catch (error) {
       console.error('Error getting reviews:', error)
@@ -818,7 +808,6 @@ class DatabaseService {
   // Método alternativo para obtener reseñas sin índices compuestos
   async getReviewsAlternative(businessId, includeUserData = true) {
     try {
-      console.log(`🔄 Usando método alternativo para reseñas del negocio: ${businessId}`)
       
       // Obtener todas las reseñas y filtrar en JavaScript
       const q = collection(db, 'reviews')
@@ -842,7 +831,6 @@ class DatabaseService {
         return dateB - dateA
       })
       
-      console.log(`📝 Encontradas ${allReviews.length} reseñas usando método alternativo`)
       return allReviews
     } catch (error) {
       console.error('Error en método alternativo:', error)
@@ -1118,7 +1106,7 @@ class DatabaseService {
   // Función para resetear el flag de errores de permisos
   resetPermissionError() {
     this.permissionError = false
-    console.log('🔄 Flag de permisos reseteado - se intentará usar Firebase nuevamente')
+    
   }
 
   // Función para verificar si hay errores de permisos
@@ -1129,16 +1117,14 @@ class DatabaseService {
   // Función de diagnóstico para verificar reseñas
   async getReviewsDiagnostic(businessId) {
     try {
-      console.log(`🔍 DIAGNÓSTICO: Verificando reseñas para negocio ${businessId}`)
       
       // 1. Verificar todas las reseñas sin filtros
       const allReviewsQuery = collection(db, 'reviews')
       const allSnapshot = await getDocs(allReviewsQuery)
-      console.log(`📊 Total de reseñas en la BD: ${allSnapshot.size}`)
       
       allSnapshot.forEach((doc) => {
         const data = doc.data()
-        console.log(`Reseña ${doc.id}: businessId=${data.businessId}, userId=${data.userId}, rating=${data.rating}`)
+        
       })
       
       // 2. Intentar consulta filtrada
@@ -1148,7 +1134,6 @@ class DatabaseService {
       )
       
       const filteredSnapshot = await getDocs(filteredQuery)
-      console.log(`📊 Reseñas filtradas para ${businessId}: ${filteredSnapshot.size}`)
       
       return filteredSnapshot.size
     } catch (error) {

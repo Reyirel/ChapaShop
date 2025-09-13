@@ -31,7 +31,7 @@ class GoogleDriveService {
   async uploadImage(file, businessId, fileName) {
     // Si no está configurado o estamos en desarrollo, usar mock directamente
     if (!this.isConfigured || this.isDevelopment) {
-      console.log('📦 Usando modo demo para imágenes')
+      
       return this.mockUpload(file, fileName)
     }
     
@@ -77,7 +77,7 @@ class GoogleDriveService {
       }
     } catch (error) {
       console.error('Error uploading to Google Drive:', error)
-      console.log('🔄 Fallback: usando modo demo')
+      
       return this.mockUpload(file, fileName)
     }
   }
@@ -98,7 +98,7 @@ class GoogleDriveService {
       }
     } catch (error) {
       console.error('Error creating object URL:', error)
-      objectUrl = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjY2NjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbiBkZSBkZW1vPC90ZXh0Pjwvc3ZnPg==`
+      objectUrl = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjY2NjIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbiBkZSBkZW1vPC90ZXh0Pjwvc3ZnPg==`
     }
     
     return {

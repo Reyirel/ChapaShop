@@ -33,18 +33,15 @@ const BusinessDashboard = () => {
     try {
       if (!user) return
 
-      console.log('🔍 Obteniendo negocios para usuario:', user.uid)
       
       // Usar la función específica para evitar problemas de índice
       const data = await dbService.getUserBusinesses(user.uid)
-      console.log('✅ Negocios obtenidos:', data.length)
       setBusinesses(data || [])
     } catch (error) {
       console.error('Error fetching businesses:', error)
       
       // Si hay error de índice, mostrar mensaje informativo y usar datos vacíos
       if (error.message && error.message.includes('index')) {
-        console.log('⚠️ Error de índice de Firebase, usando fallback')
         setBusinesses([])
         
         // Mostrar mensaje informativo al usuario
@@ -323,8 +320,6 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
       const business = await dbService.createBusiness(businessData)
 
       // Mostrar mensaje de éxito con información sobre el proceso de aprobación
-      console.log('✅ Negocio creado exitosamente:', business)
-      
       alert(`
 🎉 ¡Negocio creado exitosamente!
 
