@@ -212,17 +212,15 @@ const Navbar = () => {
                       </Link>
                     )}
 
-                    {/* Mis Favoritos - solo para usuarios normales */}
-                    {!isAdmin() && !isBusiness() && (
-                      <Link
-                        to="/favorites"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-gray-700/50 transition-colors"
-                      >
-                        <Heart size={16} className="text-red-400" />
-                        <span>Mis Favoritos</span>
-                      </Link>
-                    )}
+                    {/* Mis Favoritos - para todos los usuarios autenticados */}
+                    <Link
+                      to="/favorites"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-white hover:bg-gray-700/50 transition-colors"
+                    >
+                      <Heart size={16} className="text-red-400" />
+                      <span>Mis Favoritos</span>
+                    </Link>
 
                     <div className="border-t border-gray-700/50 mt-2 pt-2">
                       <button

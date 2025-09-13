@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { auth } from '../services/firebase'
 import dbService from '../services/database'
 import { 
@@ -19,7 +19,8 @@ import {
   Trash2,
   AlertTriangle,
   Edit,
-  X
+  X,
+  Heart
 } from 'lucide-react'
 
 const AdminPanel = () => {
@@ -231,9 +232,18 @@ const AdminPanel = () => {
                 <p className="text-gray-400 text-lg">Gestión de negocios y usuarios</p>
               </div>
             </div>
-            <div className="bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-700/50">
-              <span className="text-sm text-gray-400">Admin:</span>
-              <span className="text-[#3ecf8e] font-medium ml-2">{user?.full_name}</span>
+            <div className="flex items-center gap-4">
+              <Link
+                to="/favorites"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl border border-gray-700/50 transition-colors text-white"
+              >
+                <Heart size={16} className="text-red-400" />
+                <span>Mis Favoritos</span>
+              </Link>
+              <div className="bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-700/50">
+                <span className="text-sm text-gray-400">Admin:</span>
+                <span className="text-[#3ecf8e] font-medium ml-2">{user?.full_name}</span>
+              </div>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import dbService from '../services/database'
 import LocationPicker from '../components/LocationPicker'
@@ -19,7 +19,8 @@ import {
   CheckCircle,
   XCircle,
   Image,
-  X
+  X,
+  Heart
 } from 'lucide-react'
 
 // Helper function to format business hours for Firebase
@@ -170,13 +171,22 @@ Para configurar los índices, ve a Firebase Console > Firestore Database > Index
               <h1 className="text-3xl font-bold text-white mb-2">Panel de Negocios</h1>
               <p className="text-gray-300">Gestiona tus negocios y su información</p>
             </div>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 font-medium"
-            >
-              <Plus size={20} />
-              Crear Negocio
-            </button>
+            <div className="flex items-center gap-4">
+              <Link
+                to="/favorites"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl border border-gray-700/50 transition-colors text-white"
+              >
+                <Heart size={16} className="text-red-400" />
+                <span>Mis Favoritos</span>
+              </Link>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all duration-200 font-medium"
+              >
+                <Plus size={20} />
+                Crear Negocio
+              </button>
+            </div>
           </div>
         </div>
 

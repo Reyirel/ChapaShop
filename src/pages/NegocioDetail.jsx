@@ -31,6 +31,8 @@ const NegocioDetail = () => {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [liked, setLiked] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [loadingFavorite, setLoadingFavorite] = useState(false)
   const [activeTab, setActiveTab] = useState('info')
   
   // Estados para nueva reseña
@@ -82,6 +84,16 @@ const NegocioDetail = () => {
         setProducts(productsData || [])
         setLoading(false)
 
+        // Verificar si el negocio está en favoritos
+        if (user) {
+          try {
+            const favoriteStatus = await dbService.isFavorite(user.uid, id)
+            setIsFavorite(favoriteStatus)
+          } catch (error) {
+            console.error('Error checking favorite status:', error)
+          }
+        }
+
       } catch (error) {
         console.error('Error fetching negocio:', error)
         setLoading(false)
@@ -89,7 +101,7 @@ const NegocioDetail = () => {
     }
 
     fetchData()
-  }, [id])
+  }, [id, user])
 
   const formatBusinessHours = (hours) => {
     if (!hours || typeof hours !== 'object') return []
@@ -104,17 +116,10 @@ const NegocioDetail = () => {
       sunday: 'Domingo'
     }
 
-    const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-    
-    return dayOrder.map(day => {
-      const dayData = hours[day]
-      if (!dayData) return null
-      
-      return {
-        day: dayNames[day],
-        time: dayData.closed ? 'Cerrado' : `${dayData.open} - ${dayData.close}`
-      }
-    }).filter(Boolean)
+    return Object.entries(hours).map(([day, data]) => ({
+      day: dayNames[day] || day,
+      ...data
+    }))
   }
 
   const shareNegocio = () => {
@@ -188,6 +193,29 @@ const NegocioDetail = () => {
     }
   }
 
+  const handleFavoriteToggle = async () => {
+    if (!user) {
+      alert('Debes iniciar sesión para guardar favoritos')
+      return
+    }
+
+    setLoadingFavorite(true)
+    try {
+      if (isFavorite) {
+        await dbService.removeFromFavorites(user.uid, id)
+        setIsFavorite(false)
+      } else {
+        await dbService.addToFavorites(user.uid, id)
+        setIsFavorite(true)
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+      alert('Error al actualizar favoritos. Inténtalo de nuevo.')
+    } finally {
+      setLoadingFavorite(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
@@ -245,12 +273,14 @@ const NegocioDetail = () => {
         {/* Actions */}
         <div className="absolute top-4 right-4 flex gap-2">
           <button
-            onClick={() => setLiked(!liked)}
+            onClick={handleFavoriteToggle}
+            disabled={loadingFavorite}
             className={`p-3 rounded-full backdrop-blur-sm transition-colors ${
-              liked ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
-            }`}
+              isFavorite ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
+            } ${loadingFavorite ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
           >
-            <Heart className={`h-5 w-5 ${liked ? 'fill-current' : ''}`} />
+            <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
           </button>
           <button
             onClick={shareNegocio}

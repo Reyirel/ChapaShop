@@ -26,7 +26,9 @@ service cloud.firestore {
 
     // Favorites - solo el dueño puede leer/escribir sus favoritos
     match /favorites/{favoriteId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
     // Products - lectura pública, escritura solo admin
