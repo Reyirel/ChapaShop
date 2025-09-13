@@ -1,8 +1,11 @@
 ﻿import { Link } from 'react-router-dom'
 import { FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
 import { Store, Star, Rocket, LogIn, UserPlus } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const Home = () => {
+  const { user } = useAuth()
+
   const HeroBackground = () => (
     <div className="absolute inset-0 overflow-hidden">
       {/* Gradient Background */}
@@ -15,7 +18,7 @@ const Home = () => {
     </div>
   )
 
-  const FeatureCard = ({ icon: IconComponent, title, description, stats }) => (
+  const FeatureCard = ({ icon: IconComponent, title, description }) => (
     <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-8 rounded-2xl">
       <div className="text-center">
         <div className="mb-6 flex justify-center">
@@ -25,15 +28,6 @@ const Home = () => {
           {title}
         </h3>
         <p className="text-gray-300 leading-relaxed mb-4">{description}</p>
-        
-        {stats && (
-          <div className="mt-4 pt-4 border-t border-gray-700/50">
-            <div className="text-2xl font-bold text-[#3ecf8e]">
-              {stats.value}{stats.suffix}
-            </div>
-            <div className="text-sm text-gray-400">{stats.label}</div>
-          </div>
-        )}
       </div>
     </div>
   )
@@ -58,17 +52,8 @@ const Home = () => {
     }
   }
 
-  const StatCard = ({ number, label }) => (
-    <div className="text-center">
-      <div className="text-3xl md:text-4xl font-bold text-[#3ecf8e] mb-2">
-        {number}+
-      </div>
-      <div className="text-gray-400 text-sm uppercase tracking-wider">{label}</div>
-    </div>
-  )
-
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+    <div className="h-screen bg-black text-white relative overflow-hidden">
       <HeroBackground />
       
       <div className="relative z-10 min-h-screen flex flex-col">        
@@ -93,19 +78,13 @@ const Home = () => {
               </p>
             </div>
 
-            {/* Stats Section */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12 max-w-4xl mx-auto">
-              <StatCard number={500} label="Negocios" />
-              <StatCard number={1200} label="Usuarios" />
-              <StatCard number={250} label="Ciudades" />
-              <StatCard number={99} label="Satisfacción" />
-            </div>
-
             {/* CTA Buttons */}
             <div className="mb-16 flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <SimpleButton to="/login" variant="primary" icon={LogIn}>
-                Iniciar Sesión
-              </SimpleButton>
+              {!user && (
+                <SimpleButton to="/login" variant="primary" icon={LogIn}>
+                  Iniciar Sesión
+                </SimpleButton>
+              )}
               <SimpleButton to="/register" variant="secondary" icon={UserPlus}>
                 Crear Cuenta
               </SimpleButton>
@@ -117,19 +96,16 @@ const Home = () => {
                 icon={Store}
                 title="Negocios Locales"
                 description="Conecta con comercios de tu comunidad y apoya la economía local con una experiencia digital moderna"
-                stats={{ value: 500, suffix: "+", label: "Negocios registrados" }}
               />
               <FeatureCard
                 icon={Star}
                 title="Calidad Premium"
                 description="Solo los mejores productos y servicios verificados por nuestra comunidad activa"
-                stats={{ value: 98, suffix: "%", label: "Satisfacción" }}
               />
               <FeatureCard
                 icon={Rocket}
                 title="Experiencia Rápida"
                 description="Interfaz intuitiva y moderna para encontrar lo que necesitas al instante"
-                stats={{ value: 3, suffix: "s", label: "Tiempo promedio" }}
               />
             </div>
           </div>

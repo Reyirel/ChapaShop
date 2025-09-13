@@ -100,7 +100,7 @@ const Favorites = () => {
           <div className="text-center">
             <div className="flex items-center justify-center gap-3 mb-4">
               <Heart className="h-8 w-8 text-red-500 fill-current" />
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-800 to-[#3ecf8e] bg-clip-text text-transparent">
+              <h1 className="text-3xl md:text-4xl font-bold text-[#3ecf8e]">
                 Mis Favoritos
               </h1>
             </div>
