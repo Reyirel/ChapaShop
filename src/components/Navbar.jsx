@@ -291,10 +291,10 @@ const Navbar = () => {
         {/* Mobile Navigation */}
         <div className={`md:hidden transition-all duration-300 ease-in-out ${
           isMenuOpen 
-            ? 'max-h-96 opacity-100 pb-4' 
+            ? 'max-h-screen opacity-100 pb-4' 
             : 'max-h-0 opacity-0 overflow-hidden'
         }`}>
-          <div className="space-y-2 pt-4 border-t border-gray-800/50">
+          <div className="space-y-2 pt-4 border-t border-gray-800/50 max-h-[calc(100vh-8rem)] overflow-y-auto navbar-mobile-scroll">
             {navItems.map((item) => (
               <NavLink key={item.path} to={item.path} icon={item.icon} mobile>
                 {item.label}
@@ -304,12 +304,12 @@ const Navbar = () => {
             {user && (
               <>
                 {/* User Info */}
-                <div className="flex items-center gap-3 px-4 py-3 bg-gray-800/30 rounded-xl border border-gray-700/50 mx-0">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-full flex items-center justify-center text-black text-sm font-bold">
+                <div className="flex items-center gap-3 px-3 py-3 bg-gray-800/30 rounded-xl border border-gray-700/50 mx-0">
+                  <div className="w-8 h-8 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-full flex items-center justify-center text-black text-xs font-bold flex-shrink-0">
                     {getInitials()}
                   </div>
-                  <div className="flex-1">
-                    <p className="text-white font-medium text-sm">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-medium text-sm truncate">
                       {userProfile?.full_name || 'Usuario'}
                     </p>
                     <p className="text-gray-400 text-xs truncate">{user.email}</p>
@@ -331,10 +331,10 @@ const Navbar = () => {
                 <Link
                   to="/profile"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-white hover:bg-[#3ecf8e]/20 hover:text-[#3ecf8e]"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 text-white hover:bg-[#3ecf8e]/20 hover:text-[#3ecf8e]"
                 >
-                  <User size={20} />
-                  <span>Mi Perfil</span>
+                  <User size={18} />
+                  <span className="text-sm">Mi Perfil</span>
                 </Link>
 
                 {/* Admin Panel Link for Mobile */}
@@ -342,10 +342,10 @@ const Navbar = () => {
                   <Link
                     to="/admin-panel"
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-white hover:bg-red-400/20 hover:text-red-400"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 text-white hover:bg-red-400/20 hover:text-red-400"
                   >
-                    <Shield size={20} />
-                    <span>Panel Admin</span>
+                    <Shield size={18} />
+                    <span className="text-sm">Panel Admin</span>
                   </Link>
                 )}
 
@@ -354,10 +354,10 @@ const Navbar = () => {
                   <Link
                     to="/business-dashboard"
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-white hover:bg-blue-400/20 hover:text-blue-400"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 text-white hover:bg-blue-400/20 hover:text-blue-400"
                   >
-                    <Settings size={20} />
-                    <span>Mi Dashboard</span>
+                    <Settings size={18} />
+                    <span className="text-sm">Mi Dashboard</span>
                   </Link>
                 )}
 
@@ -365,23 +365,25 @@ const Navbar = () => {
                 <Link
                   to="/favorites"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-white hover:bg-red-400/20 hover:text-red-400"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 text-white hover:bg-red-400/20 hover:text-red-400"
                 >
-                  <Heart size={20} />
-                  <span>Mis Favoritos</span>
+                  <Heart size={18} />
+                  <span className="text-sm">Mis Favoritos</span>
                 </Link>
 
                 {/* Logout */}
-                <button
-                  onClick={() => {
-                    logout()
-                    setIsMenuOpen(false)
-                  }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300 w-full text-white hover:bg-red-400/20 hover:text-red-400"
-                >
-                  <LogOut size={20} />
-                  <span>Cerrar Sesión</span>
-                </button>
+                <div className="border-t border-gray-700/50 pt-2 mt-2">
+                  <button
+                    onClick={() => {
+                      logout()
+                      setIsMenuOpen(false)
+                    }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 w-full text-left text-white hover:bg-red-400/20 hover:text-red-400"
+                  >
+                    <LogOut size={18} />
+                    <span className="text-sm">Cerrar Sesión</span>
+                  </button>
+                </div>
               </>
             )}
           </div>

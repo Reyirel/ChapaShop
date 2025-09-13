@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import AuthContext from '../context/AuthContext'
 import dbService from '../services/database'
 import CategoryAnimationDetail from '../components/CategoryAnimationDetail'
+import useAnalytics from '../hooks/useAnalytics'
 import { 
   ArrowLeft,
   MapPin, 
@@ -77,6 +78,12 @@ const getCategoryImage = (categoryName) => {
 const NegocioDetail = () => {
   const { id } = useParams()
   const { user } = useContext(AuthContext)
+  const { 
+    trackBusinessView,
+    trackBusinessContact,
+    trackFavoriteAction,
+    trackReviewSubmit
+  } = useAnalytics()
   const [negocio, setNegocio] = useState(null)
   const [reviews, setReviews] = useState([])
   const [products, setProducts] = useState([])
@@ -134,6 +141,13 @@ const NegocioDetail = () => {
         setReviews(reviewsData || [])
         setProducts(productsData || [])
         setLoading(false)
+
+        // Track business view
+        trackBusinessView(
+          id, 
+          negocioData.name, 
+          negocioData.business_categories?.name || negocioData.category || 'otros'
+        )
 
         // Verificar si el negocio está en favoritos
         if (user) {
@@ -264,6 +278,9 @@ const NegocioDetail = () => {
       // Limpiar formulario
       setNewReview({ rating: 0, comment: '' })
       
+      // Track review submission
+      trackReviewSubmit(id, newReview.rating)
+      
       alert('¡Reseña enviada exitosamente!')
     } catch (error) {
       console.error('Error submitting review:', error)
@@ -284,9 +301,11 @@ const NegocioDetail = () => {
       if (isFavorite) {
         await dbService.removeFromFavorites(user.uid, id)
         setIsFavorite(false)
+        trackFavoriteAction(id, 'remove')
       } else {
         await dbService.addToFavorites(user.uid, id)
         setIsFavorite(true)
+        trackFavoriteAction(id, 'add')
       }
     } catch (error) {
       console.error('Error toggling favorite:', error)
@@ -709,6 +728,7 @@ const NegocioDetail = () => {
           {negocio.phone && (
             <a
               href={`tel:${negocio.phone}`}
+              onClick={() => trackBusinessContact(id, 'phone')}
               className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white text-center py-3 px-6 rounded-xl font-medium hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center justify-center gap-2"
             >
               <Phone className="h-5 w-5" />
@@ -721,6 +741,7 @@ const NegocioDetail = () => {
               href={`https://wa.me/${negocio.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackBusinessContact(id, 'whatsapp')}
               className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-3 px-6 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center gap-2"
             >
               <img src="/whatsapp-icon.svg" alt="WhatsApp" className="h-5 w-5" />

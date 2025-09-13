@@ -91,9 +91,14 @@ const Login = () => {
   }
 
   const handleUseMockData = () => {
+    // Solo permitir en desarrollo
+    if (import.meta.env.PROD) {
+      console.warn('Mock data no disponible en producción')
+      return
+    }
+    
     const mockData = createMockData()
     setMessage(`✅ Usando ${mockData.length} negocios de ejemplo (datos mock)`)
-    
   }
 
   const getErrorMessage = (errorCode) => {
@@ -299,7 +304,7 @@ const Login = () => {
               </p>
             </div>
           </form>            {/* Botones para desarrollo - Solo en desarrollo */}
-            {!import.meta.env.PROD && (
+            {import.meta.env.DEV && (
               <div className="pt-4 border-t border-gray-700 space-y-2">
                 <h4 className="text-sm font-medium text-gray-400 text-center">🔧 Herramientas de Desarrollo</h4>
                 
@@ -346,7 +351,8 @@ const Login = () => {
               </div>
             )}
 
-            {/* Estado de Firebase */}
+            {/* Estado de Firebase - Solo en desarrollo */}
+            {import.meta.env.DEV && (
             <div className="p-3 rounded-lg border" style={{
               backgroundColor: firebaseStatus === 'working' ? 'rgb(34 197 94 / 0.1)' : 
                               firebaseStatus === 'mock' ? 'rgb(234 179 8 / 0.1)' : 'rgb(59 130 246 / 0.1)',
@@ -368,13 +374,12 @@ const Login = () => {
                 )}
                 {firebaseStatus === 'mock' && (
                   <>
-                    <span className="text-yellow-400">📦</span>
-                    <span className="text-yellow-300">Usando Datos Mock</span>
-                    <span className="text-xs text-yellow-400 ml-2">(Configura las reglas de Firestore)</span>
+
                   </>
                 )}
               </div>
             </div>
+            )}
         </div>
       </div>
     </div>
