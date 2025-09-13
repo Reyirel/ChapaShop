@@ -745,24 +745,61 @@ class DatabaseService {
     }
   }
 
-  async getReviews(businessId) {
+  async getReviews(businessId, includeUserData = true) {
     try {
+      console.log(`🔍 Buscando reseñas para negocio: ${businessId}`)
+      
+      // Usar consulta simple primero para evitar problemas de índice
       const q = query(
         collection(db, 'reviews'), 
-        where('businessId', '==', businessId),
-        orderBy('createdAt', 'desc')
+        where('businessId', '==', businessId)
       )
       
       const querySnapshot = await getDocs(q)
       const reviews = []
       
       querySnapshot.forEach((doc) => {
-        reviews.push({
+        const reviewData = {
           id: doc.id,
           ...doc.data()
-        })
+        }
+        console.log(`📄 Reseña encontrada: ${reviewData.id}, usuario: ${reviewData.userId}, rating: ${reviewData.rating}`)
+        reviews.push(reviewData)
       })
       
+      // Ordenar manualmente por fecha
+      reviews.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0)
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0)
+        return dateB - dateA
+      })
+      
+      // Si se solicita incluir datos de usuario, obtenerlos después
+      if (includeUserData && reviews.length > 0) {
+        const reviewPromises = reviews.map(async (review) => {
+          if (review.userId) {
+            try {
+              const userDoc = await getDoc(doc(db, 'users', review.userId))
+              if (userDoc.exists()) {
+                const userData = userDoc.data()
+                review.userName = userData.displayName || userData.name || 'Usuario'
+                review.userAvatar = userData.photoURL || userData.avatar
+              } else {
+                review.userName = 'Usuario'
+              }
+            } catch (error) {
+              console.warn('Error obteniendo usuario para reseña:', error)
+              review.userName = 'Usuario'
+            }
+          } else {
+            review.userName = 'Usuario anónimo'
+          }
+        })
+        
+        await Promise.all(reviewPromises)
+      }
+      
+      console.log(`📝 Encontradas ${reviews.length} reseñas para negocio ${businessId}`)
       return reviews
     } catch (error) {
       console.error('Error getting reviews:', error)
@@ -773,6 +810,42 @@ class DatabaseService {
         return this.getMockReviews(businessId)
       }
       
+      console.error('❌ Error detallado:', error.message)
+      return []
+    }
+  }
+
+  // Método alternativo para obtener reseñas sin índices compuestos
+  async getReviewsAlternative(businessId, includeUserData = true) {
+    try {
+      console.log(`🔄 Usando método alternativo para reseñas del negocio: ${businessId}`)
+      
+      // Obtener todas las reseñas y filtrar en JavaScript
+      const q = collection(db, 'reviews')
+      const querySnapshot = await getDocs(q)
+      const allReviews = []
+      
+      querySnapshot.forEach((doc) => {
+        const reviewData = {
+          id: doc.id,
+          ...doc.data()
+        }
+        if (reviewData.businessId === businessId) {
+          allReviews.push(reviewData)
+        }
+      })
+      
+      // Ordenar por fecha
+      allReviews.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt)
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt)
+        return dateB - dateA
+      })
+      
+      console.log(`📝 Encontradas ${allReviews.length} reseñas usando método alternativo`)
+      return allReviews
+    } catch (error) {
+      console.error('Error en método alternativo:', error)
       return []
     }
   }
@@ -856,7 +929,7 @@ class DatabaseService {
   // Update business rating based on reviews
   async updateBusinessRating(businessId) {
     try {
-      const reviews = await this.getReviews(businessId)
+      const reviews = await this.getReviews(businessId, false) // No necesitamos datos de usuario para el cálculo
       
       if (reviews.length === 0) {
         await this.updateBusiness(businessId, { rating: 0, totalReviews: 0 })
@@ -1051,6 +1124,37 @@ class DatabaseService {
   // Función para verificar si hay errores de permisos
   hasPermissionError() {
     return this.permissionError
+  }
+
+  // Función de diagnóstico para verificar reseñas
+  async getReviewsDiagnostic(businessId) {
+    try {
+      console.log(`🔍 DIAGNÓSTICO: Verificando reseñas para negocio ${businessId}`)
+      
+      // 1. Verificar todas las reseñas sin filtros
+      const allReviewsQuery = collection(db, 'reviews')
+      const allSnapshot = await getDocs(allReviewsQuery)
+      console.log(`📊 Total de reseñas en la BD: ${allSnapshot.size}`)
+      
+      allSnapshot.forEach((doc) => {
+        const data = doc.data()
+        console.log(`Reseña ${doc.id}: businessId=${data.businessId}, userId=${data.userId}, rating=${data.rating}`)
+      })
+      
+      // 2. Intentar consulta filtrada
+      const filteredQuery = query(
+        collection(db, 'reviews'), 
+        where('businessId', '==', businessId)
+      )
+      
+      const filteredSnapshot = await getDocs(filteredQuery)
+      console.log(`📊 Reseñas filtradas para ${businessId}: ${filteredSnapshot.size}`)
+      
+      return filteredSnapshot.size
+    } catch (error) {
+      console.error('❌ Error en diagnóstico:', error)
+      return 0
+    }
   }
 }
 

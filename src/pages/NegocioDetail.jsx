@@ -55,9 +55,12 @@ const NegocioDetail = () => {
         // Obtener reseñas (manejar errores silenciosamente)
         let reviewsData = []
         try {
+          console.log(`🔍 Cargando reseñas para negocio ${id}`)
           reviewsData = await dbService.getBusinessReviews(id)
+          console.log(`✅ Se cargaron ${reviewsData.length} reseñas`)
         } catch (error) {
-          console.warn('No se pudieron cargar las reseñas:', error.message)
+          console.error('❌ Error al cargar reseñas:', error)
+          console.error('Detalles del error:', error.message)
           reviewsData = []
         }
 
@@ -149,6 +152,14 @@ const NegocioDetail = () => {
     setSubmittingReview(true)
 
     try {
+      console.log(`📝 Creando reseña para negocio ${id}, usuario ${user.uid}`)
+      console.log(`Datos de la reseña:`, {
+        businessId: id,
+        userId: user.uid,
+        rating: newReview.rating,
+        comment: newReview.comment.trim()
+      })
+      
       await dbService.createReview({
         businessId: id,
         userId: user.uid,
@@ -156,8 +167,12 @@ const NegocioDetail = () => {
         comment: newReview.comment.trim()
       })
 
+      console.log('✅ Reseña creada exitosamente')
+
       // Recargar reseñas
+      console.log('🔄 Recargando reseñas...')
       const updatedReviews = await dbService.getBusinessReviews(id)
+      console.log(`📋 Se recargaron ${updatedReviews.length} reseñas`)
       setReviews(updatedReviews || [])
       
       // Actualizar rating promedio

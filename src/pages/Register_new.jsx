@@ -10,6 +10,7 @@ const Register = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -33,13 +34,19 @@ const Register = () => {
       return
     }
 
+    if (!displayName.trim()) {
+      setError('Por favor ingresa tu nombre')
+      setLoading(false)
+      return
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       
       // Crear perfil básico en Firebase
       await dbService.createUserProfile(userCredential.user.uid, {
         email: email,
-        full_name: '',
+        displayName: displayName.trim(),
         role: 'person'
       })
       
@@ -176,6 +183,21 @@ const Register = () => {
                     )}
                   </div>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <UserPlus size={16} />
+                  Nombre Completo
+                </label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                  placeholder="Tu nombre completo"
+                  required
+                />
               </div>
               
               {error && (
