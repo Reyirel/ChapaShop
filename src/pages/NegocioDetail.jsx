@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AuthContext from '../context/AuthContext'
 import dbService from '../services/database'
+import CategoryAnimationDetail from '../components/CategoryAnimationDetail'
 import { 
   ArrowLeft,
   MapPin, 
@@ -154,22 +155,51 @@ const NegocioDetail = () => {
   }, [id, user])
 
   const formatBusinessHours = (hours) => {
-    if (!hours || typeof hours !== 'object') return []
-    
-    const dayNames = {
-      monday: 'Lunes',
-      tuesday: 'Martes', 
-      wednesday: 'Miércoles',
-      thursday: 'Jueves',
-      friday: 'Viernes',
-      saturday: 'Sábado',
-      sunday: 'Domingo'
-    }
+    const dayNames = [
+      { key: 'monday', name: 'Lunes' },
+      { key: 'tuesday', name: 'Martes' },
+      { key: 'wednesday', name: 'Miércoles' },
+      { key: 'thursday', name: 'Jueves' },
+      { key: 'friday', name: 'Viernes' },
+      { key: 'saturday', name: 'Sábado' },
+      { key: 'sunday', name: 'Domingo' }
+    ]
 
-    return Object.entries(hours).map(([day, data]) => ({
-      day: dayNames[day] || day,
-      ...data
-    }))
+    return dayNames.map(({ key, name }) => {
+      let timeDisplay = 'Cerrado'
+      
+      // Si no hay datos de horarios o el día no existe
+      if (!hours || typeof hours !== 'object' || !hours[key]) {
+        return {
+          day: name,
+          time: 'Cerrado'
+        }
+      }
+
+      const data = hours[key]
+      
+      // Manejar diferentes formatos de datos
+      if (typeof data === 'string') {
+        timeDisplay = data === '' ? 'Cerrado' : data
+      } else if (typeof data === 'object' && data !== null) {
+        if (data.time) {
+          timeDisplay = data.time
+        } else if (data.open && data.close) {
+          timeDisplay = `${data.open} - ${data.close}`
+        } else if (data.isOpen === false || data.closed === true) {
+          timeDisplay = 'Cerrado'
+        } else if (data.isOpen === true) {
+          timeDisplay = data.hours || '24 horas'
+        } else {
+          timeDisplay = 'Cerrado'
+        }
+      }
+
+      return {
+        day: name,
+        time: timeDisplay
+      }
+    })
   }
 
   const shareNegocio = () => {
@@ -301,37 +331,31 @@ const NegocioDetail = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Hero Section */}
-      <div className="relative h-96 bg-white shadow-sm">
-        <img 
-          src={
-            negocio.image_url || 
-            negocio.images?.[0] || 
-            negocio.imageUrl || 
-            getCategoryImage(negocio.business_categories?.name || negocio.category || 'Servicio')
-          } 
-          alt={negocio.name}
-          className="w-full h-full object-cover"
+      <div className="relative h-96 bg-white shadow-sm overflow-hidden">
+        {/* Animación de categoría de fondo */}
+        <CategoryAnimationDetail 
+          category={negocio.business_categories?.name || negocio.category || 'otros'} 
+          businessName={negocio.name}
         />
-        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
         
         {/* Navigation */}
-        <div className="absolute top-4 left-4">
+        <div className="absolute top-4 left-4 z-30">
           <Link 
             to="/negocios"
-            className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-white/30 transition-colors"
+            className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-white/30 transition-colors text-black"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 text-black" />
             Volver
           </Link>
         </div>
 
         {/* Actions */}
-        <div className="absolute top-4 right-4 flex gap-2">
+        <div className="absolute top-4 right-4 flex gap-2 z-30">
           <button
             onClick={handleFavoriteToggle}
             disabled={loadingFavorite}
             className={`p-3 rounded-full backdrop-blur-sm transition-colors ${
-              isFavorite ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
+              isFavorite ? 'bg-red-500 text-white' : 'bg-black/20 text-black hover:bg-black/30'
             } ${loadingFavorite ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
           >
@@ -339,14 +363,14 @@ const NegocioDetail = () => {
           </button>
           <button
             onClick={shareNegocio}
-            className="p-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
+            className="p-3 rounded-full bg-black/20 backdrop-blur-sm text-black hover:bg-black/30 transition-colors"
           >
             <Share2 className="h-5 w-5" />
           </button>
         </div>
 
         {/* Business Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+        <div className="absolute bottom-0 left-0 right-0 p-6 text-white z-20">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-2">
               {negocio.business_categories && (
@@ -360,14 +384,14 @@ const NegocioDetail = () => {
               {negocio.reviewCount > 0 && (
                 <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
                   <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-black">
                     {negocio.avgRating} ({negocio.reviewCount} reseñas)
                   </span>
                 </div>
               )}
             </div>
-            <h1 className="text-4xl font-bold mb-2">{negocio.name}</h1>
-            <p className="text-xl opacity-90">{negocio.description}</p>
+            <h1 className="text-4xl font-bold mb-2 text-black">{negocio.name}</h1>
+            <p className="text-xl opacity-90 text-black">{negocio.description}</p>
           </div>
         </div>
       </div>
@@ -447,7 +471,11 @@ const NegocioDetail = () => {
                         <div className="flex items-center gap-3">
                           <MapPin className="h-4 w-4 text-gray-400" />
                           <a 
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(negocio.address)}`}
+                            href={
+                              negocio.location && negocio.location.lat && negocio.location.lng
+                                ? `https://www.google.com/maps/search/?api=1&query=${negocio.location.lat},${negocio.location.lng}`
+                                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(negocio.address)}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-indigo-600 hover:underline flex items-center gap-1"
@@ -495,16 +523,18 @@ const NegocioDetail = () => {
                       {businessHours.length === 0 ? (
                         <p className="text-gray-500 italic text-center py-4">Horarios no disponibles</p>
                       ) : (
-                        <div className="grid gap-3">
+                        <div className="space-y-2">
                           {businessHours.map((hour, index) => (
-                            <div key={index} className="flex justify-between items-center py-2 px-3 bg-white rounded-lg border border-gray-100">
-                              <span className="text-gray-700 font-medium">{hour.day}</span>
-                              <span className={`font-semibold px-3 py-1 rounded-full text-sm ${
-                                hour.time === 'Cerrado' 
+                            <div key={index} className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 px-4 bg-white rounded-lg border border-gray-100 gap-2">
+                              <span className="text-gray-700 font-medium text-sm sm:text-base">
+                                {hour.day}
+                              </span>
+                              <span className={`font-semibold px-3 py-1 rounded-full text-xs sm:text-sm text-center ${
+                                hour.time === 'Cerrado' || hour.time === 'cerrado' || hour.time === 'CERRADO'
                                   ? 'bg-red-100 text-red-700' 
                                   : 'bg-green-100 text-green-700'
                               }`}>
-                                {hour.time}
+                                {hour.time || 'No disponible'}
                               </span>
                             </div>
                           ))}

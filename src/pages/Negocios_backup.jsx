@@ -12,33 +12,104 @@ import {
   Heart,
   Share2,
   Store,
+  ShoppingBag,
   Award,
+  Sparkles,
   MessageSquare,
   ThumbsUp,
+  Phone,
+  Mail,
+  Layers,
+  Utensils,
+  Coffee,
+  BookOpen,
+  Scissors,
+  Car,
+  GraduationCap,
+  Heart as HeartIcon,
+  Gamepad2,
+  Briefcase,
   ChevronDown,
   ChevronUp,
-  Layers,
-  X
+  BarChart3
 } from 'lucide-react'
 
 // Function to get appropriate icon for each category
 const getCategoryIcon = (categoryName) => {
   const categoryIcons = {
-    'Restaurante': Store,
-    'Café': Store,
-    'Tienda': Store,
-    'Servicio': Store,
-    'Servicios': Store,
-    'Entretenimiento': Store,
-    'Salud y Belleza': Store,
-    'Salud': Store,
-    'Educación': Store,
+    'Restaurante': Utensils,
+    'Café': Coffee,
+    'Tienda': ShoppingBag,
+    'Servicio': Briefcase,
+    'Entretenimiento': Gamepad2,
+    'Salud y Belleza': HeartIcon,
+    'Educación': GraduationCap,
+    'Transporte': Car,
+    'Librería': BookOpen,
+    'Peluquería': Scissors,
+    'Bar': Coffee,
+    'Hotel': Store,
+    'Gimnasio': HeartIcon,
+    'Consultoría': Briefcase,
     'Tecnología': Store,
-    'Transporte': Store,
-    'Otros': Store
+    'Arte': Sparkles,
+    'Deporte': Award,
+    'Viajes': MapPin,
+    'Música': MessageSquare,
+    'Fotografía': Store
   }
   
-  return categoryIcons[categoryName] || Store
+  return categoryIcons[categoryName] || Store // Default to Store icon if category not found
+}
+
+// Function to get appropriate image for each category
+const getCategoryImage = (categoryName) => {
+  const categoryImages = {
+    'Restaurante': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Imagen personalizada de comida
+    'Café': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Imagen personalizada de comida
+    'Tienda': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Imagen personalizada de tienda
+    'Servicio': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Imagen personalizada de servicio
+    'Entretenimiento': 'https://i.pinimg.com/1200x/2a/b7/d4/2ab7d413230af01e379488186e03a2fe.jpg', // Imagen personalizada de entretenimiento
+    'Salud y Belleza': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Imagen personalizada de salud y belleza
+    'Educación': 'https://i.pinimg.com/736x/6a/b0/4d/6ab04d7cee29ee80a53b84bc6ecd8d6d.jpg', // Imagen personalizada de educación
+    'Transporte': 'https://i.pinimg.com/736x/c3/c4/03/c3c403673f9e4ab5ec3c5b5d6e0a1279.jpg', // Imagen personalizada de transporte
+    'Librería': 'https://i.pinimg.com/736x/6a/b0/4d/6ab04d7cee29ee80a53b84bc6ecd8d6d.jpg', // Usar imagen de educación
+    'Peluquería': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Bar': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Usar imagen de comida
+    'Hotel': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Gimnasio': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Consultoría': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Tecnología': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Arte': 'https://i.pinimg.com/1200x/2a/b7/d4/2ab7d413230af01e379488186e03a2fe.jpg', // Usar imagen de entretenimiento
+    'Deporte': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Viajes': 'https://i.pinimg.com/736x/c3/c4/03/c3c403673f9e4ab5ec3c5b5d6e0a1279.jpg', // Usar imagen de transporte
+    'Música': 'https://i.pinimg.com/1200x/2a/b7/d4/2ab7d413230af01e379488186e03a2fe.jpg', // Usar imagen de entretenimiento
+    'Fotografía': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Farmacia': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Automotriz': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Construcción': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Inmobiliaria': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Financiero': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Legal': 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg', // Usar imagen de servicio
+    'Veterinaria': 'https://i.pinimg.com/736x/65/6e/f2/656ef2cb9e82a5c102e723bf997a4cb2.jpg', // Usar imagen de salud y belleza
+    'Florería': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Joyería': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Panadería': 'https://i.pinimg.com/1200x/a1/34/22/a13422ec6437ea3b036875cd7880c65c.jpg', // Usar imagen de comida
+    'Supermercado': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Ropa': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Electrónicos': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Muebles': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Jardín': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Mascotas': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Libros': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Zapatos': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Juguetes': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Deportes': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Cocina': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg', // Usar imagen de tienda
+    'Limpieza': 'https://i.pinimg.com/1200x/e6/43/8f/e6438f55e171e284e97d19f05704a990.jpg' // Usar imagen de tienda
+  }
+  
+  return categoryImages[categoryName] || 'https://i.pinimg.com/1200x/96/90/8b/96908bfa7ba5e90d235f4bbf4ed85493.jpg'
 }
 
 const Negocios = () => {
@@ -80,33 +151,40 @@ const Negocios = () => {
       }
 
       // Cargar reviews para cada negocio y calcular ratings
-      const negociosConReviews = []
-      
-      if (negociosData && negociosData.length > 0) {
-        for (const negocio of negociosData) {
+      const negociosConReviews = await Promise.all(
+        negociosData.map(async (negocio) => {
           try {
-            const reviews = await dbService.getBusinessReviews(negocio.id)
+            const reviews = await dbService.getReviews(negocio.id)
             const avgRating = reviews.length > 0 
               ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
               : 0
             
-            negociosConReviews.push({
+            return {
               ...negocio,
+              reviews,
               avgRating: parseFloat(avgRating.toFixed(1)),
               reviewCount: reviews.length
-            })
+            }
           } catch (error) {
-            console.error(`Error loading reviews for business ${negocio.id}:`, error)
-            negociosConReviews.push({
+            console.error('Error loading reviews for business:', negocio.id, error)
+            return {
               ...negocio,
+              reviews: [],
               avgRating: 0,
               reviewCount: 0
-            })
+            }
           }
-        }
-      }
+        })
+      )
 
-      // Calcular top negocios (mejor rating con al menos 1 reseña)
+      // Procesar negocios para calcular ratings promedio
+      const negociosConRating = negociosConReviews
+
+      // Establecer datos
+      setNegocios(negociosConRating)
+      setCategorias(categoriasData || [])
+
+      // Top 10 negocios con mejor rating
       const topRated = [...negociosConReviews]
         .filter(n => n.reviewCount > 0)
         .sort((a, b) => {
@@ -115,8 +193,6 @@ const Negocios = () => {
         })
         .slice(0, 10)
 
-      setNegocios(negociosConReviews)
-      setCategorias(categoriasData)
       setTopNegocios(topRated)
       setLoading(false)
 
@@ -129,11 +205,38 @@ const Negocios = () => {
       setCategorias([])
       setTopNegocios([])
     }
-  }, [])
+  }, []) // Empty dependency array for useCallback
+
+  // Make debug functions available globally for testing
+  useEffect(() => {
+    window.debugFirebase = {
+      showAllBusinesses: () => dbService.debugAllBusinesses(),
+      approveAllPending: () => dbService.approveAllPendingBusinesses(),
+      refreshPage: () => fetchData(),
+      debugCategories: () => debugCategories()
+    }
+  }, [fetchData])
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  const debugCategories = () => {
+    console.log('=== DEBUG CATEGORIES ===')
+    console.log('Total businesses:', negocios?.length || 0)
+    console.log('Categories:', categorias)
+    console.log('Selected category:', selectedCategory)
+    
+    if (negocios) {
+      const categoryCounts = {}
+      negocios.forEach(negocio => {
+        const cat = negocio.category || negocio.category_name || negocio.business_categories?.name || 'Sin Categoría'
+        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1
+      })
+      console.log('Businesses by category:', categoryCounts)
+    }
+    console.log('=======================')
+  }
 
   const filteredNegocios = negocios.filter(negocio => {
     const matchesSearch = negocio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -207,7 +310,7 @@ const Negocios = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-6 py-3 border border-gray-300 rounded-xl bg-white text-gray-700 focus:ring-2 focus:ring-[#3ecf8e] focus:border-[#3ecf8e] outline-none transition-all"
+                className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 focus:ring-[#3ecf8e] focus:border-[#3ecf8e] outline-none min-w-[180px]"
               >
                 <option value="recent">Más recientes</option>
                 <option value="rating">Mejor calificados</option>
@@ -217,31 +320,54 @@ const Negocios = () => {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
-                {filteredNegocios.length}
-              </div>
-              <div className="text-gray-500 text-sm">Negocios</div>
+          {/* Stats - Ahora colapsables en móvil */}
+          <div className="max-w-4xl mx-auto mt-8">
+            {/* Header colapsible para móvil */}
+            <div className="md:hidden mb-4">
+              <button
+                onClick={() => setIsStatsExpanded(!isStatsExpanded)}
+                className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <BarChart3 className="h-5 w-5 text-[#3ecf8e]" />
+                  <span className="font-semibold text-gray-800">Estadísticas</span>
+                </div>
+                {isStatsExpanded ? (
+                  <ChevronUp className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                )}
+              </button>
             </div>
-            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
-                {topNegocios.reduce((acc, neg) => acc + neg.reviewCount, 0)}+
+
+            {/* Contenido de estadísticas */}
+            <div className={`grid grid-cols-2 md:grid-cols-4 gap-6 transition-all duration-300 overflow-hidden ${
+              !isStatsExpanded ? 'md:grid hidden' : 'grid'
+            }`}>
+              <div className="text-center bg-white rounded-xl p-4 shadow-sm">
+                <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
+                  {negocios.length}+
+                </div>
+                <div className="text-gray-500 text-sm">Negocios</div>
               </div>
-              <div className="text-gray-500 text-sm">Reseñas</div>
-            </div>
-            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
-                {categorias.length}+
+              <div className="text-center bg-white rounded-xl p-4 shadow-sm">
+                <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
+                  {topNegocios.reduce((acc, neg) => acc + neg.reviewCount, 0)}+
+                </div>
+                <div className="text-gray-500 text-sm">Reseñas</div>
               </div>
-              <div className="text-gray-500 text-sm">Categorías</div>
-            </div>
-            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
-                {topNegocios.length > 0 ? Math.round(topNegocios.reduce((acc, neg) => acc + neg.avgRating, 0) / topNegocios.length * 10) / 10 : 0}★
+              <div className="text-center bg-white rounded-xl p-4 shadow-sm">
+                <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
+                  {categorias.length}+
+                </div>
+                <div className="text-gray-500 text-sm">Categorías</div>
               </div>
-              <div className="text-gray-500 text-sm">Promedio</div>
+              <div className="text-center bg-white rounded-xl p-4 shadow-sm">
+                <div className="text-2xl md:text-3xl font-bold text-[#3ecf8e] mb-1">
+                  {topNegocios.length > 0 ? Math.round(topNegocios.reduce((acc, neg) => acc + neg.avgRating, 0) / topNegocios.length * 10) / 10 : 0}★
+                </div>
+                <div className="text-gray-500 text-sm">Promedio</div>
+              </div>
             </div>
           </div>
         </div>
@@ -428,6 +554,7 @@ const BusinessCard = ({ negocio }) => {
   const [isFavorite, setIsFavorite] = useState(false)
   const [loadingFavorite, setLoadingFavorite] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [userReview, setUserReview] = useState(null)
   const [userRating, setUserRating] = useState(0)
   const [reviewComment, setReviewComment] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
@@ -559,6 +686,7 @@ const BusinessCard = ({ negocio }) => {
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
+                    // Reset form state when opening modal
                     setUserRating(0)
                     setReviewComment('')
                     setShowReviewModal(true)
@@ -580,6 +708,7 @@ const BusinessCard = ({ negocio }) => {
                       url: window.location.origin + `/negocio/${negocio.id}`
                     })
                   } else {
+                    // Fallback: copy to clipboard
                     navigator.clipboard.writeText(window.location.origin + `/negocio/${negocio.id}`)
                     alert('Enlace copiado al portapapeles')
                   }
@@ -680,13 +809,18 @@ const BusinessCard = ({ negocio }) => {
                   }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <X className="h-5 w-5 text-gray-400" />
+                  <span className="text-gray-500 text-2xl">×</span>
                 </button>
               </div>
 
-              <form onSubmit={handleReviewSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-800 mb-2">{negocio.name}</h4>
+                <p className="text-sm text-gray-600">{negocio.description}</p>
+              </div>
+
+              <form onSubmit={handleReviewSubmit}>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
                     Calificación *
                   </label>
                   <div className="flex gap-1">
@@ -695,45 +829,59 @@ const BusinessCard = ({ negocio }) => {
                         key={star}
                         type="button"
                         onClick={() => setUserRating(star)}
-                        className={`text-2xl transition-colors ${
-                          star <= userRating ? 'text-yellow-400' : 'text-gray-300'
-                        }`}
+                        className="p-1 hover:scale-110 transition-transform"
                       >
-                        ★
+                        <Star
+                          className={`h-8 w-8 ${
+                            star <= userRating
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                          }`}
+                        />
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div>
+                <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Comentario
+                    Comentario (opcional)
                   </label>
                   <textarea
                     value={reviewComment}
-                    onChange={(e) => setReviewComment(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent resize-none"
-                    rows="4"
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setReviewComment(value)
+                      // Force re-render by updating state
+                      setTimeout(() => {
+                        if (e.target.value !== value) {
+                          setReviewComment(e.target.value)
+                        }
+                      }, 0)
+                    }}
+                    onInput={(e) => {
+                      const value = e.target.value
+                      setReviewComment(value)
+                    }}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#3ecf8e] focus:border-[#3ecf8e] outline-none resize-none transition-colors"
                     placeholder="Comparte tu experiencia con este negocio..."
+                    name="reviewComment"
                   />
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowReviewModal(false)
-                      setUserRating(0)
-                      setReviewComment('')
-                    }}
-                    className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    onClick={() => setShowReviewModal(false)}
+                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={submittingReview || userRating === 0}
-                    className="flex-1 px-4 py-2 bg-[#3ecf8e] text-white rounded-lg hover:bg-[#2dd4bf] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex-1 px-4 py-3 bg-[#3ecf8e] text-white rounded-xl hover:bg-[#2dd4bf] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submittingReview ? 'Enviando...' : 'Enviar Reseña'}
                   </button>
@@ -742,9 +890,87 @@ const BusinessCard = ({ negocio }) => {
             </div>
           </div>
         </div>
-      )}
-    </>
+      </div>
+    </Link>
+
+    {/* Review Modal */}
+    {showReviewModal && user && (
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800">Dejar Reseña</h3>
+              <button
+                onClick={() => {
+                  setShowReviewModal(false)
+                  setUserRating(0)
+                  setReviewComment('')
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+
+            <form onSubmit={handleReviewSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Calificación *
+                </label>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setUserRating(star)}
+                      className={`text-2xl transition-colors ${
+                        star <= userRating ? 'text-yellow-400' : 'text-gray-300'
+                      }`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Comentario
+                </label>
+                <textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3ecf8e] focus:border-transparent resize-none"
+                  rows="4"
+                  placeholder="Comparte tu experiencia con este negocio..."
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReviewModal(false)
+                    setUserRating(0)
+                    setReviewComment('')
+                  }}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingReview || userRating === 0}
+                  className="flex-1 px-4 py-2 bg-[#3ecf8e] text-white rounded-lg hover:bg-[#2dd4bf] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {submittingReview ? 'Enviando...' : 'Enviar Reseña'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   )
 }
-
-export default Negocios
