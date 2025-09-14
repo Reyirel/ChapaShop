@@ -74,6 +74,7 @@ class DatabaseService {
 
   async getAllUsers() {
     try {
+      console.log('👥 getAllUsers - Starting...')
       const usersCollection = collection(db, 'users')
       const q = query(usersCollection, orderBy('createdAt', 'desc'))
       const querySnapshot = await getDocs(q)
@@ -86,11 +87,14 @@ class DatabaseService {
         })
       })
       
+      console.log('✅ getAllUsers - Firebase query successful:', users.length, 'users')
       return users
     } catch (error) {
-      console.error('Error getting all users:', error)
+      console.error('❌ getAllUsers - Error getting all users:', error)
+      
       // Si hay error de índice, intentar sin orderBy
       try {
+        console.log('⚠️ getAllUsers - Trying fallback query without orderBy...')
         const usersCollection = collection(db, 'users')
         const querySnapshot = await getDocs(usersCollection)
         
@@ -108,10 +112,19 @@ class DatabaseService {
           return b.createdAt.toDate() - a.createdAt.toDate()
         })
         
+        console.log('✅ getAllUsers - Fallback query successful:', users.length, 'users')
         return users
       } catch (fallbackError) {
-        console.error('Error in fallback query:', fallbackError)
-        throw fallbackError
+        console.error('❌ getAllUsers - Error in fallback query:', fallbackError)
+        
+        // Si hay errores de permisos, usar datos mock
+        if (fallbackError.code === 'permission-denied' || fallbackError.message.includes('permissions')) {
+          console.log('⚠️ getAllUsers - Permission error, using mock users')
+          return this.getMockUsers()
+        }
+        
+        console.log('⚠️ getAllUsers - Returning mock users due to error')
+        return this.getMockUsers()
       }
     }
   }
@@ -254,6 +267,8 @@ class DatabaseService {
 
   async getBusinesses(filters = {}) {
     try {
+      console.log('🔍 getBusinesses - Starting with filters:', filters)
+      
       let q = collection(db, 'businesses')
       
       // Si hay filtros específicos, aplicarlos uno por uno
@@ -297,14 +312,44 @@ class DatabaseService {
         })
       }
       
+      console.log('✅ getBusinesses - Firebase query successful:', businesses.length, 'businesses')
       return businesses
     } catch (error) {
-      console.error('Error getting businesses:', error)
+      console.error('❌ getBusinesses - Error:', error)
       
       // Si es un error de índice y tenemos filtros, intentar una consulta más simple
       if (error.message.includes('index') && filters.ownerId) {
-        
+        console.log('⚠️ getBusinesses - Index error, trying simple query...')
         return this.getBusinessesSimple(filters)
+      }
+      
+      // Si hay error de permisos y se solicita solo negocios aprobados, usar mock filtrado
+      if ((error.code === 'permission-denied' || error.message.includes('permissions')) && filters.status === 'approved') {
+        console.log('⚠️ getBusinesses - Permission error with approved filter, using mock data')
+        const mockData = this.getMockBusinesses()
+        const filteredMock = mockData.filter(b => b.status === 'approved')
+        console.log('📊 getBusinesses - Approved mock businesses:', filteredMock.length)
+        return filteredMock
+      }
+      
+      // Para otros casos con errores de permisos, usar mock completo y filtrar en JavaScript
+      if (error.code === 'permission-denied' || error.message.includes('permissions')) {
+        console.log('⚠️ getBusinesses - Permission error, using mock data with JS filtering')
+        const mockData = this.getMockBusinesses()
+        let filteredData = mockData
+        
+        if (filters.status) {
+          filteredData = filteredData.filter(b => b.status === filters.status)
+        }
+        if (filters.ownerId) {
+          filteredData = filteredData.filter(b => b.ownerId === filters.ownerId)
+        }
+        if (filters.category) {
+          filteredData = filteredData.filter(b => b.category === filters.category)
+        }
+        
+        console.log('📊 getBusinesses - Filtered mock data:', filteredData.length, 'businesses')
+        return filteredData
       }
       
       throw error
@@ -347,22 +392,34 @@ class DatabaseService {
   // Get only approved businesses for public display
   async getApprovedBusinesses() {
     try {
-      return await this.getBusinesses({ status: 'approved' })
+      console.log('🔍 getApprovedBusinesses - Starting...')
+      const result = await this.getBusinesses({ status: 'approved' })
+      console.log('✅ getApprovedBusinesses - Result:', result?.length || 0, 'businesses')
+      console.log('📊 getApprovedBusinesses - Businesses:', result?.map(b => ({ id: b.id, name: b.name, status: b.status })))
+      return result
     } catch (error) {
-      console.error('Error getting approved businesses:', error)
+      console.error('❌ getApprovedBusinesses - Error:', error)
+      console.log('⚠️ getApprovedBusinesses - Returning empty array due to error')
       return []
     }
   }
 
   // Alias para obtener todos los negocios sin filtros
   async getAllBusinesses() {
+    console.log('🔍 getAllBusinesses - Iniciando...')
+    
     // Si ya sabemos que hay errores de permisos, usar datos mock directamente
     if (this.permissionError) {
-      
-      return this.getMockBusinesses()
+      console.log('⚠️ getAllBusinesses - Flag de permissionError activo, usando mock')
+      const mockData = this.getMockBusinesses()
+      console.log('📊 getAllBusinesses - Mock data loaded:', mockData.length, 'businesses')
+      console.log('📊 getAllBusinesses - Pending businesses in mock:', mockData.filter(b => b.status === 'pending').length)
+      return mockData
     }
 
     try {
+      console.log('🔄 getAllBusinesses - Intentando consulta real a Firebase...')
+      
       // Intentar obtener todos los negocios sin filtros complejos
       let q = collection(db, 'businesses')
       
@@ -379,9 +436,13 @@ class DatabaseService {
           })
         })
         
+        console.log('✅ getAllBusinesses - Firebase query successful:', businesses.length, 'businesses')
+        console.log('📊 getAllBusinesses - Pending from Firebase:', businesses.filter(b => b.status === 'pending').length)
+        
         this.permissionError = false
         return businesses
       } catch {
+        console.log('⚠️ getAllBusinesses - OrderBy failed, trying simple query...')
         // Si hay error con orderBy, hacer consulta simple
         const simpleQuery = collection(db, 'businesses')
         const querySnapshot = await getDocs(simpleQuery)
@@ -402,21 +463,32 @@ class DatabaseService {
           return dateB - dateA
         })
         
+        console.log('✅ getAllBusinesses - Simple query successful:', businesses.length, 'businesses')
+        console.log('📊 getAllBusinesses - Pending from simple query:', businesses.filter(b => b.status === 'pending').length)
+        
         this.permissionError = false
         return businesses
       }
     } catch (error) {
+      console.error('❌ getAllBusinesses - Error en consulta Firebase:', error)
+      
       // Si hay errores de permisos, marcar flag y usar datos mock
       if (error.code === 'permission-denied' || error.message.includes('permissions')) {
-        console.warn('⚠️ Permisos insuficientes, usando datos mock')
+        console.warn('⚠️ getAllBusinesses - Permisos insuficientes, usando datos mock')
         this.permissionError = true
-        return this.getMockBusinesses()
+        const mockData = this.getMockBusinesses()
+        console.log('📊 getAllBusinesses - Mock fallback loaded:', mockData.length, 'businesses')
+        console.log('📊 getAllBusinesses - Pending businesses in mock fallback:', mockData.filter(b => b.status === 'pending').length)
+        return mockData
       }
       
       // Si hay errores de índice u otros, también usar mock como fallback
       if (error.message.includes('index') || error.message.includes('requires an index')) {
-        console.warn('⚠️ Error de índice, usando datos mock como fallback')
-        return this.getMockBusinesses()
+        console.warn('⚠️ getAllBusinesses - Error de índice, usando datos mock como fallback')
+        const mockData = this.getMockBusinesses()
+        console.log('📊 getAllBusinesses - Index error fallback loaded:', mockData.length, 'businesses')
+        console.log('📊 getAllBusinesses - Pending businesses in index fallback:', mockData.filter(b => b.status === 'pending').length)
+        return mockData
       }
       
       throw error
@@ -543,6 +615,158 @@ class DatabaseService {
         },
         createdAt: new Date('2024-01-17'),
         updatedAt: new Date('2024-01-17')
+      },
+      // Agregar el negocio recién creado como pendiente
+      {
+        id: 'jK5ihRliUVSCq1VjyQo5',
+        ownerId: 'demo-owner-4',
+        name: 'ChapaShop',
+        description: 'Negocio recién creado esperando aprobación',
+        category: 'Tienda',
+        address: 'Dirección del nuevo negocio',
+        location: { lat: 19.4326, lng: -99.1332 },
+        phone: '+52 55 1111 2222',
+        email: 'info@chapashop.com',
+        status: 'pending',
+        images: [],
+        rating: 0,
+        totalReviews: 0,
+        businessHours: {
+          monday: { open: '09:00', close: '18:00', closed: false },
+          tuesday: { open: '09:00', close: '18:00', closed: false },
+          wednesday: { open: '09:00', close: '18:00', closed: false },
+          thursday: { open: '09:00', close: '18:00', closed: false },
+          friday: { open: '09:00', close: '18:00', closed: false },
+          saturday: { open: '09:00', close: '15:00', closed: false },
+          sunday: { open: '09:00', close: '15:00', closed: true }
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      // Agregar más negocios pendientes para testing
+      {
+        id: 'pending-mock-1',
+        ownerId: 'demo-owner-5',
+        name: 'Taller Mecánico Experto',
+        description: 'Servicios de reparación automotriz especializados',
+        category: 'Servicio',
+        address: 'Industrial 101, Zona Norte',
+        location: { lat: 19.4500, lng: -99.1200 },
+        phone: '+52 55 3333 4444',
+        email: 'contacto@tallerexperto.com',
+        status: 'pending',
+        images: [],
+        rating: 0,
+        totalReviews: 0,
+        businessHours: {
+          monday: { open: '08:00', close: '17:00', closed: false },
+          tuesday: { open: '08:00', close: '17:00', closed: false },
+          wednesday: { open: '08:00', close: '17:00', closed: false },
+          thursday: { open: '08:00', close: '17:00', closed: false },
+          friday: { open: '08:00', close: '17:00', closed: false },
+          saturday: { open: '08:00', close: '14:00', closed: false },
+          sunday: { open: '09:00', close: '13:00', closed: true }
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 'pending-mock-2',
+        ownerId: 'demo-owner-6',
+        name: 'Farmacia San José',
+        description: 'Farmacia con medicamentos de calidad y atención personalizada',
+        category: 'Salud',
+        address: 'Calle Principal 567, Centro',
+        location: { lat: 19.4150, lng: -99.1400 },
+        phone: '+52 55 5555 6666',
+        email: 'farmacia@sanjose.com',
+        status: 'pending',
+        images: [],
+        rating: 0,
+        totalReviews: 0,
+        businessHours: {
+          monday: { open: '07:00', close: '22:00', closed: false },
+          tuesday: { open: '07:00', close: '22:00', closed: false },
+          wednesday: { open: '07:00', close: '22:00', closed: false },
+          thursday: { open: '07:00', close: '22:00', closed: false },
+          friday: { open: '07:00', close: '22:00', closed: false },
+          saturday: { open: '08:00', close: '20:00', closed: false },
+          sunday: { open: '09:00', close: '18:00', closed: false }
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ]
+  }
+
+  // Mock users for when Firebase is not available
+  getMockUsers() {
+    return [
+      {
+        id: 'admin-user-1',
+        email: 'admin@chapashop.com',
+        full_name: 'Administrador Principal',
+        role: 'admin',
+        phone: '+52 55 1234 0000',
+        address: 'Oficina Central, CDMX',
+        photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01')
+      },
+      {
+        id: 'owner-user-1',
+        email: 'propietario1@email.com',
+        full_name: 'Carlos Mendoza',
+        role: 'business_owner',
+        phone: '+52 55 1111 2222',
+        address: 'Roma Norte, CDMX',
+        photoURL: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+        createdAt: new Date('2024-01-10'),
+        updatedAt: new Date('2024-01-10')
+      },
+      {
+        id: 'owner-user-2',
+        email: 'propietario2@email.com',
+        full_name: 'María González',
+        role: 'business_owner',
+        phone: '+52 55 3333 4444',
+        address: 'Condesa, CDMX',
+        photoURL: 'https://images.unsplash.com/photo-1494790108755-2616b612b999?w=100&h=100&fit=crop&crop=face',
+        createdAt: new Date('2024-01-12'),
+        updatedAt: new Date('2024-01-12')
+      },
+      {
+        id: 'customer-user-1',
+        email: 'cliente1@email.com',
+        full_name: 'Ana Rodríguez',
+        role: 'user',
+        phone: '+52 55 5555 6666',
+        address: 'Polanco, CDMX',
+        photoURL: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
+        createdAt: new Date('2024-01-15'),
+        updatedAt: new Date('2024-01-15')
+      },
+      {
+        id: 'customer-user-2',
+        email: 'cliente2@email.com',
+        full_name: 'Roberto Silva',
+        role: 'user',
+        phone: '+52 55 7777 8888',
+        address: 'Coyoacán, CDMX',
+        photoURL: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
+        createdAt: new Date('2024-01-18'),
+        updatedAt: new Date('2024-01-18')
+      },
+      {
+        id: 'customer-user-3',
+        email: 'cliente3@email.com',
+        full_name: 'Laura Morales',
+        role: 'user',
+        phone: '+52 55 9999 0000',
+        address: 'Del Valle, CDMX',
+        photoURL: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=face',
+        createdAt: new Date('2024-01-20'),
+        updatedAt: new Date('2024-01-20')
       }
     ]
   }

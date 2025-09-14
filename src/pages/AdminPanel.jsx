@@ -137,14 +137,27 @@ const AdminPanel = () => {
 
   const fetchData = async () => {
     try {
+      console.log('🔄 AdminPanel - Iniciando fetchData...')
+      
       // Fetch all businesses
       const businessesData = await dbService.getAllBusinesses()
+      console.log('🏢 AdminPanel - Businesses loaded:', businessesData?.length || 0)
+      console.log('📊 AdminPanel - Businesses data:', businessesData)
 
       // Fetch pending businesses
       const pendingData = businessesData.filter(b => b.status === 'pending')
+      console.log('⏳ AdminPanel - Pending businesses found:', pendingData.length)
+      console.log('📋 AdminPanel - Pending businesses:', pendingData.map(b => ({ id: b.id, name: b.name, status: b.status })))
       
-      // Fetch all users
-      const usersData = await dbService.getAllUsers()
+      // Fetch all users (with error handling)
+      let usersData = []
+      try {
+        usersData = await dbService.getAllUsers()
+        console.log('👥 AdminPanel - Users loaded:', usersData?.length || 0)
+      } catch (userError) {
+        console.error('⚠️ AdminPanel - Error loading users, continuing with empty array:', userError)
+        usersData = [] // Continue with empty users array
+      }
       
       setBusinesses(businessesData || [])
       setPendingBusinesses(pendingData || [])
@@ -157,6 +170,16 @@ const AdminPanel = () => {
       const totalReviews = businessesData.reduce((acc, b) => acc + (b.reviews?.length || 0), 0)
       const totalProducts = businessesData.reduce((acc, b) => acc + (b.products?.length || 0), 0)
       
+      console.log('📈 AdminPanel - Stats calculated:', {
+        totalBusinesses,
+        approvedBusinesses,
+        rejectedBusinesses,
+        pendingBusinesses: pendingData.length,
+        totalReviews,
+        totalProducts,
+        totalUsers: usersData.length
+      })
+      
       // Calculate average rating
       const allReviews = businessesData.flatMap(b => b.reviews || [])
       const avgRating = allReviews.length > 0 
@@ -167,14 +190,14 @@ const AdminPanel = () => {
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
       const recentBusinesses = businessesData.filter(b => 
-        new Date(b.created_at) > weekAgo
+        new Date(b.created_at || b.createdAt) > weekAgo
       ).length
 
       // Calculate growth percentage
       const monthAgo = new Date()
       monthAgo.setMonth(monthAgo.getMonth() - 1)
       const businessesLastMonth = businessesData.filter(b => 
-        new Date(b.created_at) <= monthAgo
+        new Date(b.created_at || b.createdAt) <= monthAgo
       ).length
       const growth = businessesLastMonth > 0 
         ? (((totalBusinesses - businessesLastMonth) / businessesLastMonth) * 100).toFixed(1)
@@ -217,8 +240,28 @@ const AdminPanel = () => {
       setNotifications(newNotifications)
       setLastRefresh(new Date())
 
+      console.log('✅ AdminPanel - fetchData completed successfully')
+
     } catch (error) {
-      console.error('Error fetching data:', error)
+      console.error('❌ AdminPanel - Error fetching data:', error)
+      
+      // Even if there are errors, try to set what we can
+      console.log('⚠️ AdminPanel - Setting fallback empty data due to error')
+      setBusinesses([])
+      setPendingBusinesses([])
+      setUsers([])
+      setStats({
+        total: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        reviews: 0,
+        products: 0,
+        avgRating: 0,
+        recentActivity: 0,
+        growth: 0
+      })
+      setNotifications([])
     } finally {
       setLoading(false)
     }
@@ -605,6 +648,11 @@ const AdminPanel = () => {
 
   // Refresh data manually
   const handleRefresh = () => {
+    console.log('🔄 AdminPanel - Manual refresh initiated')
+    
+    // Reset permission error flag to try real Firebase query again
+    dbService.resetPermissionError()
+    
     setLoading(true)
     fetchData()
   }
@@ -697,10 +745,40 @@ const AdminPanel = () => {
                 <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
               </button>
 
+              {/* Debug Button */}
+              <button
+                onClick={() => {
+                  console.log('🔧 DEBUG INFO:')
+                  console.log('- Permission Error Flag:', dbService.hasPermissionError())
+                  console.log('- Total Businesses:', businesses.length)
+                  console.log('- Pending Businesses:', pendingBusinesses.length)
+                  console.log('- All Businesses:', businesses.map(b => ({ id: b.id, name: b.name, status: b.status })))
+                  console.log('- Pending Details:', pendingBusinesses.map(b => ({ id: b.id, name: b.name, status: b.status })))
+                  
+                  // Force reset and refresh
+                  dbService.resetPermissionError()
+                  console.log('🔄 Permission error flag reset, refreshing...')
+                  handleRefresh()
+                }}
+                className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-xl transition-colors"
+                title="Debug & Force Refresh"
+              >
+                <Settings size={20} />
+              </button>
+
               {/* User Info */}
               <div className="bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-700/50">
                 <span className="text-gray-400 text-sm">Admin:</span>
                 <span className="text-[#3ecf8e] font-medium ml-2 text-sm">{user?.full_name}</span>
+              </div>
+
+              {/* Data Source Indicator */}
+              <div className={`px-3 py-1 rounded-lg text-xs font-medium border ${
+                dbService.hasPermissionError() 
+                  ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-400' 
+                  : 'bg-green-500/20 border-green-500/30 text-green-400'
+              }`}>
+                {dbService.hasPermissionError() ? 'MOCK DATA' : 'LIVE DATA'}
               </div>
             </div>
           </div>
