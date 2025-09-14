@@ -86,12 +86,14 @@ const Navbar = () => {
   // Obtener elementos de navegación según el rol del usuario
   const getNavItems = () => {
     if (!user) {
+      // Para usuarios no autenticados, solo devolver items de autenticación para el menú móvil
       return [
         { path: '/login', label: 'Iniciar Sesión', icon: LogIn },
         { path: '/register', label: 'Registrarse', icon: UserPlus }
       ]
     }
 
+    // Para usuarios autenticados, devolver navegación principal
     const baseItems = [
       { path: '/', label: 'Inicio', icon: Home },
       { path: '/negocios', label: 'Negocios', icon: Store },
@@ -204,18 +206,20 @@ const Navbar = () => {
               </span>
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-2">
-              {navItems.map((item) => (
-                <NavLink 
-                  key={item.path} 
-                  to={item.path} 
-                  icon={item.icon}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
+            {/* Desktop Navigation - Solo mostrar si hay usuario autenticado */}
+            {user && (
+              <div className="hidden md:flex items-center space-x-2">
+                {navItems.map((item) => (
+                  <NavLink 
+                    key={item.path} 
+                    to={item.path} 
+                    icon={item.icon}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
 
             {/* User Menu - Desktop */}
             {user ? (
