@@ -33,15 +33,16 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
   const mapCenter = position ? [position.lat, position.lng] : defaultCenter
   const mapKey = position ? `${position.lat}-${position.lng}` : 'default'
 
-  // Notificar ubicación inicial si existe
+  // Notificar ubicación inicial si existe (solo una vez)
   useEffect(() => {
     if (initialPosition && onLocationChange) {
+      console.log('📍 LocationPicker: Notificando ubicación inicial:', initialPosition)
       onLocationChange({
         latitude: initialPosition.lat,
         longitude: initialPosition.lng
       })
     }
-  }, [initialPosition, onLocationChange])
+  }, []) // Solo ejecutar una vez al montar el componente
 
   const handleLocationSelect = async (latlng) => {
     setPosition(latlng)
@@ -55,19 +56,24 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
         return
       }
 
-      // Solo guardar las coordenadas exactas
-      onLocationChange({
-        latitude: latlng.lat,
-        longitude: latlng.lng
-      })
+      // Guardar las coordenadas exactas con mayor precisión
+      const locationData = {
+        latitude: parseFloat(latlng.lat.toFixed(8)),
+        longitude: parseFloat(latlng.lng.toFixed(8))
+      }
+      
+      console.log('📍 Ubicación seleccionada:', locationData)
+      onLocationChange(locationData)
       
     } catch (error) {
       console.error('Error al procesar la ubicación:', error)
       if (onLocationChange && typeof onLocationChange === 'function') {
-        onLocationChange({
-          latitude: latlng.lat,
-          longitude: latlng.lng
-        })
+        const fallbackLocation = {
+          latitude: parseFloat(latlng.lat.toFixed(8)),
+          longitude: parseFloat(latlng.lng.toFixed(8))
+        }
+        console.log('📍 Ubicación de respaldo:', fallbackLocation)
+        onLocationChange(fallbackLocation)
       }
     } finally {
       setLoading(false)
@@ -87,6 +93,11 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         }
+        console.log('🎯 Ubicación GPS obtenida:', {
+          latitude: latlng.lat,
+          longitude: latlng.lng,
+          accuracy: position.coords.accuracy
+        })
         handleLocationSelect(latlng)
       },
       (error) => {
@@ -113,8 +124,8 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000 // 5 minutos
+        timeout: 15000,
+        maximumAge: 60000 // 1 minuto para datos más frescos
       }
     )
   }
@@ -165,10 +176,13 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
             <span className="font-medium text-[#3ecf8e]">Coordenadas seleccionadas:</span>
           </p>
           <p className="text-sm text-gray-400 mt-1">
-            Lat: {position.lat.toFixed(6)}, Lng: {position.lng.toFixed(6)}
+            Lat: {position.lat.toFixed(8)}, Lng: {position.lng.toFixed(8)}
           </p>
           <p className="text-xs text-gray-500 mt-2">
-            Estas coordenadas se pueden usar directamente con Google Maps
+            📍 Estas coordenadas se enviarán a la base de datos
+          </p>
+          <p className="text-xs text-green-400 mt-1">
+            ✅ Google Maps: {position.lat.toFixed(6)}, {position.lng.toFixed(6)}
           </p>
         </div>
       )}

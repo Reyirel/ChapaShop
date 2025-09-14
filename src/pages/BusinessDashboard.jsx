@@ -27,8 +27,23 @@ import {
 
 // Helper function to format business hours for Firebase
 const formatBusinessHours = (hours) => {
+  console.log('🕒 formatBusinessHours recibió:', hours)
+  console.log('🕒 formatBusinessHours - tipo:', typeof hours)
+  
+  // If hours is null or undefined, return default business hours
   if (!hours || typeof hours !== 'object') {
-    return null
+    console.log('⚠️ Horarios inválidos o nulos, generando horarios por defecto')
+    const defaultHours = {
+      monday: { open: '09:00', close: '18:00', closed: false },
+      tuesday: { open: '09:00', close: '18:00', closed: false },
+      wednesday: { open: '09:00', close: '18:00', closed: false },
+      thursday: { open: '09:00', close: '18:00', closed: false },
+      friday: { open: '09:00', close: '18:00', closed: false },
+      saturday: { open: '09:00', close: '15:00', closed: false },
+      sunday: { open: '09:00', close: '15:00', closed: true }
+    }
+    console.log('🕒 formatBusinessHours - horarios por defecto generados:', defaultHours)
+    return defaultHours
   }
 
   const formatted = {}
@@ -46,11 +61,13 @@ const formatBusinessHours = (hours) => {
       formatted[day] = {
         open: '09:00',
         close: '18:00',
-        closed: true
+        closed: false
       }
     }
   })
 
+  console.log('✅ Horarios formateados:', formatted)
+  console.log('✅ formatBusinessHours - nunca es null, siempre devuelve objeto:', typeof formatted === 'object')
   return formatted
 }
 
@@ -384,14 +401,21 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
     name: '',
     description: '',
     category: '',
-    address: '',
     phone: '',
     email: '',
     website: ''
   })
   
   const [location, setLocation] = useState(null)
-  const [businessHours, setBusinessHours] = useState(null)
+  const [businessHours, setBusinessHours] = useState({
+    monday: { open: '09:00', close: '18:00', closed: false },
+    tuesday: { open: '09:00', close: '18:00', closed: false },
+    wednesday: { open: '09:00', close: '18:00', closed: false },
+    thursday: { open: '09:00', close: '18:00', closed: false },
+    friday: { open: '09:00', close: '18:00', closed: false },
+    saturday: { open: '09:00', close: '15:00', closed: false },
+    sunday: { open: '09:00', close: '15:00', closed: true }
+  })
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
 
@@ -402,6 +426,21 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
     setLoading(true)
 
     try {
+      console.log('📝 Datos del formulario antes de enviar:')
+      console.log('- formData:', formData)
+      console.log('- location:', location)
+      console.log('- businessHours (raw):', businessHours)
+      console.log('- businessHours tipo:', typeof businessHours)
+      console.log('- businessHours es null:', businessHours === null)
+      console.log('- businessHours keys:', businessHours ? Object.keys(businessHours) : 'N/A')
+      console.log('- products:', products)
+
+      // Debug: verificar businessHours antes y después del formateo
+      console.log('🔍 Antes de formatBusinessHours:', businessHours)
+      const formattedHours = formatBusinessHours(businessHours)
+      console.log('🔍 Después de formatBusinessHours:', formattedHours)
+      console.log('🔍 formattedHours es null:', formattedHours === null)
+
       const businessData = {
         ...formData,
         ownerId: user.uid,
@@ -409,9 +448,18 @@ const CreateBusinessModal = ({ onClose, onSuccess }) => {
           lat: location.latitude,
           lng: location.longitude
         } : null,
-        businessHours: formatBusinessHours(businessHours),
+        businessHours: formattedHours,
         products: products.length > 0 ? products.join(', ') : ''
       }
+
+      console.log('🏢 Creando negocio con datos FINALES:')
+      console.log('- name:', businessData.name)
+      console.log('- location:', businessData.location)
+      console.log('- businessHours:', businessData.businessHours)
+      console.log('- businessHours tipo:', typeof businessData.businessHours)
+      console.log('- hasBusinessHours:', !!businessData.businessHours)
+      console.log('- hasProducts:', !!businessData.products)
+      console.log('- Objeto completo:', businessData)
 
       const businessId = await dbService.createBusiness(businessData)
       
@@ -560,30 +608,22 @@ Error técnico: ${error.message}`
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Dirección
+              Ubicación del Negocio
             </label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData({...formData, address: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Calle 123, Ciudad, País"
+            <LocationPicker
+              onLocationChange={setLocation}
+              initialPosition={location ? { lat: location.latitude, lng: location.longitude } : null}
             />
           </div>
 
-          <LocationPicker
-            onLocationChange={setLocation}
-            initialLocation={location}
-          />
-
           <BusinessHours
-            value={businessHours}
-            onChange={setBusinessHours}
+            onHoursChange={setBusinessHours}
+            initialHours={businessHours}
           />
 
           <ProductList
-            products={products}
-            onChange={setProducts}
+            onProductsChange={setProducts}
+            initialProducts={products}
           />
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
@@ -619,7 +659,6 @@ const EditBusinessModal = ({ business, onClose, onSuccess }) => {
     name: business.name || '',
     description: business.description || '',
     category: business.category || '',
-    address: business.address || '',
     phone: business.phone || '',
     email: business.email || '',
     website: business.website || ''
@@ -627,11 +666,24 @@ const EditBusinessModal = ({ business, onClose, onSuccess }) => {
   
   const [location, setLocation] = useState(business.location ? {
     latitude: business.location.lat,
-    longitude: business.location.lng,
-    address: business.address
+    longitude: business.location.lng
   } : null)
   
-  const [businessHours, setBusinessHours] = useState(business.businessHours || null)
+  const [businessHours, setBusinessHours] = useState(() => {
+    if (business.businessHours && typeof business.businessHours === 'object') {
+      return business.businessHours
+    }
+    // Default hours if none exist
+    return {
+      monday: { open: '09:00', close: '18:00', closed: false },
+      tuesday: { open: '09:00', close: '18:00', closed: false },
+      wednesday: { open: '09:00', close: '18:00', closed: false },
+      thursday: { open: '09:00', close: '18:00', closed: false },
+      friday: { open: '09:00', close: '18:00', closed: false },
+      saturday: { open: '09:00', close: '15:00', closed: false },
+      sunday: { open: '09:00', close: '15:00', closed: true }
+    }
+  })
   const [products, setProducts] = useState(
     business.products ? business.products.split(', ').filter(p => p.trim()) : []
   )
@@ -644,15 +696,37 @@ const EditBusinessModal = ({ business, onClose, onSuccess }) => {
     setLoading(true)
 
     try {
+      console.log('🔄 Datos del formulario de edición antes de enviar:')
+      console.log('- formData:', formData)
+      console.log('- location:', location)
+      console.log('- businessHours (raw):', businessHours)
+      console.log('- businessHours tipo:', typeof businessHours)
+      console.log('- businessHours keys:', businessHours ? Object.keys(businessHours) : 'N/A')
+      console.log('- products:', products)
+
+      // Debug: verificar businessHours antes y después del formateo
+      console.log('🔍 EDIT - Antes de formatBusinessHours:', businessHours)
+      const formattedHours = formatBusinessHours(businessHours)
+      console.log('🔍 EDIT - Después de formatBusinessHours:', formattedHours)
+
       const businessData = {
         ...formData,
         location: location ? {
           lat: location.latitude,
           lng: location.longitude
         } : null,
-        businessHours: formatBusinessHours(businessHours),
+        businessHours: formattedHours,
         products: products.length > 0 ? products.join(', ') : ''
       }
+
+      console.log('🔄 Actualizando negocio con datos FINALES:')
+      console.log('- businessId:', business.id)
+      console.log('- name:', businessData.name)
+      console.log('- location:', businessData.location)
+      console.log('- businessHours:', businessData.businessHours)
+      console.log('- businessHours tipo:', typeof businessData.businessHours)
+      console.log('- hasBusinessHours:', !!businessData.businessHours)
+      console.log('- hasProducts:', !!businessData.products)
 
       const result = await dbService.updateBusiness(business.id, businessData)
       
@@ -680,7 +754,7 @@ Los cambios se guardaron correctamente y aparecerán una vez que se configuren l
 
 Error técnico: ${error.message}`
       } else if (error.message && error.message.includes('permission')) {
-        errorMessage = 'Error de permisos. Verifica que tengas acceso para editar este negocio.'
+        errorMessage = 'Error de permisos. Verifica que tengas acceso para actualizar negocios.'
       }
       
       alert(errorMessage)
@@ -805,30 +879,22 @@ Error técnico: ${error.message}`
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Dirección
+              Ubicación del Negocio
             </label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData({...formData, address: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Calle 123, Ciudad, País"
+            <LocationPicker
+              onLocationChange={setLocation}
+              initialPosition={location ? { lat: location.latitude, lng: location.longitude } : null}
             />
           </div>
 
-          <LocationPicker
-            onLocationChange={setLocation}
-            initialLocation={location}
-          />
-
           <BusinessHours
-            value={businessHours}
-            onChange={setBusinessHours}
+            onHoursChange={setBusinessHours}
+            initialHours={businessHours}
           />
 
           <ProductList
-            products={products}
-            onChange={setProducts}
+            onProductsChange={setProducts}
+            initialProducts={products}
           />
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
@@ -847,7 +913,7 @@ Error técnico: ${error.message}`
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                'Actualizar Negocio'
+                'Crear Negocio'
               )}
             </button>
           </div>

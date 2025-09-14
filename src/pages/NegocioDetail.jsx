@@ -4,6 +4,8 @@ import AuthContext from '../context/AuthContext'
 import dbService from '../services/database'
 import CategoryAnimationDetail from '../components/CategoryAnimationDetail'
 import useAnalytics from '../hooks/useAnalytics'
+import { formatBusinessHours, isOpenNow } from '../utils/businessHours'
+import { formatLocation } from '../utils/location'
 import { 
   ArrowLeft,
   MapPin, 
@@ -168,54 +170,6 @@ const NegocioDetail = () => {
     fetchData()
   }, [id, user])
 
-  const formatBusinessHours = (hours) => {
-    const dayNames = [
-      { key: 'monday', name: 'Lunes' },
-      { key: 'tuesday', name: 'Martes' },
-      { key: 'wednesday', name: 'Miércoles' },
-      { key: 'thursday', name: 'Jueves' },
-      { key: 'friday', name: 'Viernes' },
-      { key: 'saturday', name: 'Sábado' },
-      { key: 'sunday', name: 'Domingo' }
-    ]
-
-    return dayNames.map(({ key, name }) => {
-      let timeDisplay = 'Cerrado'
-      
-      // Si no hay datos de horarios o el día no existe
-      if (!hours || typeof hours !== 'object' || !hours[key]) {
-        return {
-          day: name,
-          time: 'Cerrado'
-        }
-      }
-
-      const data = hours[key]
-      
-      // Manejar diferentes formatos de datos
-      if (typeof data === 'string') {
-        timeDisplay = data === '' ? 'Cerrado' : data
-      } else if (typeof data === 'object' && data !== null) {
-        if (data.time) {
-          timeDisplay = data.time
-        } else if (data.open && data.close) {
-          timeDisplay = `${data.open} - ${data.close}`
-        } else if (data.isOpen === false || data.closed === true) {
-          timeDisplay = 'Cerrado'
-        } else if (data.isOpen === true) {
-          timeDisplay = data.hours || '24 horas'
-        } else {
-          timeDisplay = 'Cerrado'
-        }
-      }
-
-      return {
-        day: name,
-        time: timeDisplay
-      }
-    })
-  }
-
   const shareNegocio = () => {
     if (navigator.share) {
       navigator.share({
@@ -345,7 +299,15 @@ const NegocioDetail = () => {
     )
   }
 
+  // Usar las funciones utilitarias
   const businessHours = formatBusinessHours(negocio.businessHours || negocio.business_hours)
+  const isCurrentlyOpen = isOpenNow(negocio.businessHours || negocio.business_hours)
+  const locationInfo = formatLocation({
+    lat: negocio.location?.lat,
+    lng: negocio.location?.lng,
+    address: negocio.address,
+    name: negocio.name
+  })
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -486,22 +448,29 @@ const NegocioDetail = () => {
                         </div>
                       )}
 
-                      {negocio.address && (
+                      {locationInfo.hasLocation && (
                         <div className="flex items-center gap-3">
                           <MapPin className="h-4 w-4 text-gray-400" />
-                          <a 
-                            href={
-                              negocio.location && negocio.location.lat && negocio.location.lng
-                                ? `https://www.google.com/maps/search/?api=1&query=${negocio.location.lat},${negocio.location.lng}`
-                                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(negocio.address)}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-indigo-600 hover:underline flex items-center gap-1"
-                          >
-                            {negocio.address}
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
+                          <div className="flex flex-col gap-1">
+                            {locationInfo.hasAddress ? (
+                              <span className="text-gray-700 text-sm">
+                                {locationInfo.displayText}
+                              </span>
+                            ) : locationInfo.hasCoordinates ? (
+                              <span className="text-gray-500 text-sm italic">
+                                Ubicación disponible en el mapa
+                              </span>
+                            ) : null}
+                            <a 
+                              href={locationInfo.mapsLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-indigo-600 hover:underline flex items-center gap-1 text-sm font-medium"
+                            >
+                              📍 Ver en Google Maps
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -533,10 +502,23 @@ const NegocioDetail = () => {
 
                   {/* Horarios */}
                   <div className="space-y-4">
-                    <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-indigo-600" />
-                      Horarios de Atención
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                        <Clock className="h-5 w-5 text-indigo-600" />
+                        Horarios de Atención
+                      </h3>
+                      {/* Indicador de estado actual */}
+                      <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                        isCurrentlyOpen 
+                          ? 'bg-green-100 text-green-800 border border-green-200' 
+                          : 'bg-red-100 text-red-800 border border-red-200'
+                      }`}>
+                        <div className={`w-2 h-2 rounded-full ${
+                          isCurrentlyOpen ? 'bg-green-500' : 'bg-red-500'
+                        }`}></div>
+                        {isCurrentlyOpen ? 'Abierto ahora' : 'Cerrado ahora'}
+                      </div>
+                    </div>
                     
                     <div className="bg-gray-50 rounded-lg p-4">
                       {businessHours.length === 0 ? (
@@ -549,7 +531,7 @@ const NegocioDetail = () => {
                                 {hour.day}
                               </span>
                               <span className={`font-semibold px-3 py-1 rounded-full text-xs sm:text-sm text-center ${
-                                hour.time === 'Cerrado' || hour.time === 'cerrado' || hour.time === 'CERRADO'
+                                hour.isOpen === false || hour.time === 'Cerrado' || hour.time === 'cerrado' || hour.time === 'CERRADO'
                                   ? 'bg-red-100 text-red-700' 
                                   : 'bg-green-100 text-green-700'
                               }`}>

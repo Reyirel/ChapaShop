@@ -9,7 +9,14 @@ const ProductList = ({ onProductsChange, initialProducts = [] }) => {
     if (newProduct.trim() && !products.includes(newProduct.trim())) {
       const updatedProducts = [...products, newProduct.trim()]
       setProducts(updatedProducts)
-      onProductsChange(updatedProducts)
+      
+      // Verificar que onProductsChange es una función antes de llamarla
+      if (typeof onProductsChange === 'function') {
+        onProductsChange(updatedProducts)
+      } else {
+        console.warn('⚠️ ProductList: onProductsChange no es una función:', typeof onProductsChange)
+      }
+      
       setNewProduct('')
     }
   }
@@ -17,7 +24,13 @@ const ProductList = ({ onProductsChange, initialProducts = [] }) => {
   const removeProduct = (index) => {
     const updatedProducts = products.filter((_, i) => i !== index)
     setProducts(updatedProducts)
-    onProductsChange(updatedProducts)
+    
+    // Verificar que onProductsChange es una función antes de llamarla
+    if (typeof onProductsChange === 'function') {
+      onProductsChange(updatedProducts)
+    } else {
+      console.warn('⚠️ ProductList: onProductsChange no es una función:', typeof onProductsChange)
+    }
   }
 
   const handleKeyPress = (e) => {

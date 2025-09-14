@@ -829,19 +829,6 @@ const AdminPanel = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Dirección
-                      </label>
-                      <input
-                        type="text"
-                        value={editFormData.address}
-                        onChange={(e) => setEditFormData({...editFormData, address: e.target.value})}
-                        className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
-                        placeholder="Ej: Calle Principal 123, Centro, Ciudad"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
                         Sitio Web
                       </label>
                       <input

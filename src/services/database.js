@@ -76,13 +76,51 @@ class DatabaseService {
   // BUSINESSES
   async createBusiness(businessData) {
     try {
+      console.log('🏭 DatabaseService.createBusiness - Datos recibidos:', businessData)
+      console.log('🕒 DatabaseService - businessHours original:', businessData.businessHours)
+      console.log('🕒 DatabaseService - businessHours tipo:', typeof businessData.businessHours)
+      console.log('🕒 DatabaseService - businessHours existe:', !!businessData.businessHours)
+
       // Validate and format business hours if provided
       if (businessData.businessHours) {
+        console.log('✅ DatabaseService - businessHours existe, validando...')
         businessData.businessHours = this.validateBusinessHours(businessData.businessHours)
+        console.log('✅ DatabaseService - businessHours después de validación:', businessData.businessHours)
+      } else {
+        console.log('⚠️ DatabaseService - businessHours NO existe o es falsy')
+        console.log('⚠️ DatabaseService - Valor exacto:', businessData.businessHours)
+        console.log('⚠️ DatabaseService - Es null:', businessData.businessHours === null)
+        console.log('⚠️ DatabaseService - Es undefined:', businessData.businessHours === undefined)
       }
 
-      
-      const docRef = await addDoc(collection(db, 'businesses'), {
+      // Validate location data
+      if (businessData.location) {
+        console.log('📍 Ubicación recibida para crear negocio:', businessData.location)
+        
+        // Ensure location has the correct structure
+        if (!businessData.location.lat || !businessData.location.lng) {
+          console.warn('⚠️ Estructura de ubicación inválida, eliminando campo location')
+          businessData.location = null
+        } else {
+          // Ensure numeric values
+          businessData.location = {
+            lat: parseFloat(businessData.location.lat),
+            lng: parseFloat(businessData.location.lng)
+          }
+          console.log('✅ Ubicación validada:', businessData.location)
+        }
+      }
+
+      console.log('💾 Datos del negocio ANTES de guardar en Firebase:', {
+        name: businessData.name,
+        location: businessData.location,
+        businessHours: businessData.businessHours,
+        hasBusinessHours: !!businessData.businessHours,
+        businessHoursType: typeof businessData.businessHours
+      })
+
+      // Crear el objeto final que se enviará a Firebase
+      const finalBusinessData = {
         ...businessData,
         status: 'pending',
         images: [],
@@ -90,19 +128,30 @@ class DatabaseService {
         totalReviews: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      })
+      }
 
+      console.log('🚀 Objeto FINAL enviado a Firebase:', finalBusinessData)
+      console.log('🚀 businessHours en objeto final:', finalBusinessData.businessHours)
+      console.log('🚀 businessHours final es null:', finalBusinessData.businessHours === null)
       
+      const docRef = await addDoc(collection(db, 'businesses'), finalBusinessData)
+
+      console.log('✅ Negocio creado exitosamente con ID:', docRef.id)
       return { id: docRef.id, ...businessData }
     } catch (error) {
       console.error('❌ Error creating business:', error)
+      console.error('❌ Datos que causaron el error:', businessData)
       throw error
     }
   }
 
   // Validate and format business hours
   validateBusinessHours(hours) {
+    console.log('🔍 validateBusinessHours - Input:', hours)
+    console.log('🔍 validateBusinessHours - Input tipo:', typeof hours)
+    
     if (!hours || typeof hours !== 'object') {
+      console.log('⚠️ validateBusinessHours - Input inválido, devolviendo null')
       return null
     }
 
@@ -134,6 +183,7 @@ class DatabaseService {
           }
         }
       } else {
+        console.warn(`⚠️ validateBusinessHours - Día ${day} faltante o inválido, usando valores por defecto`)
         // Default values for missing days
         validatedHours[day] = {
           open: '09:00',
@@ -143,6 +193,8 @@ class DatabaseService {
       }
     })
 
+    console.log('✅ validateBusinessHours - Output:', validatedHours)
+    console.log('✅ validateBusinessHours - Output tipo:', typeof validatedHours)
     return validatedHours
   }
 
@@ -497,8 +549,32 @@ class DatabaseService {
       // Validate and format business hours if being updated
       if (updates.businessHours) {
         updates.businessHours = this.validateBusinessHours(updates.businessHours)
-        
       }
+
+      // Validate location data if being updated
+      if (updates.location) {
+        console.log('📍 Ubicación recibida para actualizar negocio:', updates.location)
+        
+        // Ensure location has the correct structure
+        if (!updates.location.lat || !updates.location.lng) {
+          console.warn('⚠️ Estructura de ubicación inválida, eliminando campo location')
+          updates.location = null
+        } else {
+          // Ensure numeric values
+          updates.location = {
+            lat: parseFloat(updates.location.lat),
+            lng: parseFloat(updates.location.lng)
+          }
+          console.log('✅ Ubicación validada para actualización:', updates.location)
+        }
+      }
+
+      console.log('💾 Actualizando negocio con ID:', businessId)
+      console.log('💾 Datos a actualizar:', {
+        hasLocation: !!updates.location,
+        location: updates.location,
+        hasBusinessHours: !!updates.businessHours
+      })
 
       const docRef = doc(db, 'businesses', businessId)
       await updateDoc(docRef, {
@@ -506,9 +582,11 @@ class DatabaseService {
         updatedAt: serverTimestamp()
       })
       
+      console.log('✅ Negocio actualizado exitosamente')
       return { id: businessId, ...updates }
     } catch (error) {
       console.error('❌ Error updating business:', error)
+      console.error('❌ Datos que causaron el error:', updates)
       throw error
     }
   }

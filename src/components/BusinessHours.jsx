@@ -49,7 +49,15 @@ const BusinessHours = ({ onHoursChange, initialHours = null }) => {
         }
       })
       
+      console.log('🕒 BusinessHours enviando datos:', cleanedHours)
+      console.log('🕒 BusinessHours - Tipo de dato:', typeof cleanedHours)
+      console.log('🕒 BusinessHours - Es objeto válido:', cleanedHours && typeof cleanedHours === 'object')
+      console.log('🕒 BusinessHours - Días incluidos:', Object.keys(cleanedHours))
+      console.log('🕒 BusinessHours - Datos del lunes:', cleanedHours.monday)
+      
       onHoursChange(cleanedHours)
+    } else {
+      console.warn('⚠️ BusinessHours: onHoursChange no es una función válida:', typeof onHoursChange)
     }
   }, [hours, onHoursChange])
 
