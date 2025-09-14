@@ -26,15 +26,7 @@ function LocationMarker({ position, onLocationSelect }) {
 
 const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
   const [position, setPosition] = useState(initialPosition)
-  const [address, setAddress] = useState('')
   const [loading, setLoading] = useState(false)
-
-  // Establecer posición inicial si existe
-  useEffect(() => {
-    if (initialPosition) {
-      setPosition(initialPosition)
-    }
-  }, [initialPosition])
 
   // Posición por defecto (Chapantongo, Hidalgo)
   const defaultCenter = [20.2833, -99.4167]
@@ -44,59 +36,12 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
   // Notificar ubicación inicial si existe
   useEffect(() => {
     if (initialPosition && onLocationChange) {
-      // Si hay posición inicial, intentar obtener la dirección
-      const getInitialAddress = async () => {
-        try {
-          const response = await fetch(
-            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${initialPosition.lat}&longitude=${initialPosition.lng}&localityLanguage=es`
-          )
-          
-          if (response.ok) {
-            const data = await response.json()
-            if (data.locality || data.city) {
-              const addressParts = []
-              if (data.locality) addressParts.push(data.locality)
-              if (data.city && data.city !== data.locality) addressParts.push(data.city)
-              if (data.principalSubdivision) addressParts.push(data.principalSubdivision)
-              if (data.countryName) addressParts.push(data.countryName)
-              
-              if (addressParts.length > 0) {
-                setAddress(addressParts.join(', '))
-                onLocationChange({
-                  latitude: initialPosition.lat,
-                  longitude: initialPosition.lng,
-                  address: addressParts.join(', ')
-                })
-                return
-              }
-            }
-          }
-        } catch (error) {
-        }
-        
-        // Si no se pudo obtener dirección, usar coordenadas
-        const defaultAddress = `Lat: ${initialPosition.lat.toFixed(6)}, Lng: ${initialPosition.lng.toFixed(6)}`
-        setAddress(defaultAddress)
-        onLocationChange({
-          latitude: initialPosition.lat,
-          longitude: initialPosition.lng,
-          address: defaultAddress
-        })
-      }
-      
-      getInitialAddress()
+      onLocationChange({
+        latitude: initialPosition.lat,
+        longitude: initialPosition.lng
+      })
     }
-  }, []) // Solo ejecutar una vez al montar
-
-  useEffect(() => {
-    // Establecer la posición inicial si se proporciona
-    if (initialPosition) {
-      setPosition(initialPosition)
-    } else {
-      // Intentar obtener la ubicación actual del usuario
-      getCurrentLocation()
-    }
-  }, [initialPosition])
+  }, [initialPosition, onLocationChange])
 
   const handleLocationSelect = async (latlng) => {
     setPosition(latlng)
@@ -110,47 +55,10 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
         return
       }
 
-      // Crear dirección por defecto con coordenadas
-      const defaultAddress = `Lat: ${latlng.lat.toFixed(6)}, Lng: ${latlng.lng.toFixed(6)}`
-      
-      // Intentar obtener dirección usando diferentes servicios
-      let finalAddress = defaultAddress
-      
-      try {
-        // Timeout de 5 segundos para evitar bloqueos
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000)
-        
-        // Intentar con el servicio de geocoding inverso
-        const response = await fetch(
-          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latlng.lat}&longitude=${latlng.lng}&localityLanguage=es`,
-          { signal: controller.signal }
-        )
-        
-        clearTimeout(timeoutId)
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.locality || data.city) {
-            const addressParts = []
-            if (data.locality) addressParts.push(data.locality)
-            if (data.city && data.city !== data.locality) addressParts.push(data.city)
-            if (data.principalSubdivision) addressParts.push(data.principalSubdivision)
-            if (data.countryName) addressParts.push(data.countryName)
-            
-            if (addressParts.length > 0) {
-              finalAddress = addressParts.join(', ')
-            }
-          }
-        }
-      } catch {
-      }
-      
-      setAddress(finalAddress)
+      // Solo guardar las coordenadas exactas
       onLocationChange({
         latitude: latlng.lat,
-        longitude: latlng.lng,
-        address: finalAddress
+        longitude: latlng.lng
       })
       
     } catch (error) {
@@ -158,8 +66,7 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
       if (onLocationChange && typeof onLocationChange === 'function') {
         onLocationChange({
           latitude: latlng.lat,
-          longitude: latlng.lng,
-          address: `Lat: ${latlng.lat.toFixed(6)}, Lng: ${latlng.lng.toFixed(6)}`
+          longitude: latlng.lng
         })
       }
     } finally {
@@ -224,18 +131,16 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
           {loading ? 'Obteniendo...' : 'Usar mi ubicación'}
         </button>
         
-        {position && (
-          <button
-            type="button"
-            onClick={() => {
-              setPosition(null)
-              setAddress('')
-              onLocationChange(null)
-            }}
-            className="px-4 py-2 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors text-sm"
-          >
-            Limpiar
-          </button>
+        {position && (        <button
+          type="button"
+          onClick={() => {
+            setPosition(null)
+            onLocationChange(null)
+          }}
+          className="px-4 py-2 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors text-sm"
+        >
+          Limpiar
+        </button>
         )}
       </div>
 
@@ -254,12 +159,17 @@ const LocationPicker = ({ onLocationChange, initialPosition = null }) => {
         </MapContainer>
       </div>
 
-      {address && (
+      {position && (
         <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-3">
           <p className="text-sm text-gray-300">
-            <span className="font-medium text-[#3ecf8e]">Dirección seleccionada:</span>
+            <span className="font-medium text-[#3ecf8e]">Coordenadas seleccionadas:</span>
           </p>
-          <p className="text-sm text-gray-400 mt-1">{address}</p>
+          <p className="text-sm text-gray-400 mt-1">
+            Lat: {position.lat.toFixed(6)}, Lng: {position.lng.toFixed(6)}
+          </p>
+          <p className="text-xs text-gray-500 mt-2">
+            Estas coordenadas se pueden usar directamente con Google Maps
+          </p>
         </div>
       )}
 
