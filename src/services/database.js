@@ -72,6 +72,61 @@ class DatabaseService {
     }
   }
 
+  async getAllUsers() {
+    try {
+      const usersCollection = collection(db, 'users')
+      const q = query(usersCollection, orderBy('createdAt', 'desc'))
+      const querySnapshot = await getDocs(q)
+      
+      const users = []
+      querySnapshot.forEach((doc) => {
+        users.push({
+          id: doc.id,
+          ...doc.data()
+        })
+      })
+      
+      return users
+    } catch (error) {
+      console.error('Error getting all users:', error)
+      // Si hay error de índice, intentar sin orderBy
+      try {
+        const usersCollection = collection(db, 'users')
+        const querySnapshot = await getDocs(usersCollection)
+        
+        const users = []
+        querySnapshot.forEach((doc) => {
+          users.push({
+            id: doc.id,
+            ...doc.data()
+          })
+        })
+        
+        // Ordenar en JavaScript
+        users.sort((a, b) => {
+          if (!a.createdAt || !b.createdAt) return 0
+          return b.createdAt.toDate() - a.createdAt.toDate()
+        })
+        
+        return users
+      } catch (fallbackError) {
+        console.error('Error in fallback query:', fallbackError)
+        throw fallbackError
+      }
+    }
+  }
+
+  async deleteUser(userId) {
+    try {
+      const docRef = doc(db, 'users', userId)
+      await deleteDoc(docRef)
+      return true
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      throw error
+    }
+  }
+
   // BUSINESSES
   async createBusiness(businessData) {
     try {

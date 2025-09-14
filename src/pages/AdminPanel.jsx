@@ -44,7 +44,20 @@ import {
   UserCheck,
   UserX,
   Building2,
-  Package
+  Package,
+  UtensilsCrossed,
+  Coffee,
+  ShoppingBag,
+  Wrench,
+  Laptop,
+  GraduationCap,
+  Gamepad2,
+  Car,
+  Home,
+  Dumbbell,
+  PawPrint,
+  Stethoscope,
+  Brush
 } from 'lucide-react'
 
 const AdminPanel = () => {
@@ -79,6 +92,26 @@ const AdminPanel = () => {
   const [notifications, setNotifications] = useState([])
   const [showNotifications, setShowNotifications] = useState(false)
   const [lastRefresh, setLastRefresh] = useState(new Date())
+  
+  // User management states
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [showUserModal, setShowUserModal] = useState(false)
+  const [showUserEditModal, setShowUserEditModal] = useState(false)
+  const [showUserDeleteModal, setShowUserDeleteModal] = useState(false)
+  const [userToEdit, setUserToEdit] = useState(null)
+  const [userToDelete, setUserToDelete] = useState(null)
+  const [userEditFormData, setUserEditFormData] = useState({
+    full_name: '',
+    email: '',
+    role: 'user',
+    phone: '',
+    address: ''
+  })
+  const [userEditLoading, setUserEditLoading] = useState(false)
+  const [userDeleteLoading, setUserDeleteLoading] = useState(false)
+  const [userSearchTerm, setUserSearchTerm] = useState('')
+  const [userFilterRole, setUserFilterRole] = useState('all')
+  
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -110,8 +143,12 @@ const AdminPanel = () => {
       // Fetch pending businesses
       const pendingData = businessesData.filter(b => b.status === 'pending')
       
+      // Fetch all users
+      const usersData = await dbService.getAllUsers()
+      
       setBusinesses(businessesData || [])
       setPendingBusinesses(pendingData || [])
+      setUsers(usersData || [])
 
       // Calculate advanced stats
       const totalBusinesses = businessesData.length
@@ -227,6 +264,20 @@ const AdminPanel = () => {
   }
 
   const openBusinessModal = (business) => {
+    console.log('🔍 AdminPanel - Abriendo modal para negocio:', business)
+    console.log('🔍 AdminPanel - business.id:', business.id)
+    console.log('🔍 AdminPanel - business.name:', business.name)
+    console.log('🔍 AdminPanel - business.description:', business.description)
+    console.log('🔍 AdminPanel - business.category:', business.category)
+    console.log('🔍 AdminPanel - business.location:', business.location)
+    console.log('🔍 AdminPanel - business.businessHours:', business.businessHours)
+    console.log('🔍 AdminPanel - business.products:', business.products)
+    console.log('🔍 AdminPanel - business.phone:', business.phone)
+    console.log('🔍 AdminPanel - business.email:', business.email)
+    console.log('🔍 AdminPanel - business.status:', business.status)
+    console.log('🔍 AdminPanel - business.created_at:', business.created_at)
+    console.log('🔍 AdminPanel - business.ownerId:', business.ownerId)
+    
     setSelectedBusiness(business)
     setAdminNotes(business.admin_notes || '')
     setShowModal(true)
@@ -266,6 +317,97 @@ const AdminPanel = () => {
     }
   }
 
+  // User Management Functions
+  const openUserModal = (user) => {
+    console.log('🔍 AdminPanel - Abriendo modal para usuario:', user)
+    setSelectedUser(user)
+    setShowUserModal(true)
+  }
+
+  const openUserEditModal = (user) => {
+    setUserToEdit(user)
+    setUserEditFormData({
+      full_name: user.full_name || '',
+      email: user.email || '',
+      role: user.role || 'user',
+      phone: user.phone || '',
+      address: user.address || ''
+    })
+    setShowUserEditModal(true)
+  }
+
+  const openUserDeleteModal = (user) => {
+    setUserToDelete(user)
+    setShowUserDeleteModal(true)
+  }
+
+  const handleEditUser = async (e) => {
+    e.preventDefault()
+    if (!userToEdit) return
+
+    setUserEditLoading(true)
+    try {
+      await dbService.updateUserProfile(userToEdit.id, userEditFormData)
+      
+      // Refresh data
+      fetchData()
+      setShowUserEditModal(false)
+      setUserToEdit(null)
+      alert('Usuario actualizado exitosamente')
+    } catch (error) {
+      console.error('Error updating user:', error)
+      alert('Error al actualizar el usuario. Por favor, inténtalo de nuevo.')
+    } finally {
+      setUserEditLoading(false)
+    }
+  }
+
+  const handleDeleteUser = async (userId) => {
+    setUserDeleteLoading(true)
+    try {
+      await dbService.deleteUser(userId)
+      
+      // Refresh data
+      fetchData()
+      setShowUserDeleteModal(false)
+      setUserToDelete(null)
+      setShowUserModal(false)
+      setSelectedUser(null)
+      alert('Usuario eliminado exitosamente')
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      alert('Error al eliminar el usuario. Por favor, inténtalo de nuevo.')
+    } finally {
+      setUserDeleteLoading(false)
+    }
+  }
+
+  const getUserRoleBadge = (role) => {
+    const badges = {
+      admin: { color: 'bg-purple-500', text: 'Administrador' },
+      business_owner: { color: 'bg-blue-500', text: 'Propietario' },
+      user: { color: 'bg-gray-500', text: 'Usuario' }
+    }
+    
+    const badge = badges[role] || badges.user
+    
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white ${badge.color}`}>
+        {badge.text}
+      </span>
+    )
+  }
+
+  // Filter users
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.full_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                         user.email?.toLowerCase().includes(userSearchTerm.toLowerCase())
+    
+    const matchesRole = userFilterRole === 'all' || user.role === userFilterRole
+    
+    return matchesSearch && matchesRole
+  })
+
   const getStatusBadge = (status) => {
     const badges = {
       pending: { color: 'bg-yellow-500', icon: Clock, text: 'Pendiente' },
@@ -298,8 +440,38 @@ const AdminPanel = () => {
     
     const matchesStatus = filterStatus === 'all' || business.status === filterStatus
     
-    const matchesCategory = filterCategory === 'all' || 
-                           business.business_categories?.name === filterCategory
+    // Improved category matching
+    const matchesCategory = (() => {
+      if (filterCategory === 'all') return true
+      
+      const businessCategory = (
+        business.business_categories?.name || 
+        business.category || 
+        business.category_name || 
+        ''
+      ).toLowerCase()
+      
+      const filterCat = filterCategory.toLowerCase()
+      
+      // Direct match
+      if (businessCategory === filterCat) return true
+      
+      // Check if business category contains filter category
+      if (businessCategory.includes(filterCat)) return true
+      
+      // Check against all defined categories
+      const allCategories = getAllCategories()
+      const selectedCategory = allCategories.find(cat => 
+        cat.name.toLowerCase() === filterCat || cat.id === filterCat
+      )
+      
+      if (selectedCategory) {
+        return businessCategory.includes(selectedCategory.id) || 
+               businessCategory.includes(selectedCategory.name.toLowerCase())
+      }
+      
+      return false
+    })()
 
     const matchesDate = (() => {
       if (dateRange === 'all') return true
@@ -352,15 +524,83 @@ const AdminPanel = () => {
     link.click()
   }
 
+  // Get all available categories with icons
+  const getAllCategories = () => {
+    return [
+      { id: 'restaurante', name: 'Restaurante', icon: UtensilsCrossed, color: '#FF6B6B' },
+      { id: 'cafe', name: 'Café', icon: Coffee, color: '#4ECDC4' },
+      { id: 'tienda', name: 'Tienda', icon: ShoppingBag, color: '#45B7D1' },
+      { id: 'servicios', name: 'Servicios', icon: Wrench, color: '#96CEB4' },
+      { id: 'servicio', name: 'Servicio', icon: Wrench, color: '#96CEB4' },
+      { id: 'tecnologia', name: 'Tecnología', icon: Laptop, color: '#9B59B6' },
+      { id: 'entretenimiento', name: 'Entretenimiento', icon: Gamepad2, color: '#FFEAA7' },
+      { id: 'salud', name: 'Salud y Belleza', icon: Stethoscope, color: '#DDA0DD' },
+      { id: 'educacion', name: 'Educación', icon: GraduationCap, color: '#98D8C8' },
+      { id: 'transporte', name: 'Transporte', icon: Car, color: '#F7DC6F' },
+      { id: 'automotriz', name: 'Automotriz', icon: Car, color: '#E74C3C' },
+      { id: 'belleza', name: 'Belleza', icon: Brush, color: '#F39C12' },
+      { id: 'hogar', name: 'Hogar', icon: Home, color: '#2ECC71' },
+      { id: 'deportes', name: 'Deportes', icon: Dumbbell, color: '#3498DB' },
+      { id: 'mascotas', name: 'Mascotas', icon: PawPrint, color: '#E67E22' },
+      { id: 'otros', name: 'Otros', icon: Package, color: '#95A5A6' },
+      { id: 'otro', name: 'Otro', icon: Package, color: '#95A5A6' }
+    ]
+  }
+
   // Get unique categories for filter
   const getUniqueCategories = () => {
-    const categories = new Set()
+    const allCategories = getAllCategories()
+    const categoriesInUse = new Set()
+    
     businesses.forEach(business => {
       if (business.business_categories?.name) {
-        categories.add(business.business_categories.name)
+        categoriesInUse.add(business.business_categories.name.toLowerCase())
+      }
+      if (business.category) {
+        categoriesInUse.add(business.category.toLowerCase())
+      }
+      if (business.category_name) {
+        categoriesInUse.add(business.category_name.toLowerCase())
       }
     })
-    return Array.from(categories)
+    
+    // Filter categories that are actually in use or return all if user wants to see all
+    return allCategories.filter(cat => 
+      categoriesInUse.has(cat.id) || 
+      categoriesInUse.has(cat.name.toLowerCase()) ||
+      cat.id === 'otros' || cat.id === 'otro'
+    )
+  }
+
+  // Get category icon and color
+  const getCategoryInfo = (categoryName) => {
+    const allCategories = getAllCategories()
+    const normalizedName = categoryName?.toLowerCase() || 'otros'
+    
+    console.log('getCategoryInfo - Input:', categoryName, 'Normalized:', normalizedName)
+    console.log('Available categories:', allCategories.map(cat => ({ id: cat.id, name: cat.name })))
+    
+    // Try to find exact match first
+    let category = allCategories.find(cat => 
+      cat.id === normalizedName || 
+      cat.name.toLowerCase() === normalizedName
+    )
+    
+    console.log('Exact match found:', category)
+    
+    // If not found, try partial match
+    if (!category) {
+      category = allCategories.find(cat => 
+        normalizedName.includes(cat.id) || 
+        cat.id.includes(normalizedName)
+      )
+      console.log('Partial match found:', category)
+    }
+    
+    // Fallback to "otros"
+    const result = category || allCategories.find(cat => cat.id === 'otros')
+    console.log('Final result:', result)
+    return result
   }
 
   // Refresh data manually
@@ -672,16 +912,25 @@ const AdminPanel = () => {
                     <option value="rejected">Rechazados</option>
                   </select>
                   
-                  <select
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                    className="px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50"
-                  >
-                    <option value="all">Todas las categorías</option>
-                    {getUniqueCategories().map(category => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <Filter size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <select
+                      value={filterCategory}
+                      onChange={(e) => setFilterCategory(e.target.value)}
+                      className="pl-10 pr-8 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 appearance-none cursor-pointer min-w-[200px]"
+                    >
+                      <option value="all">🏪 Todas las categorías</option>
+                      {getAllCategories().map(category => {
+                        const IconComponent = category.icon
+                        return (
+                          <option key={category.id} value={category.name}>
+                            {category.name}
+                          </option>
+                        )
+                      })}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                   
                   <select
                     value={dateRange}
@@ -702,6 +951,92 @@ const AdminPanel = () => {
                     Exportar
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Visual Category Filter */}
+            <div className="bg-gray-800/20 backdrop-blur-sm border border-gray-700/30 p-4 rounded-2xl">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Filter size={20} className="text-[#3ecf8e]" />
+                Filtrar por Categoría
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                {/* All Categories Option */}
+                <button
+                  onClick={() => setFilterCategory('all')}
+                  className={`group relative p-3 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 category-filter-button ${
+                    filterCategory === 'all'
+                      ? 'border-[#3ecf8e] bg-[#3ecf8e]/10 shadow-lg shadow-[#3ecf8e]/20 category-filter-active'
+                      : 'border-gray-600/50 bg-gray-700/30 hover:border-gray-500 hover:bg-gray-700/50'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className={`mx-auto mb-2 p-2 rounded-lg transition-colors ${
+                      filterCategory === 'all' ? 'bg-[#3ecf8e]/20' : 'bg-gray-600/30'
+                    }`}>
+                      <Store size={20} className={`mx-auto category-icon ${
+                        filterCategory === 'all' ? 'text-[#3ecf8e]' : 'text-gray-400'
+                      }`} />
+                    </div>
+                    <span className={`text-xs font-medium ${
+                      filterCategory === 'all' ? 'text-[#3ecf8e]' : 'text-gray-300'
+                    }`}>
+                      Todas
+                    </span>
+                    {filterCategory === 'all' && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#3ecf8e] rounded-full animate-pulse"></div>
+                    )}
+                  </div>
+                </button>
+
+                {/* Individual Category Options */}
+                {getAllCategories().map((category) => {
+                  const IconComponent = category.icon
+                  const isActive = filterCategory === category.name || filterCategory === category.id
+                  const categoryBusinesses = businesses.filter(business => {
+                    const businessCategory = business.business_categories?.name || business.category || business.category_name || ''
+                    return businessCategory.toLowerCase().includes(category.id) || 
+                           businessCategory.toLowerCase().includes(category.name.toLowerCase())
+                  })
+                  
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => setFilterCategory(category.name)}
+                      className={`group relative p-3 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 category-filter-button ${
+                        isActive
+                          ? 'border-[#3ecf8e] bg-[#3ecf8e]/10 shadow-lg shadow-[#3ecf8e]/20 category-filter-active'
+                          : 'border-gray-600/50 bg-gray-700/30 hover:border-gray-500 hover:bg-gray-700/50'
+                      }`}
+                      disabled={categoryBusinesses.length === 0}
+                    >
+                      <div className="text-center">
+                        <div className={`mx-auto mb-2 p-2 rounded-lg transition-colors ${
+                          isActive ? 'bg-[#3ecf8e]/20' : 'bg-gray-600/30'
+                        }`}>
+                          <IconComponent size={20} className={`mx-auto category-icon transition-colors ${
+                            isActive ? 'text-[#3ecf8e]' : categoryBusinesses.length > 0 ? 'text-gray-400' : 'text-gray-600'
+                          }`} />
+                        </div>
+                        <span className={`text-xs font-medium block ${
+                          isActive ? 'text-[#3ecf8e]' : categoryBusinesses.length > 0 ? 'text-gray-300' : 'text-gray-600'
+                        }`}>
+                          {category.name}
+                        </span>
+                        {categoryBusinesses.length > 0 && (
+                          <span className={`text-xs mt-1 block category-count ${
+                            isActive ? 'text-[#3ecf8e]/80' : 'text-gray-400'
+                          }`}>
+                            ({categoryBusinesses.length})
+                          </span>
+                        )}
+                        {isActive && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#3ecf8e] rounded-full animate-pulse"></div>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -738,14 +1073,33 @@ const AdminPanel = () => {
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
                           <h3 className="text-xl font-bold text-white line-clamp-1">{business.name}</h3>
                           <div className="flex flex-wrap items-center gap-2">
-                            {business.business_categories && (
-                              <span 
-                                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium text-white"
-                                style={{ backgroundColor: business.business_categories.color || '#3ecf8e' }}
-                              >
-                                {business.business_categories.name}
-                              </span>
-                            )}
+                            {/* Category Badge with Icon */}
+                            {(() => {
+                              const businessCategory = business.business_categories?.name || business.category || business.category_name
+                              console.log('Debug - Business:', business.name, 'Category sources:', {
+                                'business_categories_name': business.business_categories?.name,
+                                'category': business.category,
+                                'category_name': business.category_name,
+                                'final': businessCategory
+                              })
+                              
+                              if (!businessCategory) return null
+                              
+                              const categoryInfo = getCategoryInfo(businessCategory)
+                              const IconComponent = categoryInfo?.icon || Package
+                              
+                              console.log('Debug - Category info for', businessCategory, ':', categoryInfo)
+                              
+                              return (
+                                <span 
+                                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-white shadow-sm business-category-badge"
+                                  style={{ backgroundColor: categoryInfo?.color || '#3ecf8e' }}
+                                >
+                                  <IconComponent size={12} className="category-icon" />
+                                  {businessCategory}
+                                </span>
+                              )
+                            })()}
                             {getStatusBadge(business.status)}
                           </div>
                         </div>
@@ -755,7 +1109,7 @@ const AdminPanel = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-400 mb-4">
                           <div className="flex items-center gap-2">
                             <Users size={14} className="text-[#3ecf8e] flex-shrink-0" />
-                            <span className="truncate">{business.profiles?.full_name}</span>
+                            <span className="truncate">{business.profiles?.full_name || business.contactName || 'No especificado'}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Star size={14} className="text-[#3ecf8e] flex-shrink-0" />
@@ -767,22 +1121,22 @@ const AdminPanel = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             <Calendar size={14} className="text-[#3ecf8e] flex-shrink-0" />
-                            <span>{new Date(business.created_at).toLocaleDateString()}</span>
+                            <span>{new Date(business.created_at || business.createdAt || Date.now()).toLocaleDateString()}</span>
                           </div>
                         </div>
 
                         {/* Contact Info */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-gray-500">
-                          {business.phone && (
+                          {(business.phone || business.contactPhone) && (
                             <div className="flex items-center gap-2">
                               <Phone size={12} className="text-[#3ecf8e] flex-shrink-0" />
-                              <span>{business.phone}</span>
+                              <span>{business.phone || business.contactPhone}</span>
                             </div>
                           )}
-                          {business.email && (
+                          {(business.email || business.contactEmail) && (
                             <div className="flex items-center gap-2">
                               <Mail size={12} className="text-[#3ecf8e] flex-shrink-0" />
-                              <span className="truncate">{business.email}</span>
+                              <span className="truncate">{business.email || business.contactEmail}</span>
                             </div>
                           )}
                           {business.address && (
@@ -861,14 +1215,214 @@ const AdminPanel = () => {
         {/* Users Tab */}
         {activeTab === 'users' && (
           <div className="space-y-6">
-            <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-6 rounded-2xl">
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Users size={20} className="text-[#3ecf8e]" />
-                Gestión de Usuarios
-              </h3>
+            {/* Search and Filters */}
+            <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-4 rounded-2xl">
+              <div className="flex flex-col lg:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Buscar usuarios..."
+                      value={userSearchTerm}
+                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-3">
+                  <select
+                    value={userFilterRole}
+                    onChange={(e) => setUserFilterRole(e.target.value)}
+                    className="px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50"
+                  >
+                    <option value="all">Todos los roles</option>
+                    <option value="admin">Administradores</option>
+                    <option value="business_owner">Propietarios</option>
+                    <option value="user">Usuarios</option>
+                  </select>
+                  
+                  <button
+                    onClick={() => {
+                      const csvData = filteredUsers.map(user => ({
+                        'Nombre': user.full_name || 'N/A',
+                        'Email': user.email || 'N/A',
+                        'Rol': user.role || 'user',
+                        'Teléfono': user.phone || 'N/A',
+                        'Dirección': user.address || 'N/A',
+                        'Fecha Registro': user.createdAt ? new Date(user.createdAt.toDate ? user.createdAt.toDate() : user.createdAt).toLocaleDateString() : 'N/A'
+                      }))
+                      
+                      const csvString = [
+                        Object.keys(csvData[0]).join(','),
+                        ...csvData.map(row => Object.values(row).join(','))
+                      ].join('\n')
+                      
+                      const blob = new Blob([csvString], { type: 'text/csv' })
+                      const url = URL.createObjectURL(blob)
+                      const link = document.createElement('a')
+                      link.href = url
+                      link.download = `chapaShop_usuarios_${new Date().toISOString().split('T')[0]}.csv`
+                      link.click()
+                    }}
+                    className="px-4 py-3 bg-[#3ecf8e]/20 text-[#3ecf8e] border border-[#3ecf8e]/30 rounded-xl hover:bg-[#3ecf8e]/30 transition-colors flex items-center gap-2"
+                  >
+                    <Download size={16} />
+                    Exportar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Users Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 p-6 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-400 text-sm font-medium">Total Usuarios</p>
+                    <p className="text-3xl font-bold text-white mt-1">{users.length}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-blue-500/20">
+                    <Users size={24} className="text-blue-400" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 p-6 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-400 text-sm font-medium">Administradores</p>
+                    <p className="text-3xl font-bold text-white mt-1">{users.filter(u => u.role === 'admin').length}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-purple-500/20">
+                    <Shield size={24} className="text-purple-400" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 p-6 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-400 text-sm font-medium">Propietarios</p>
+                    <p className="text-3xl font-bold text-white mt-1">{users.filter(u => u.role === 'business_owner').length}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-green-500/20">
+                    <Store size={24} className="text-green-400" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-gray-500/10 to-gray-600/5 border border-gray-500/20 p-6 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm font-medium">Usuarios Regulares</p>
+                    <p className="text-3xl font-bold text-white mt-1">{users.filter(u => u.role === 'user' || !u.role).length}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gray-500/20">
+                    <UserCheck size={24} className="text-gray-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Results Counter */}
+            <div className="flex items-center justify-between">
               <p className="text-gray-400">
-                Próximamente: Panel de gestión de usuarios, roles y permisos.
+                Mostrando {filteredUsers.length} de {users.length} usuarios
+                {userSearchTerm && ` para "${userSearchTerm}"`}
               </p>
+            </div>
+
+            {/* Users List */}
+            <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden">
+              <div className="divide-y divide-gray-700/50">
+                {filteredUsers.map((user) => (
+                  <div key={user.id} className="p-6 hover:bg-gray-700/20 transition-colors">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                          <h3 className="text-xl font-bold text-white line-clamp-1">{user.full_name || 'Sin nombre'}</h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {getUserRoleBadge(user.role)}
+                            {user.id === auth.currentUser?.uid && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-green-400 bg-green-500/20">
+                                Tú
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-400 mb-4">
+                          <div className="flex items-center gap-2">
+                            <Mail size={14} className="text-[#3ecf8e] flex-shrink-0" />
+                            <span className="truncate">{user.email || 'No especificado'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Phone size={14} className="text-[#3ecf8e] flex-shrink-0" />
+                            <span className="truncate">{user.phone || 'No especificado'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Calendar size={14} className="text-[#3ecf8e] flex-shrink-0" />
+                            <span>
+                              {user.createdAt ? 
+                                new Date(user.createdAt.toDate ? user.createdAt.toDate() : user.createdAt).toLocaleDateString() :
+                                'Fecha no disponible'
+                              }
+                            </span>
+                          </div>
+                        </div>
+
+                        {user.address && (
+                          <div className="flex items-start gap-2 text-xs text-gray-500">
+                            <MapPin size={12} className="text-[#3ecf8e] flex-shrink-0 mt-0.5" />
+                            <span className="line-clamp-1">{user.address}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-row lg:flex-col gap-2 lg:ml-6">
+                        <button
+                          onClick={() => openUserModal(user)}
+                          className="flex items-center justify-center gap-2 lg:gap-0 p-3 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-blue-500/30 flex-1 lg:flex-initial"
+                          title="Ver detalles"
+                        >
+                          <Eye size={16} />
+                          <span className="lg:hidden text-sm">Ver</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => openUserEditModal(user)}
+                          className="p-3 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-blue-500/30"
+                          title="Editar usuario"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        
+                        {user.id !== auth.currentUser?.uid && (
+                          <button
+                            onClick={() => openUserDeleteModal(user)}
+                            className="p-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-200 border border-gray-700/50 hover:border-red-500/30"
+                            title="Eliminar usuario"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {filteredUsers.length === 0 && (
+                  <div className="p-12 text-center">
+                    <Users size={48} className="mx-auto text-gray-600 mb-4" />
+                    <h3 className="text-xl font-bold text-gray-400 mb-2">No se encontraron usuarios</h3>
+                    <p className="text-gray-500">
+                      {userSearchTerm ? 'Intenta con otros términos de búsqueda' : 'No hay usuarios registrados aún'}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -902,19 +1456,28 @@ const AdminPanel = () => {
                     </div>
                     <div>
                       <h2 className="text-3xl font-bold text-white">{selectedBusiness.name}</h2>
-                      <p className="text-gray-400">Propietario: {selectedBusiness.profiles?.full_name}</p>
+                      <p className="text-gray-400">Propietario: {selectedBusiness.profiles?.full_name || selectedBusiness.contactName || 'No especificado'}</p>
                     </div>
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-3">
-                    {selectedBusiness.business_categories && (
-                      <span 
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium text-white"
-                        style={{ backgroundColor: selectedBusiness.business_categories.color || '#3ecf8e' }}
-                      >
-                        {selectedBusiness.business_categories.name}
-                      </span>
-                    )}
+                    {(() => {
+                      const businessCategory = selectedBusiness.business_categories?.name || selectedBusiness.category || selectedBusiness.category_name
+                      if (!businessCategory) return null
+                      
+                      const categoryInfo = getCategoryInfo(businessCategory)
+                      const IconComponent = categoryInfo?.icon || Package
+                      
+                      return (
+                        <span 
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white shadow-lg business-category-badge"
+                          style={{ backgroundColor: categoryInfo?.color || '#3ecf8e' }}
+                        >
+                          <IconComponent size={16} className="category-icon" />
+                          {businessCategory}
+                        </span>
+                      )
+                    })()}
                     {getStatusBadge(selectedBusiness.status)}
                   </div>
                 </div>
@@ -935,7 +1498,14 @@ const AdminPanel = () => {
                       <Package size={16} className="text-blue-400" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-white">{selectedBusiness.products?.length || 0}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {Array.isArray(selectedBusiness.products) ? 
+                          selectedBusiness.products.length : 
+                          (selectedBusiness.products && typeof selectedBusiness.products === 'string' ? 
+                            selectedBusiness.products.split(',').filter(p => p.trim()).length : 
+                            0)
+                        }
+                      </p>
                       <p className="text-xs text-gray-400">Productos</p>
                     </div>
                   </div>
@@ -947,7 +1517,9 @@ const AdminPanel = () => {
                       <Star size={16} className="text-yellow-400" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-white">{calculateAverageRating(selectedBusiness.reviews)}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {selectedBusiness.rating || calculateAverageRating(selectedBusiness.reviews)}
+                      </p>
                       <p className="text-xs text-gray-400">Rating</p>
                     </div>
                   </div>
@@ -959,7 +1531,9 @@ const AdminPanel = () => {
                       <MessageSquare size={16} className="text-green-400" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-white">{selectedBusiness.reviews?.length || 0}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {selectedBusiness.reviews?.length || selectedBusiness.totalReviews || 0}
+                      </p>
                       <p className="text-xs text-gray-400">Reseñas</p>
                     </div>
                   </div>
@@ -971,7 +1545,14 @@ const AdminPanel = () => {
                       <Calendar size={16} className="text-purple-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-white">{new Date(selectedBusiness.created_at).toLocaleDateString()}</p>
+                      <p className="text-lg font-bold text-white">
+                        {selectedBusiness.created_at ? 
+                          new Date(selectedBusiness.created_at.toDate ? selectedBusiness.created_at.toDate() : selectedBusiness.created_at).toLocaleDateString() :
+                          selectedBusiness.createdAt ?
+                          new Date(selectedBusiness.createdAt.toDate ? selectedBusiness.createdAt.toDate() : selectedBusiness.createdAt).toLocaleDateString() :
+                          'N/A'
+                        }
+                      </p>
                       <p className="text-xs text-gray-400">Registrado</p>
                     </div>
                   </div>
@@ -995,6 +1576,21 @@ const AdminPanel = () => {
                           </div>
                         </div>
                       </div>
+
+                      <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700/50">
+                        <div className="flex items-start gap-3">
+                          <Store size={16} className="text-[#3ecf8e] mt-1 flex-shrink-0" />
+                          <div className="flex-1">
+                            <span className="text-gray-400 font-medium block mb-1">Categoría:</span>
+                            <span className="text-gray-300 capitalize">
+                              {selectedBusiness.business_categories?.name || 
+                               selectedBusiness.category || 
+                               selectedBusiness.category_name || 
+                               'No especificada'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                       
                       <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700/50">
                         <div className="flex items-start gap-3">
@@ -1002,10 +1598,89 @@ const AdminPanel = () => {
                           <div className="flex-1">
                             <span className="text-gray-400 font-medium block mb-1">Dirección:</span>
                             <span className="text-gray-300">{selectedBusiness.address || 'No especificada'}</span>
+                            {selectedBusiness.location && (
+                              <div className="mt-2 text-xs text-gray-500">
+                                <span>Coordenadas: {selectedBusiness.location.lat?.toFixed(6)}, {selectedBusiness.location.lng?.toFixed(6)}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
+
+                      {selectedBusiness.products && typeof selectedBusiness.products === 'string' && selectedBusiness.products.length > 0 && (
+                        <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700/50">
+                          <div className="flex items-start gap-3">
+                            <Package size={16} className="text-[#3ecf8e] mt-1 flex-shrink-0" />
+                            <div className="flex-1">
+                              <span className="text-gray-400 font-medium block mb-1">Productos/Servicios:</span>
+                              <div className="space-y-1">
+                                {selectedBusiness.products.split(',').map((product, index) => (
+                                  product.trim() && (
+                                    <span key={index} className="inline-block bg-gray-700/50 text-gray-300 px-2 py-1 rounded text-sm mr-2 mb-1">
+                                      {product.trim()}
+                                    </span>
+                                  )
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {Array.isArray(selectedBusiness.products) && selectedBusiness.products.length > 0 && (
+                        <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700/50">
+                          <div className="flex items-start gap-3">
+                            <Package size={16} className="text-[#3ecf8e] mt-1 flex-shrink-0" />
+                            <div className="flex-1">
+                              <span className="text-gray-400 font-medium block mb-1">Productos/Servicios:</span>
+                              <div className="space-y-1">
+                                {selectedBusiness.products.map((product, index) => (
+                                  <span key={index} className="inline-block bg-gray-700/50 text-gray-300 px-2 py-1 rounded text-sm mr-2 mb-1">
+                                    {product.name || product}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Alertas de datos faltantes */}
+                    {(() => {
+                      const missingData = []
+                      if (!selectedBusiness.description || selectedBusiness.description.trim() === '') missingData.push('Descripción')
+                      if (!selectedBusiness.category && !selectedBusiness.business_categories?.name) missingData.push('Categoría')
+                      if (!selectedBusiness.phone && !selectedBusiness.contactPhone) missingData.push('Teléfono')
+                      if (!selectedBusiness.email && !selectedBusiness.contactEmail) missingData.push('Email')
+                      if (!selectedBusiness.address) missingData.push('Dirección')
+                      if (!selectedBusiness.location) missingData.push('Ubicación en mapa')
+                      if (!selectedBusiness.businessHours) missingData.push('Horarios de atención')
+                      
+                      if (missingData.length > 0) {
+                        return (
+                          <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-700/50 rounded-xl">
+                            <div className="flex items-start gap-3">
+                              <AlertTriangle size={16} className="text-yellow-400 mt-1 flex-shrink-0" />
+                              <div className="flex-1">
+                                <span className="text-yellow-400 font-medium block mb-1">Datos Faltantes:</span>
+                                <div className="space-y-1">
+                                  {missingData.map((item, index) => (
+                                    <span key={index} className="inline-block bg-yellow-700/30 text-yellow-200 px-2 py-1 rounded text-xs mr-2 mb-1">
+                                      {item}
+                                    </span>
+                                  ))}
+                                </div>
+                                <p className="text-yellow-200 text-xs mt-2">
+                                  Considera solicitar estos datos al propietario para mejorar la calidad del listado.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return null
+                    })()}
                   </div>
 
                   <div>
@@ -1016,15 +1691,19 @@ const AdminPanel = () => {
                     <div className="space-y-3">
                       <div className="flex items-center gap-3 p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
                         <Phone size={14} className="text-[#3ecf8e]" />
-                        <span className="text-gray-300">{selectedBusiness.phone || 'No especificado'}</span>
+                        <span className="text-gray-300">{selectedBusiness.phone || selectedBusiness.contactPhone || 'No especificado'}</span>
                       </div>
                       <div className="flex items-center gap-3 p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
                         <Mail size={14} className="text-[#3ecf8e]" />
-                        <span className="text-gray-300">{selectedBusiness.email || 'No especificado'}</span>
+                        <span className="text-gray-300">{selectedBusiness.email || selectedBusiness.contactEmail || 'No especificado'}</span>
                       </div>
                       <div className="flex items-center gap-3 p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
                         <Globe size={14} className="text-[#3ecf8e]" />
                         <span className="text-gray-300">{selectedBusiness.website || 'No especificado'}</span>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                        <Users size={14} className="text-[#3ecf8e]" />
+                        <span className="text-gray-300">ID Propietario: {selectedBusiness.ownerId || 'No especificado'}</span>
                       </div>
                     </div>
                   </div>
@@ -1034,34 +1713,104 @@ const AdminPanel = () => {
                   <div>
                     <h3 className="font-bold text-white mb-4 text-xl flex items-center gap-2">
                       <Activity size={20} className="text-[#3ecf8e]" />
-                      Estadísticas
+                      Estadísticas y Estado
                     </h3>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                        <span className="text-gray-400 font-medium">Estado:</span>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(selectedBusiness.status)}
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
                         <span className="text-gray-400 font-medium">Total Productos:</span>
-                        <span className="text-[#3ecf8e] font-bold">{selectedBusiness.products?.length || 0}</span>
+                        <span className="text-[#3ecf8e] font-bold">
+                          {Array.isArray(selectedBusiness.products) ? 
+                            selectedBusiness.products.length : 
+                            (selectedBusiness.products && typeof selectedBusiness.products === 'string' ? 
+                              selectedBusiness.products.split(',').filter(p => p.trim()).length : 
+                              0)
+                          }
+                        </span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
                         <span className="text-gray-400 font-medium">Total Reseñas:</span>
-                        <span className="text-[#3ecf8e] font-bold">{selectedBusiness.reviews?.length || 0}</span>
+                        <span className="text-[#3ecf8e] font-bold">{selectedBusiness.reviews?.length || selectedBusiness.totalReviews || 0}</span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
                         <span className="text-gray-400 font-medium">Rating Promedio:</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-[#3ecf8e] font-bold">{calculateAverageRating(selectedBusiness.reviews)}</span>
+                          <span className="text-[#3ecf8e] font-bold">
+                            {selectedBusiness.rating || calculateAverageRating(selectedBusiness.reviews)}
+                          </span>
                           <div className="flex text-yellow-400">
                             {[...Array(5)].map((_, i) => (
-                              <Star key={i} size={12} fill={i < Math.round(calculateAverageRating(selectedBusiness.reviews)) ? "currentColor" : "none"} />
+                              <Star key={i} size={12} fill={i < Math.round(selectedBusiness.rating || calculateAverageRating(selectedBusiness.reviews)) ? "currentColor" : "none"} />
                             ))}
                           </div>
                         </div>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
                         <span className="text-gray-400 font-medium">Fecha Registro:</span>
-                        <span className="text-gray-300">{new Date(selectedBusiness.created_at).toLocaleDateString()}</span>
+                        <span className="text-gray-300">
+                          {selectedBusiness.created_at ? 
+                            new Date(selectedBusiness.created_at.toDate ? selectedBusiness.created_at.toDate() : selectedBusiness.created_at).toLocaleDateString() :
+                            selectedBusiness.createdAt ?
+                            new Date(selectedBusiness.createdAt.toDate ? selectedBusiness.createdAt.toDate() : selectedBusiness.createdAt).toLocaleDateString() :
+                            'No disponible'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                        <span className="text-gray-400 font-medium">Última Actualización:</span>
+                        <span className="text-gray-300">
+                          {selectedBusiness.updated_at ? 
+                            new Date(selectedBusiness.updated_at.toDate ? selectedBusiness.updated_at.toDate() : selectedBusiness.updated_at).toLocaleDateString() :
+                            selectedBusiness.updatedAt ?
+                            new Date(selectedBusiness.updatedAt.toDate ? selectedBusiness.updatedAt.toDate() : selectedBusiness.updatedAt).toLocaleDateString() :
+                            'No disponible'
+                          }
+                        </span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Horarios de atención */}
+                  {selectedBusiness.businessHours && (
+                    <div>
+                      <h3 className="font-bold text-white mb-4 text-xl flex items-center gap-2">
+                        <Clock size={20} className="text-[#3ecf8e]" />
+                        Horarios de Atención
+                      </h3>
+                      <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700/50">
+                        <div className="space-y-2">
+                          {Object.entries(selectedBusiness.businessHours).map(([day, hours]) => {
+                            const dayNames = {
+                              monday: 'Lunes',
+                              tuesday: 'Martes', 
+                              wednesday: 'Miércoles',
+                              thursday: 'Jueves',
+                              friday: 'Viernes',
+                              saturday: 'Sábado',
+                              sunday: 'Domingo'
+                            };
+                            
+                            return (
+                              <div key={day} className="flex justify-between items-center text-sm">
+                                <span className="text-gray-400 font-medium">{dayNames[day]}:</span>
+                                <span className="text-gray-300">
+                                  {hours.closed ? 
+                                    'Cerrado' : 
+                                    `${hours.open || '09:00'} - ${hours.close || '18:00'}`
+                                  }
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {selectedBusiness.admin_notes && (
                     <div>
@@ -1074,6 +1823,76 @@ const AdminPanel = () => {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Información técnica adicional */}
+              <div className="mb-8">
+                <h3 className="font-bold text-white mb-4 text-xl flex items-center gap-2">
+                  <Settings size={20} className="text-[#3ecf8e]" />
+                  Información Técnica
+                </h3>
+                <div className="bg-gray-800/20 p-6 rounded-xl border border-gray-700/50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">ID del Negocio:</span>
+                        <span className="text-gray-300 font-mono text-sm">{selectedBusiness.id}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">ID del Propietario:</span>
+                        <span className="text-gray-300 font-mono text-sm">{selectedBusiness.ownerId || 'No disponible'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">Tiene Ubicación:</span>
+                        <span className={`text-sm font-medium ${selectedBusiness.location ? 'text-green-400' : 'text-red-400'}`}>
+                          {selectedBusiness.location ? 'Sí' : 'No'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">Tiene Horarios:</span>
+                        <span className={`text-sm font-medium ${selectedBusiness.businessHours ? 'text-green-400' : 'text-red-400'}`}>
+                          {selectedBusiness.businessHours ? 'Sí' : 'No'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">Rating Base:</span>
+                        <span className="text-gray-300 text-sm">{selectedBusiness.rating || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">Total Reviews Campo:</span>
+                        <span className="text-gray-300 text-sm">{selectedBusiness.totalReviews || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">Imágenes:</span>
+                        <span className="text-gray-300 text-sm">{selectedBusiness.images?.length || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">Datos Completos:</span>
+                        <span className={`text-sm font-medium ${
+                          selectedBusiness.name && selectedBusiness.description && selectedBusiness.category ? 
+                          'text-green-400' : 'text-yellow-400'
+                        }`}>
+                          {selectedBusiness.name && selectedBusiness.description && selectedBusiness.category ? 
+                           'Completos' : 'Incompletos'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Debug info para desarrollo */}
+                  <details className="mt-4">
+                    <summary className="text-gray-400 text-sm cursor-pointer hover:text-gray-300">
+                      Ver datos raw (solo para debugging)
+                    </summary>
+                    <div className="mt-3 p-3 bg-gray-900/50 rounded-lg border border-gray-700/30">
+                      <pre className="text-xs text-gray-400 overflow-x-auto">
+                        {JSON.stringify(selectedBusiness, null, 2)}
+                      </pre>
+                    </div>
+                  </details>
                 </div>
               </div>
 
@@ -1450,6 +2269,370 @@ const AdminPanel = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Detail Modal */}
+      {showUserModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 border border-gray-700/50 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-8">
+                <div className="flex-1">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-[#3ecf8e]/20 to-[#3ecf8e]/5 border border-[#3ecf8e]/20">
+                      <Users size={24} className="text-[#3ecf8e]" />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-white">{selectedUser.full_name || 'Usuario sin nombre'}</h2>
+                      <p className="text-gray-400">Información del usuario</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-3">
+                    {getUserRoleBadge(selectedUser.role)}
+                    {selectedUser.id === auth.currentUser?.uid && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-green-400 bg-green-500/20">
+                        Tu cuenta
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => setShowUserModal(false)}
+                  className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800/50 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-bold text-white mb-4 text-xl flex items-center gap-2">
+                      <Users size={20} className="text-[#3ecf8e]" />
+                      Información Personal
+                    </h3>
+                    <div className="space-y-4 text-sm">
+                      <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700/50">
+                        <div className="flex items-start gap-3">
+                          <Mail size={16} className="text-[#3ecf8e] mt-1 flex-shrink-0" />
+                          <div className="flex-1">
+                            <span className="text-gray-400 font-medium block mb-1">Email:</span>
+                            <span className="text-gray-300">{selectedUser.email || 'No especificado'}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700/50">
+                        <div className="flex items-start gap-3">
+                          <Phone size={16} className="text-[#3ecf8e] mt-1 flex-shrink-0" />
+                          <div className="flex-1">
+                            <span className="text-gray-400 font-medium block mb-1">Teléfono:</span>
+                            <span className="text-gray-300">{selectedUser.phone || 'No especificado'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700/50">
+                        <div className="flex items-start gap-3">
+                          <MapPin size={16} className="text-[#3ecf8e] mt-1 flex-shrink-0" />
+                          <div className="flex-1">
+                            <span className="text-gray-400 font-medium block mb-1">Dirección:</span>
+                            <span className="text-gray-300">{selectedUser.address || 'No especificada'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-bold text-white mb-4 text-xl flex items-center gap-2">
+                      <Activity size={20} className="text-[#3ecf8e]" />
+                      Información del Sistema
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                        <span className="text-gray-400 font-medium">ID de Usuario:</span>
+                        <span className="text-[#3ecf8e] font-mono text-sm">{selectedUser.id}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                        <span className="text-gray-400 font-medium">Rol:</span>
+                        <span className="text-gray-300 capitalize">{selectedUser.role || 'user'}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                        <span className="text-gray-400 font-medium">Fecha de Registro:</span>
+                        <span className="text-gray-300">
+                          {selectedUser.createdAt ? 
+                            new Date(selectedUser.createdAt.toDate ? selectedUser.createdAt.toDate() : selectedUser.createdAt).toLocaleDateString() :
+                            'No disponible'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-xl border border-gray-700/50">
+                        <span className="text-gray-400 font-medium">Última Actualización:</span>
+                        <span className="text-gray-300">
+                          {selectedUser.updatedAt ? 
+                            new Date(selectedUser.updatedAt.toDate ? selectedUser.updatedAt.toDate() : selectedUser.updatedAt).toLocaleDateString() :
+                            'No disponible'
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => setShowUserModal(false)}
+                  className="px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors"
+                >
+                  Cerrar
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setShowUserModal(false)
+                    openUserEditModal(selectedUser)
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all flex items-center gap-2"
+                >
+                  <Edit size={16} />
+                  Editar Usuario
+                </button>
+                
+                {selectedUser.id !== auth.currentUser?.uid && (
+                  <button
+                    onClick={() => {
+                      setShowUserModal(false)
+                      openUserDeleteModal(selectedUser)
+                    }}
+                    className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 transition-all flex items-center gap-2"
+                  >
+                    <Trash2 size={16} />
+                    Eliminar Usuario
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Edit Modal */}
+      {showUserEditModal && userToEdit && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 border border-gray-700/50 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/20">
+                    <Edit size={24} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold text-white">Editar Usuario</h2>
+                    <p className="text-gray-400">Modificar información de {userToEdit.full_name}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowUserEditModal(false)}
+                  className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800/50 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleEditUser} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                      <Users size={16} className="text-[#3ecf8e]" />
+                      Nombre Completo *
+                    </label>
+                    <input
+                      type="text"
+                      value={userEditFormData.full_name}
+                      onChange={(e) => setUserEditFormData({...userEditFormData, full_name: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                      placeholder="Ej: Juan Pérez"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                      <Mail size={16} className="text-[#3ecf8e]" />
+                      Correo Electrónico *
+                    </label>
+                    <input
+                      type="email"
+                      value={userEditFormData.email}
+                      onChange={(e) => setUserEditFormData({...userEditFormData, email: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                      placeholder="Ej: juan@ejemplo.com"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                      <Shield size={16} className="text-[#3ecf8e]" />
+                      Rol *
+                    </label>
+                    <select
+                      value={userEditFormData.role}
+                      onChange={(e) => setUserEditFormData({...userEditFormData, role: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                      required
+                    >
+                      <option value="user">Usuario</option>
+                      <option value="business_owner">Propietario de Negocio</option>
+                      <option value="admin">Administrador</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                      <Phone size={16} className="text-[#3ecf8e]" />
+                      Teléfono
+                    </label>
+                    <input
+                      type="tel"
+                      value={userEditFormData.phone}
+                      onChange={(e) => setUserEditFormData({...userEditFormData, phone: e.target.value})}
+                      className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                      placeholder="Ej: +52 55 1234 5678"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                    <MapPin size={16} className="text-[#3ecf8e]" />
+                    Dirección
+                  </label>
+                  <textarea
+                    value={userEditFormData.address}
+                    onChange={(e) => setUserEditFormData({...userEditFormData, address: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3ecf8e]/50 focus:border-[#3ecf8e]/50"
+                    rows={3}
+                    placeholder="Dirección completa..."
+                  />
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowUserEditModal(false)}
+                    className="flex-1 px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors"
+                    disabled={userEditLoading}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={userEditLoading}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[#3ecf8e] to-[#2fb577] text-black rounded-xl hover:from-[#35d499] hover:to-[#28a866] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {userEditLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+                        Actualizando...
+                      </>
+                    ) : (
+                      <>
+                        <Edit size={16} />
+                        Actualizar Usuario
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Delete Modal */}
+      {showUserDeleteModal && userToDelete && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 border border-red-700/50 rounded-2xl max-w-lg w-full">
+            <div className="p-8">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-red-500/20 to-red-500/5 border border-red-500/20">
+                  <AlertTriangle className="text-red-400" size={32} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Confirmar Eliminación</h2>
+                  <p className="text-gray-400">Esta acción es irreversible</p>
+                </div>
+              </div>
+
+              <div className="bg-red-900/20 border border-red-700/50 rounded-xl p-6 mb-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-2 rounded-lg bg-red-500/20">
+                    <Users size={20} className="text-red-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-white mb-2">¿Estás seguro que deseas eliminar este usuario?</h3>
+                    <p className="text-red-300 font-medium text-lg mb-2">{userToDelete.full_name}</p>
+                    <p className="text-gray-400 text-sm mb-4">
+                      Email: {userToDelete.email}
+                    </p>
+                    
+                    <div className="space-y-2 text-sm">
+                      <p className="font-medium text-red-300">Se eliminará permanentemente:</p>
+                      <div className="grid grid-cols-1 gap-2 text-gray-400">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-red-400 rounded-full"></div>
+                          <span>Perfil del usuario</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-red-400 rounded-full"></div>
+                          <span>Datos personales</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-red-400 rounded-full"></div>
+                          <span>Historial de actividad</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowUserDeleteModal(false)}
+                  className="flex-1 px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-800/50 transition-colors"
+                  disabled={userDeleteLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleDeleteUser(userToDelete.id)}
+                  disabled={userDeleteLoading}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {userDeleteLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      Eliminar Usuario
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
