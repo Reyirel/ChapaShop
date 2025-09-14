@@ -181,21 +181,21 @@ const Negocios = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header Section */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-800">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 text-gray-800 px-2">
               Descubre Negocios
             </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-2">
               Explora una selección curada de los mejores negocios verificados por nuestra comunidad
             </p>
           </div>
 
           {/* Search Bar */}
           <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="¿Qué tipo de negocio buscas?"
@@ -248,35 +248,35 @@ const Negocios = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {/* Sidebar izquierdo - Categorías */}
           <div className="lg:col-span-1">
             {/* Versión móvil colapsible */}
-            <div className="lg:hidden mb-6">
+            <div className="lg:hidden mb-4 sm:mb-6">
               <button
                 onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
-                className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <Filter className="h-5 w-5 text-[#3ecf8e]" />
-                  <span className="font-semibold text-gray-800">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-[#3ecf8e]" />
+                  <span className="font-semibold text-gray-800 text-sm sm:text-base">
                     Filtrar por Categoría
                     {selectedCategory && (
-                      <span className="text-sm text-[#3ecf8e] ml-2">({selectedCategory})</span>
+                      <span className="text-xs sm:text-sm text-[#3ecf8e] ml-2">({selectedCategory})</span>
                     )}
                   </span>
                 </div>
                 {isCategoriesExpanded ? (
-                  <ChevronUp className="h-5 w-5 text-gray-500" />
+                  <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                  <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
                 )}
               </button>
             </div>
 
             {/* Contenido de categorías */}
-            <div className={`bg-white rounded-xl shadow-sm border p-6 sticky top-6 transition-all duration-300 overflow-hidden ${
+            <div className={`bg-white rounded-lg sm:rounded-xl shadow-sm border p-4 sm:p-6 sticky top-6 transition-all duration-300 overflow-hidden ${
               !isCategoriesExpanded ? 'lg:block hidden' : 'block'
             }`}>
               <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3 hidden lg:flex">
@@ -330,13 +330,13 @@ const Negocios = () => {
 
           {/* Contenido principal - Negocios */}
           <div className="lg:col-span-2">
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {filteredNegocios.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                <div className="text-center py-12 sm:py-16 bg-white rounded-lg sm:rounded-xl shadow-sm mx-1 sm:mx-0">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 px-4">
                     {selectedCategory ? 'No hay negocios en esta categoría' : 'No se encontraron negocios'}
                   </h3>
-                  <p className="text-gray-600 text-lg">
+                  <p className="text-gray-600 text-base sm:text-lg px-4">
                     {selectedCategory ? 'Prueba seleccionando otra categoría o cambiando tus filtros de búsqueda' : 'Intenta cambiar tus filtros de búsqueda'}
                   </p>
                 </div>
@@ -351,13 +351,13 @@ const Negocios = () => {
           {/* Sidebar derecho - Top negocios */}
           <div className="lg:col-span-1">
             {/* Versión móvil colapsible */}
-            <div className="lg:hidden mb-6">
+            <div className="lg:hidden mb-4 sm:mb-6">
               <button
                 onClick={() => setIsTopBusinessExpanded(!isTopBusinessExpanded)}
-                className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <Award className="h-5 w-5 text-yellow-500" />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Award className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
                   <span className="font-semibold text-gray-800">Top Calificados</span>
                 </div>
                 {isTopBusinessExpanded ? (
@@ -541,7 +541,7 @@ const BusinessCard = ({ negocio }) => {
             />
             
             {/* Action buttons */}
-            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+            <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
               {user && (
                 <button
                   onClick={handleFavoriteToggle}
@@ -551,7 +551,7 @@ const BusinessCard = ({ negocio }) => {
                   }`}
                   title={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
                 >
-                  <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                  <Heart className={`h-3 w-3 sm:h-4 sm:w-4 ${isFavorite ? 'fill-current' : ''}`} />
                 </button>
               )}
               {user && (
@@ -566,7 +566,7 @@ const BusinessCard = ({ negocio }) => {
                   className="action-button p-2 rounded-full bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-[#3ecf8e] hover:text-white transition-all"
                   title="Dejar reseña"
                 >
-                  <MessageSquare className="h-4 w-4" />
+                  <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
                 </button>
               )}
               <button 
@@ -587,33 +587,33 @@ const BusinessCard = ({ negocio }) => {
                 className="action-button p-2 rounded-full bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-[#3ecf8e] hover:text-white transition-all"
                 title="Compartir"
               >
-                <Share2 className="h-4 w-4" />
+                <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
               </button>
             </div>
           </div>
 
           {/* Contenido de la tarjeta */}
-          <div className="p-6">
-            <div className="mb-4">
-              <h3 className="text-xl font-bold text-gray-800 group-hover:text-[#3ecf8e] transition-colors mb-2">
+          <div className="p-4 sm:p-6">
+            <div className="mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 group-hover:text-[#3ecf8e] transition-colors mb-1 sm:mb-2 line-clamp-1">
                 {negocio.name || 'Nombre no disponible'}
               </h3>
-              <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">
+              <p className="text-gray-600 text-sm sm:text-base line-clamp-2 leading-relaxed">
                 {negocio.description || 'Descripción no disponible'}
               </p>
             </div>
 
             {/* Estadísticas del negocio */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4 text-[#3ecf8e]" />
-                <span className="text-gray-600">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 text-[#3ecf8e] flex-shrink-0" />
+                <span className="text-gray-600 truncate">
                   {negocio.reviewCount || 0} reseñas
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Store className="h-4 w-4 text-[#3ecf8e]" />
-                <span className="text-gray-600">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <Store className="h-3 w-3 sm:h-4 sm:w-4 text-[#3ecf8e] flex-shrink-0" />
+                <span className="text-gray-600 truncate">
                   {negocio.status === 'approved' ? 'Verificado' : 'Pendiente'}
                 </span>
               </div>
@@ -621,14 +621,14 @@ const BusinessCard = ({ negocio }) => {
 
             {/* Rating display */}
             {negocio.reviewCount > 0 && (
-              <div className="flex items-center gap-2 mb-6">
-                <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-full">
-                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                  <span className="text-sm font-semibold text-yellow-700">
+              <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                <div className="flex items-center gap-1 bg-yellow-50 px-2 sm:px-3 py-1 rounded-full">
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 fill-current" />
+                  <span className="text-xs sm:text-sm font-semibold text-yellow-700">
                     {negocio.avgRating}
                   </span>
                 </div>
-                <span className="text-sm text-gray-500">
+                <span className="text-xs sm:text-sm text-gray-500">
                   ({negocio.reviewCount} reseñas)
                 </span>
               </div>
@@ -636,17 +636,17 @@ const BusinessCard = ({ negocio }) => {
 
             {/* Dirección si está disponible */}
             {negocio.address && (
-              <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                <MapPin className="h-4 w-4 text-[#3ecf8e]" />
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6">
+                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-[#3ecf8e] flex-shrink-0" />
                 <span className="truncate">{negocio.address}</span>
               </div>
             )}
 
             {/* Login prompt for non-authenticated users */}
             {!user && (
-              <div className="mb-6 p-4 bg-gradient-to-r from-[#3ecf8e]/10 to-[#2dd4bf]/10 border border-[#3ecf8e]/20 rounded-xl">
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <ThumbsUp className="h-4 w-4 text-[#3ecf8e]" />
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-[#3ecf8e]/10 to-[#2dd4bf]/10 border border-[#3ecf8e]/20 rounded-lg sm:rounded-xl">
+                <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
+                  <ThumbsUp className="h-3 w-3 sm:h-4 sm:w-4 text-[#3ecf8e] flex-shrink-0" />
                   <span>
                     <Link to="/login" className="text-[#3ecf8e] hover:underline font-medium">
                       Inicia sesión
@@ -658,7 +658,7 @@ const BusinessCard = ({ negocio }) => {
             )}
 
             {/* Botón de acción */}
-            <div className="bg-gradient-to-r from-[#3ecf8e] to-[#2dd4bf] text-white text-center py-3 rounded-xl font-semibold group-hover:from-[#2dd4bf] group-hover:to-[#3ecf8e] transition-all duration-200 shadow-md">
+            <div className="bg-gradient-to-r from-[#3ecf8e] to-[#2dd4bf] text-white text-center py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base group-hover:from-[#2dd4bf] group-hover:to-[#3ecf8e] transition-all duration-200 shadow-md">
               Ver Detalles
             </div>
           </div>

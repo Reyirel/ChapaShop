@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
-import { Menu, X, Home, Store, LogIn, UserPlus, Shield, LogOut, Settings, User, ChevronDown, Heart } from 'lucide-react'
+import { Menu, X, Home, Store, LogIn, UserPlus, Shield, LogOut, Settings, User, ChevronDown, Heart, BarChart3 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const Navbar = () => {
@@ -9,6 +9,19 @@ const Navbar = () => {
   const location = useLocation()
   const { user, userProfile, logout, isAdmin, isBusiness, loading } = useAuth()
   const userMenuRef = useRef(null)
+
+  // Cerrar menú móvil al hacer clic en overlay
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isMenuOpen])
 
   // Cerrar menú de usuario al hacer clic fuera
   useEffect(() => {
@@ -21,6 +34,11 @@ const Navbar = () => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // Cerrar menú móvil al cambiar de ruta
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [location.pathname])
 
   // Función para obtener las iniciales del nombre o email
   const getInitials = () => {
@@ -44,20 +62,20 @@ const Navbar = () => {
   // Si está cargando, mostrar un estado de carga mínimo
   if (loading) {
     return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      <nav className="sticky top-0 z-50 bg-black/95 backdrop-blur-md text-white border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-[#3ecf8e] to-[#2dd4bf] rounded-lg flex items-center justify-center">
-                <Store className="h-5 w-5 text-white" />
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-lg flex items-center justify-center shadow-lg">
+                <Store className="h-5 w-5 text-black" />
               </div>
-              <span className="text-xl font-bold text-gray-800">ChapaShop</span>
+              <span className="text-xl font-bold bg-gradient-to-r from-white to-[#3ecf8e] bg-clip-text text-transparent">ChapaShop</span>
             </Link>
             
             {/* Loading indicator */}
             <div className="flex items-center space-x-2">
-              <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div>
+              <div className="animate-pulse bg-gray-700 h-8 w-24 rounded-lg"></div>
             </div>
           </div>
         </div>
@@ -76,323 +94,306 @@ const Navbar = () => {
 
     const baseItems = [
       { path: '/', label: 'Inicio', icon: Home },
-      { path: '/negocios', label: 'Negocios', icon: Store }
+      { path: '/negocios', label: 'Negocios', icon: Store },
+      { path: '/favorites', label: 'Mis Favoritos', icon: Heart }
     ]
 
-    // Los enlaces específicos de rol se muestran en el menú desplegable del usuario
-    // para mantener la barra de navegación limpia
     return baseItems
   }
 
   const navItems = getNavItems()
 
+  // Componente de enlace de navegación
   const NavLink = ({ to, children, icon: IconComponent, mobile = false }) => {
     const isActive = isActiveRoute(to)
-    const baseClasses = mobile 
-      ? "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300"
-      : "flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 relative"
     
-    const activeClasses = isActive
-      ? mobile
-        ? "bg-[#3ecf8e] text-black"
-        : "text-[#3ecf8e] bg-[#3ecf8e]/10"
-      : mobile
-        ? "text-white hover:bg-[#3ecf8e]/20 hover:text-[#3ecf8e]"
-        : "text-white hover:text-[#3ecf8e] hover:bg-[#3ecf8e]/10"
+    if (mobile) {
+      return (
+        <Link 
+          to={to} 
+          className={`flex items-center gap-4 px-4 py-3.5 rounded-xl font-medium transition-all duration-300 ${
+            isActive 
+              ? 'bg-gradient-to-r from-[#3ecf8e] to-[#2ebd7e] text-black shadow-lg transform scale-[0.98]' 
+              : 'text-white hover:bg-gray-800/50 active:bg-gray-700/50 hover:transform hover:scale-[0.98]'
+          }`}
+          onClick={() => setIsMenuOpen(false)}
+        >
+          <IconComponent size={22} className={isActive ? 'text-black' : 'text-[#3ecf8e]'} />
+          <span className="text-base">{children}</span>
+        </Link>
+      )
+    }
 
     return (
       <Link 
         to={to} 
-        className={`${baseClasses} ${activeClasses}`}
-        onClick={() => mobile && setIsMenuOpen(false)}
+        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+          isActive 
+            ? 'bg-[#3ecf8e] text-black shadow-md' 
+            : 'text-white hover:bg-gray-800/50 hover:text-[#3ecf8e]'
+        }`}
       >
-        {IconComponent && <IconComponent size={mobile ? 20 : 18} />}
-        <span>{children}</span>
-        {!mobile && isActive && (
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[#3ecf8e] rounded-full"></div>
-        )}
+        <IconComponent size={18} className={isActive ? 'text-black' : 'text-[#3ecf8e]'} />
+        <span className="hidden lg:block">{children}</span>
       </Link>
     )
   }
 
-  return (
-    <nav className="bg-black/95 backdrop-blur-md text-white border-b border-gray-800/50 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link 
-            to="/" 
-            className="flex items-center gap-2 text-2xl font-bold text-white hover:text-[#3ecf8e] transition-all duration-300 group"
-          >
-            <div className="w-8 h-8 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-              <Store size={18} className="text-black" />
-            </div>
-            <span className="bg-gradient-to-r from-white to-[#3ecf8e] bg-clip-text text-transparent">
-              ChapaShop
-            </span>
-          </Link>
+  // Componente de avatar del usuario
+  const UserAvatar = ({ size = 'md', showName = false }) => {
+    const sizeClasses = {
+      sm: 'w-8 h-8 text-sm',
+      md: 'w-10 h-10 text-sm',
+      lg: 'w-12 h-12 text-base'
+    }
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-2">
-            {navItems.map((item) => (
-              <NavLink key={item.path} to={item.path} icon={item.icon}>
-                {item.label}
-              </NavLink>
-            ))}
-            {user && (
-              <div className="relative" ref={userMenuRef}>
+    return (
+      <div className="flex items-center gap-3">
+        <div className={`${sizeClasses[size]} bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-full flex items-center justify-center text-white font-bold shadow-lg`}>
+          {getInitials()}
+        </div>
+        {showName && (
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-white">
+              {userProfile?.full_name || user?.email?.split('@')[0] || 'Usuario'}
+            </span>
+            <span className="text-xs text-gray-300">
+              {isAdmin() ? 'Administrador' : isBusiness() ? 'Negocio' : 'Cliente'}
+            </span>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Obtener opciones del menú de usuario
+  const getUserMenuOptions = () => {
+    const options = [
+      { path: '/profile', label: 'Mi Perfil', icon: User }
+    ]
+
+    if (isAdmin()) {
+      options.push(
+        { path: '/admin-panel', label: 'Panel Admin', icon: Shield }
+      )
+    }
+
+    if (isBusiness()) {
+      options.push(
+        { path: '/business-dashboard', label: 'Mi Dashboard', icon: BarChart3 }
+      )
+    }
+
+    return options
+  }
+
+  const userMenuOptions = getUserMenuOptions()
+
+  return (
+    <>
+      <nav className="sticky top-0 z-50 bg-black/95 backdrop-blur-md text-white border-b border-gray-800/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-lg flex items-center justify-center shadow-lg">
+                <Store className="h-5 w-5 text-black" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-white to-[#3ecf8e] bg-clip-text text-transparent">
+                ChapaShop
+              </span>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-2">
+              {navItems.map((item) => (
+                <NavLink 
+                  key={item.path} 
+                  to={item.path} 
+                  icon={item.icon}
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+
+            {/* User Menu - Desktop */}
+            {user ? (
+              <div className="hidden md:block relative" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-3 px-3 py-2 bg-gray-800/30 rounded-xl border border-gray-700/50 hover:bg-gray-700/30 transition-all duration-300 group"
+                  className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:ring-offset-2 focus:ring-offset-black"
                 >
-                  {/* Avatar with initials */}
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-full flex items-center justify-center text-black text-sm font-bold">
-                    {getInitials()}
-                  </div>
-                  <div className="flex flex-col items-start">
-                    <span className="text-sm text-white font-medium">
-                      {userProfile?.full_name || 'Usuario'}
-                    </span>
-                    {userProfile?.role && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        userProfile.role === 'admin' 
-                          ? 'bg-red-500/20 text-red-400' 
-                          : userProfile.role === 'business'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {userProfile.role === 'admin' ? 'Admin' : userProfile.role === 'business' ? 'Negocio' : 'Usuario'}
-                      </span>
-                    )}
-                  </div>
+                  <UserAvatar size="sm" />
                   <ChevronDown 
                     size={16} 
-                    className={`text-gray-400 transition-transform duration-200 ${
-                      isUserMenuOpen ? 'rotate-180' : ''
-                    }`} 
+                    className={`text-gray-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} 
                   />
                 </button>
 
-                {/* User Dropdown Menu */}
+                {/* Dropdown Menu */}
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-xl py-2 z-50">
-                    <div className="px-4 py-2 border-b border-gray-700/50">
-                      <p className="text-sm text-gray-400">Conectado como</p>
-                      <p className="text-sm text-white font-medium truncate">{user.email}</p>
+                  <div className="absolute right-0 mt-2 w-64 bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-xl py-2 z-10">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b border-gray-700/50">
+                      <UserAvatar size="md" showName />
+                      <p className="text-xs text-gray-400 mt-1 truncate">{user.email}</p>
                     </div>
-                    
-                    <Link
-                      to="/profile"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-white hover:bg-gray-700/50 transition-colors"
-                    >
-                      <User size={16} className="text-[#3ecf8e]" />
-                      <span>Mi Perfil</span>
-                    </Link>
 
-                    {isAdmin() && (
-                      <Link
-                        to="/admin-panel"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-gray-700/50 transition-colors"
-                      >
-                        <Shield size={16} className="text-red-400" />
-                        <span>Panel Admin</span>
-                      </Link>
-                    )}
+                    {/* Menu Options */}
+                    <div className="py-2">
+                      {userMenuOptions.map((option) => (
+                        <Link
+                          key={option.path}
+                          to={option.path}
+                          className="flex items-center gap-3 px-4 py-2.5 text-white hover:bg-gray-700/50 transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <option.icon size={18} className="text-[#3ecf8e]" />
+                          <span className="font-medium">{option.label}</span>
+                        </Link>
+                      ))}
+                    </div>
 
-                    {isBusiness() && (
-                      <Link
-                        to="/business-dashboard"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-gray-700/50 transition-colors"
-                      >
-                        <Settings size={16} className="text-blue-400" />
-                        <span>Mi Dashboard</span>
-                      </Link>
-                    )}
-
-                    {/* Mis Favoritos - para todos los usuarios autenticados */}
-                    <Link
-                      to="/favorites"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-white hover:bg-gray-700/50 transition-colors"
-                    >
-                      <Heart size={16} className="text-red-400" />
-                      <span>Mis Favoritos</span>
-                    </Link>
-
-                    <div className="border-t border-gray-700/50 mt-2 pt-2">
-                      <button
-                        onClick={async () => {
-                          setIsUserMenuOpen(false)
-                          
-                          // Mostrar indicador de carga (opcional)
-                          const button = event.target.closest('button')
-                          const originalText = button.textContent
-                          button.textContent = 'Cerrando sesión...'
-                          button.disabled = true
-                          
-                          try {
-                            // Timeout para el logout
-                            const logoutTimeout = setTimeout(() => {
-                              logout()
-                            }, 3000)
-                            
-                            await logout()
-                            clearTimeout(logoutTimeout)
-                          } catch (error) {
-                            console.error('Error during logout, forcing logout:', error)
-                            logout()
-                          } finally {
-                            // Restaurar botón (aunque probablemente la página se recargará)
-                            button.textContent = originalText
-                            button.disabled = false
-                          }
-                        }}
-                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-red-500/20 hover:text-red-400 transition-colors w-full"
-                      >
-                        <LogOut size={16} />
-                        <span>Cerrar Sesión</span>
-                      </button>
-                      
-                      {/* Botón de logout forzado */}
+                    {/* Logout */}
+                    <div className="border-t border-gray-700/50 pt-2">
                       <button
                         onClick={() => {
+                          logout()
                           setIsUserMenuOpen(false)
-                          if (confirm('¿Estás seguro de que quieres forzar el cierre de sesión? Esto cerrará tu sesión inmediatamente.')) {
-                            logout()
-                          }
                         }}
-                        className="flex items-center gap-3 px-4 py-1 text-xs text-gray-500 hover:text-gray-400 transition-colors w-full mt-1"
-                        title="Forzar cierre de sesión si hay problemas"
+                        className="flex items-center gap-3 px-4 py-2.5 text-red-400 hover:bg-red-500/20 transition-colors w-full text-left"
                       >
-                        <span>¿Problemas? Forzar salida</span>
+                        <LogOut size={18} />
+                        <span className="font-medium">Cerrar Sesión</span>
                       </button>
                     </div>
                   </div>
                 )}
               </div>
+            ) : (
+              <div className="hidden md:flex items-center space-x-2">
+                {navItems.map((item) => (
+                  <NavLink 
+                    key={item.path} 
+                    to={item.path} 
+                    icon={item.icon}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
             )}
-          </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
+            {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-xl text-white hover:text-[#3ecf8e] hover:bg-[#3ecf8e]/10 transition-all duration-300"
-              aria-label="Toggle menu"
+              className="md:hidden p-2 rounded-lg hover:bg-gray-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:ring-offset-2 focus:ring-offset-black"
+              aria-label="Abrir menú"
             >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMenuOpen ? (
+                <X size={24} className="text-white" />
+              ) : (
+                <Menu size={24} className="text-white" />
+              )}
             </button>
           </div>
         </div>
+      </nav>
 
-        {/* Mobile Navigation */}
-        <div className={`md:hidden transition-all duration-300 ease-in-out ${
-          isMenuOpen 
-            ? 'max-h-screen opacity-100 pb-4' 
-            : 'max-h-0 opacity-0 overflow-hidden'
-        }`}>
-          <div className="space-y-2 pt-4 border-t border-gray-800/50 max-h-[calc(100vh-8rem)] overflow-y-auto navbar-mobile-scroll">
-            {navItems.map((item) => (
-              <NavLink key={item.path} to={item.path} icon={item.icon} mobile>
-                {item.label}
-              </NavLink>
-            ))}
-            
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          
+          {/* Menu Panel */}
+          <div className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-gray-900 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-700 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-lg flex items-center justify-center shadow-lg">
+                  <Store className="h-6 w-6 text-black" />
+                </div>
+                <span className="text-lg font-bold bg-gradient-to-r from-white to-[#3ecf8e] bg-clip-text text-transparent">
+                  ChapaShop
+                </span>
+              </div>
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-[#3ecf8e] focus:ring-offset-2 focus:ring-offset-gray-900"
+              >
+                <X size={24} className="text-white" />
+              </button>
+            </div>
+
+            {/* User Info (if logged in) */}
             {user && (
-              <>
-                {/* User Info */}
-                <div className="flex items-center gap-3 px-3 py-3 bg-gray-800/30 rounded-xl border border-gray-700/50 mx-0">
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-full flex items-center justify-center text-black text-xs font-bold flex-shrink-0">
-                    {getInitials()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm truncate">
-                      {userProfile?.full_name || 'Usuario'}
-                    </p>
-                    <p className="text-gray-400 text-xs truncate">{user.email}</p>
-                    {userProfile?.role && (
-                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full mt-1 ${
-                        userProfile.role === 'admin' 
-                          ? 'bg-red-500/20 text-red-400' 
-                          : userProfile.role === 'business'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {userProfile.role === 'admin' ? 'Admin' : userProfile.role === 'business' ? 'Negocio' : 'Usuario'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Profile Link */}
-                <Link
-                  to="/profile"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 text-white hover:bg-[#3ecf8e]/20 hover:text-[#3ecf8e]"
-                >
-                  <User size={18} />
-                  <span className="text-sm">Mi Perfil</span>
-                </Link>
-
-                {/* Admin Panel Link for Mobile */}
-                {isAdmin() && (
-                  <Link
-                    to="/admin-panel"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 text-white hover:bg-red-400/20 hover:text-red-400"
-                  >
-                    <Shield size={18} />
-                    <span className="text-sm">Panel Admin</span>
-                  </Link>
-                )}
-
-                {/* Business Dashboard Link for Mobile */}
-                {isBusiness() && (
-                  <Link
-                    to="/business-dashboard"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 text-white hover:bg-blue-400/20 hover:text-blue-400"
-                  >
-                    <Settings size={18} />
-                    <span className="text-sm">Mi Dashboard</span>
-                  </Link>
-                )}
-
-                {/* Mis Favoritos Link for Mobile - para todos los usuarios autenticados */}
-                <Link
-                  to="/favorites"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 text-white hover:bg-red-400/20 hover:text-red-400"
-                >
-                  <Heart size={18} />
-                  <span className="text-sm">Mis Favoritos</span>
-                </Link>
-
-                {/* Logout */}
-                <div className="border-t border-gray-700/50 pt-2 mt-2">
-                  <button
-                    onClick={() => {
-                      logout()
-                      setIsMenuOpen(false)
-                    }}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 w-full text-left text-white hover:bg-red-400/20 hover:text-red-400"
-                  >
-                    <LogOut size={18} />
-                    <span className="text-sm">Cerrar Sesión</span>
-                  </button>
-                </div>
-              </>
+              <div className="p-4 bg-gradient-to-r from-gray-800 to-gray-800/80 border-b border-gray-700 flex-shrink-0">
+                <UserAvatar size="lg" showName />
+              </div>
             )}
+
+            {/* Navigation Links */}
+            <div className="flex-1 overflow-y-auto py-4 px-4 space-y-2 navbar-mobile-scroll mobile-menu-content">
+              {navItems.map((item) => (
+                <NavLink 
+                  key={item.path} 
+                  to={item.path} 
+                  icon={item.icon}
+                  mobile
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+
+              {/* User-specific links */}
+              {user && (
+                <>
+                  <div className="my-4 border-t border-gray-700 pt-4">
+                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-4">
+                      Mi Cuenta
+                    </div>
+                    {userMenuOptions.map((option) => (
+                      <Link
+                        key={option.path}
+                        to={option.path}
+                        className="flex items-center gap-4 px-4 py-3.5 rounded-xl font-medium transition-all duration-300 text-white hover:bg-gray-800/50 active:bg-gray-700/50 hover:transform hover:scale-[0.98]"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <option.icon size={22} className="text-[#3ecf8e]" />
+                        <span className="text-base">{option.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Logout Button (if logged in) */}
+            {user && (
+              <div className="p-4 border-t border-gray-700 flex-shrink-0">
+                <button
+                  onClick={() => {
+                    logout()
+                    setIsMenuOpen(false)
+                  }}
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-xl font-medium transition-all duration-300 text-red-400 hover:bg-red-500/20 active:bg-red-500/30 hover:transform hover:scale-[0.98] w-full focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                >
+                  <LogOut size={22} />
+                  <span className="text-base">Cerrar Sesión</span>
+                </button>
+              </div>
+            )}
+
+
           </div>
         </div>
-      </div>
-
-      {/* Subtle bottom glow */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#3ecf8e]/30 to-transparent"></div>
-    </nav>
+      )}
+    </>
   )
 }
 

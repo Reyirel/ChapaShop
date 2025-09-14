@@ -11,8 +11,7 @@ const Profile = () => {
     full_name: '',
     phone: '',
     business_name: '',
-    business_description: '',
-    role: 'person' // Agregamos el campo role
+    business_description: ''
   })
   const [saveLoading, setSaveLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -24,8 +23,7 @@ const Profile = () => {
         full_name: profile.full_name || '',
         phone: profile.phone || '',
         business_name: profile.business_name || '',
-        business_description: profile.business_description || '',
-        role: profile.role || 'person'
+        business_description: profile.business_description || ''
       })
     }
   }, [profile])
@@ -108,40 +106,40 @@ const Profile = () => {
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
       <HeroBackground />
       
-      <div className="relative z-10 min-h-screen py-8 px-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="relative z-10 min-h-screen py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-6">
+        <div className="max-w-4xl mx-auto">
           {/* Back Button */}
           <Link 
             to="/" 
-            className="inline-flex items-center gap-2 text-[#3ecf8e] hover:text-white transition-colors mb-8 group"
+            className="inline-flex items-center gap-2 text-[#3ecf8e] hover:text-white transition-colors mb-4 sm:mb-6 lg:mb-8 group text-sm sm:text-base"
           >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+            <ArrowLeft size={18} className="sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" />
             <span>Volver al inicio</span>
           </Link>
 
           {/* Profile Card */}
-          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden">
+          <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl sm:rounded-2xl overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#3ecf8e]/10 to-transparent p-8 border-b border-gray-700/50">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-full flex items-center justify-center text-black text-2xl font-bold">
+            <div className="bg-gradient-to-r from-[#3ecf8e]/10 to-transparent p-4 sm:p-6 lg:p-8 border-b border-gray-700/50">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-[#3ecf8e] to-[#2ebd7e] rounded-full flex items-center justify-center text-black text-lg sm:text-xl lg:text-2xl font-bold flex-shrink-0">
                     {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <h1 className="text-2xl font-bold">{profile?.full_name || 'Usuario'}</h1>
-                    <p className="text-gray-400">{user?.email}</p>
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm mt-2 ${getRoleBadgeClass(profile?.role)}`}>
-                      <User size={14} />
-                      {getRoleDisplayName(profile?.role)}
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">{profile?.full_name || 'Usuario'}</h1>
+                    <p className="text-gray-400 text-sm sm:text-base truncate">{user?.email}</p>
+                    <div className={`inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 rounded-full border text-xs sm:text-sm mt-1 sm:mt-2 ${getRoleBadgeClass(profile?.role)}`}>
+                      <User size={12} className="sm:w-3.5 sm:h-3.5" />
+                      <span className="truncate">{getRoleDisplayName(profile?.role)}</span>
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsEditing(!isEditing)}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#3ecf8e] text-black rounded-xl font-semibold hover:bg-[#2ebd7e] transition-colors"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-[#3ecf8e] text-black rounded-lg sm:rounded-xl font-semibold hover:bg-[#2ebd7e] transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
                 >
-                  <Edit3 size={16} />
+                  <Edit3 size={14} className="sm:w-4 sm:h-4" />
                   {isEditing ? 'Cancelar' : 'Editar'}
                 </button>
               </div>
@@ -149,27 +147,27 @@ const Profile = () => {
 
             {/* Messages */}
             {message && (
-              <div className="mx-8 mt-6 bg-green-900/30 border border-green-500/50 text-green-400 p-3 rounded-xl text-sm">
+              <div className="mx-3 sm:mx-6 lg:mx-8 mt-4 sm:mt-6 bg-green-900/30 border border-green-500/50 text-green-400 p-3 sm:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
                 {message}
               </div>
             )}
 
             {error && (
-              <div className="mx-8 mt-6 bg-red-900/30 border border-red-500/50 text-red-400 p-3 rounded-xl text-sm">
+              <div className="mx-3 sm:mx-6 lg:mx-8 mt-4 sm:mt-6 bg-red-900/30 border border-red-500/50 text-red-400 p-3 sm:p-4 rounded-lg sm:rounded-xl text-sm sm:text-base">
                 {error}
               </div>
             )}
 
             {/* Profile Form */}
-            <div className="p-8 space-y-6">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
               {/* Basic Information */}
               <div>
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <User size={20} className="text-[#3ecf8e]" />
+                <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+                  <User size={18} className="sm:w-5 sm:h-5 text-[#3ecf8e]" />
                   Información Personal
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="lg:col-span-1">
                     <label className="block text-white text-sm font-semibold mb-2">
                       Nombre Completo
                     </label>
@@ -179,29 +177,29 @@ const Profile = () => {
                         name="full_name"
                         value={formData.full_name}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-600 rounded-lg sm:rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all text-sm sm:text-base"
                         placeholder="Tu nombre completo"
                       />
                     ) : (
-                      <div className="px-4 py-3 bg-gray-900/30 border border-gray-700 rounded-xl text-gray-300">
+                      <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/30 border border-gray-700 rounded-lg sm:rounded-xl text-gray-300 text-sm sm:text-base">
                         {profile?.full_name || 'No especificado'}
                       </div>
                     )}
                   </div>
 
-                  <div>
+                  <div className="lg:col-span-1">
                     <label className="block text-white text-sm font-semibold mb-2">
-                      <Mail size={16} className="inline mr-1" />
+                      <Mail size={14} className="sm:w-4 sm:h-4 inline mr-1" />
                       Email
                     </label>
-                    <div className="px-4 py-3 bg-gray-900/30 border border-gray-700 rounded-xl text-gray-300">
+                    <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/30 border border-gray-700 rounded-lg sm:rounded-xl text-gray-300 text-sm sm:text-base">
                       {user?.email}
                     </div>
                   </div>
 
-                  <div>
+                  <div className="lg:col-span-1">
                     <label className="block text-white text-sm font-semibold mb-2">
-                      <Phone size={16} className="inline mr-1" />
+                      <Phone size={14} className="sm:w-4 sm:h-4 inline mr-1" />
                       Teléfono
                     </label>
                     {isEditing ? (
@@ -210,47 +208,33 @@ const Profile = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-600 rounded-lg sm:rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all text-sm sm:text-base"
                         placeholder="+52 123 456 7890"
                       />
                     ) : (
-                      <div className="px-4 py-3 bg-gray-900/30 border border-gray-700 rounded-xl text-gray-300">
+                      <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/30 border border-gray-700 rounded-lg sm:rounded-xl text-gray-300 text-sm sm:text-base">
                         {profile?.phone || 'No especificado'}
                       </div>
                     )}
                   </div>
 
-                  <div>
+                  <div className="lg:col-span-1">
                     <label className="block text-white text-sm font-semibold mb-2">
                       Tipo de Usuario
                     </label>
-                    {isEditing ? (
-                      <select
-                        name="role"
-                        value={formData.role}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
-                      >
-                        <option value="person">Usuario</option>
-                        <option value="client">Cliente</option>
-                        <option value="business">Negocio</option>
-                        <option value="admin">Administrador</option>
-                      </select>
-                    ) : (
-                      <div className="px-4 py-3 bg-gray-900/30 border border-gray-700 rounded-xl">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeClass(profile?.role || 'person')}`}>
-                          {getRoleDisplayName(profile?.role || 'person')}
-                        </span>
-                      </div>
-                    )}
+                    <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/30 border border-gray-700 rounded-lg sm:rounded-xl">
+                      <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold border ${getRoleBadgeClass(profile?.role || 'person')}`}>
+                        {getRoleDisplayName(profile?.role || 'person')}
+                      </span>
+                    </div>
                   </div>
 
-                  <div>
+                  <div className="lg:col-span-2">
                     <label className="block text-white text-sm font-semibold mb-2">
-                      <Calendar size={16} className="inline mr-1" />
+                      <Calendar size={14} className="sm:w-4 sm:h-4 inline mr-1" />
                       Miembro desde
                     </label>
-                    <div className="px-4 py-3 bg-gray-900/30 border border-gray-700 rounded-xl text-gray-300">
+                    <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/30 border border-gray-700 rounded-lg sm:rounded-xl text-gray-300 text-sm sm:text-base">
                       {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('es-ES') : 'No disponible'}
                     </div>
                   </div>
@@ -260,11 +244,11 @@ const Profile = () => {
               {/* Business Information (only for business users) */}
               {profile?.role === 'business' && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Building size={20} className="text-[#3ecf8e]" />
+                  <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+                    <Building size={18} className="sm:w-5 sm:h-5 text-[#3ecf8e]" />
                     Información del Negocio
                   </h3>
-                  <div className="space-y-4">
+                  <div className="space-y-4 sm:space-y-6">
                     <div>
                       <label className="block text-white text-sm font-semibold mb-2">
                         Nombre del Negocio
@@ -275,11 +259,11 @@ const Profile = () => {
                           name="business_name"
                           value={formData.business_name}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                          className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-600 rounded-lg sm:rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all text-sm sm:text-base"
                           placeholder="Nombre de tu negocio"
                         />
                       ) : (
-                        <div className="px-4 py-3 bg-gray-900/30 border border-gray-700 rounded-xl text-gray-300">
+                        <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/30 border border-gray-700 rounded-lg sm:rounded-xl text-gray-300 text-sm sm:text-base">
                           {profile?.business_name || 'No especificado'}
                         </div>
                       )}
@@ -295,11 +279,11 @@ const Profile = () => {
                           value={formData.business_description}
                           onChange={handleInputChange}
                           rows={3}
-                          className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all resize-none"
+                          className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/50 border border-gray-600 rounded-lg sm:rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all resize-none text-sm sm:text-base"
                           placeholder="Describe tu negocio..."
                         />
                       ) : (
-                        <div className="px-4 py-3 bg-gray-900/30 border border-gray-700 rounded-xl text-gray-300 min-h-[80px]">
+                        <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/30 border border-gray-700 rounded-lg sm:rounded-xl text-gray-300 min-h-[80px] text-sm sm:text-base">
                           {profile?.business_description || 'No especificado'}
                         </div>
                       )}
@@ -310,11 +294,11 @@ const Profile = () => {
 
               {/* Save Button */}
               {isEditing && (
-                <div className="flex justify-end pt-4 border-t border-gray-700/50">
+                <div className="flex flex-col sm:flex-row justify-end pt-4 sm:pt-6 border-t border-gray-700/50 gap-3 sm:gap-0">
                   <button
                     onClick={handleSave}
                     disabled={saveLoading}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#3ecf8e] text-black rounded-xl font-semibold hover:bg-[#2ebd7e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-[#3ecf8e] text-black rounded-lg sm:rounded-xl font-semibold hover:bg-[#2ebd7e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base w-full sm:w-auto"
                   >
                     {saveLoading ? (
                       <>
@@ -323,7 +307,7 @@ const Profile = () => {
                       </>
                     ) : (
                       <>
-                        <Save size={16} />
+                        <Save size={14} className="sm:w-4 sm:h-4" />
                         Guardar Cambios
                       </>
                     )}

@@ -73,7 +73,12 @@ body {
   background: #35b37a;
 }
 
-/* Clases para el navbar móvil */
+/* Scrollbar para navbar móvil */
+.navbar-mobile-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #1f2937;
+}
+
 .navbar-mobile-scroll::-webkit-scrollbar {
   width: 4px;
 }
@@ -91,8 +96,108 @@ body {
   background: #6b7280;
 }
 
+/* Mejoras para móviles */
+@media (max-width: 768px) {
+  /* Asegurar que el viewport sea correcto */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  /* Mejores scrollbars en móvil */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Navbar móvil responsivo */
+  .navbar-mobile-scroll {
+    max-height: calc(100vh - 5rem);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+
 /* Efectos de selección */
 ::selection {
   background-color: #3ecf8e;
   color: #000000;
+}
+
+/* Navbar animation improvements */
+.navbar-slide-enter {
+  transform: translateX(100%);
+}
+
+.navbar-slide-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms ease-out;
+}
+
+.navbar-slide-exit {
+  transform: translateX(0);
+}
+
+.navbar-slide-exit-active {
+  transform: translateX(100%);
+  transition: transform 300ms ease-in;
+}
+
+/* Backdrop blur for mobile */
+.mobile-backdrop {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Smooth mobile interactions */
+@media (max-width: 768px) {
+  .mobile-nav-link {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  .mobile-nav-link:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Safe area insets for mobile */
+@supports (padding: max(0px)) {
+  .mobile-menu-header {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .mobile-menu-footer {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Better focus states for accessibility */
+.nav-focus:focus-visible {
+  outline: 2px solid #3ecf8e;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Enhanced mobile menu scrolling */
+.mobile-menu-content {
+  overscroll-behavior: contain;
+}
+
+.mobile-menu-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-menu-content::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 2px;
+}
+
+.mobile-menu-content::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 2px;
+}
+
+.mobile-menu-content::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
