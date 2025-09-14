@@ -15,7 +15,6 @@ import {
   serverTimestamp 
 } from 'firebase/firestore'
 import { db } from './firebase'
-import driveService from './googleDrive'
 
 class DatabaseService {
   constructor() {
@@ -621,12 +620,12 @@ class DatabaseService {
       await this.deleteBusinessReviews(businessId)
       
       // Delete business images from Drive
-      const business = await this.getBusiness(businessId)
-      if (business.images && business.images.length > 0) {
-        for (const imageId of business.images) {
-          await driveService.deleteImage(imageId)
-        }
-      }
+      // const business = await this.getBusiness(businessId)
+      // if (business.images && business.images.length > 0) {
+      //   for (const imageId of business.images) {
+      //     await driveService.deleteImage(imageId)
+      //   }
+      // }
       
       // Delete business document
       const docRef = doc(db, 'businesses', businessId)
@@ -660,8 +659,9 @@ class DatabaseService {
         
         try {
           const fileName = `image-${Date.now()}-${i}.${file.name.split('.').pop()}`
-          const result = await driveService.uploadImage(file, businessId, fileName)
-          uploadedImages.push(result.id)
+          // const result = await driveService.uploadImage(file, businessId, fileName)
+          // uploadedImages.push(result.id)
+          console.warn('Servicio de Google Drive no disponible, saltando subida de imagen')
         } catch (fileError) {
           console.error(`Error subiendo archivo ${i}:`, fileError)
           // Continuar con el siguiente archivo en lugar de fallar todo
