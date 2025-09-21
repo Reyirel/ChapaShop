@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../services/firebase'
 import dbService from '../services/database'
 import { FloatingParticles, GridPattern, GlowOrbs } from '../components/BackgroundEffects'
-import { UserPlus, LogIn, ArrowLeft, Mail, Lock, CheckCircle, User, Store, Building, MapPin, Phone, Clock, FileText, Tag } from 'lucide-react'
+import { UserPlus, LogIn, ArrowLeft, Mail, Lock, CheckCircle, User, Store } from 'lucide-react'
 
 const Register = () => {
   const [email, setEmail] = useState('')
@@ -16,112 +16,6 @@ const Register = () => {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
-
-  // Business-specific fields
-  const [businessName, setBusinessName] = useState('')
-  const [businessCategory, setBusinessCategory] = useState('')
-  const [businessDescription, setBusinessDescription] = useState('')
-  const [businessAddress, setBusinessAddress] = useState('')
-  const [businessPhone, setBusinessPhone] = useState('')
-  const [businessHours, setBusinessHours] = useState('')
-  const [categories, setCategories] = useState([])
-
-  // Load categories when user type is business
-  useEffect(() => {
-    if (userType === 'business') {
-      loadCategories()
-    }
-  }, [userType])
-
-  const loadCategories = async () => {
-    try {
-      const cats = await dbService.getBusinessCategories()
-      setCategories(cats)
-    } catch (error) {
-      console.error('Error loading categories:', error)
-      // Fallback categories
-      setCategories([
-        { id: 'restaurante', name: 'Restaurante', color: '#FF6B6B' },
-        { id: 'cafe', name: 'Café', color: '#4ECDC4' },
-        { id: 'tienda', name: 'Tienda', color: '#45B7D1' },
-        { id: 'servicio', name: 'Servicio', color: '#96CEB4' },
-        { id: 'entretenimiento', name: 'Entretenimiento', color: '#FFEAA7' },
-        { id: 'salud', name: 'Salud y Belleza', color: '#DDA0DD' },
-        { id: 'educacion', name: 'Educación', color: '#98D8C8' },
-        { id: 'transporte', name: 'Transporte', color: '#F7DC6F' }
-      ])
-    }
-  }
-
-  // Get dynamic content based on selected category
-  const getCategoryContent = (category) => {
-    const content = {
-      restaurante: {
-        descriptionPlaceholder: 'Describe tu restaurante, especialidades, ambiente, capacidad...',
-        descriptionHelp: 'Menciona el tipo de cocina, platos destacados, ambiente y servicios especiales',
-        addressPlaceholder: 'Dirección completa del restaurante',
-        phonePlaceholder: 'Teléfono de contacto del restaurante',
-        hoursPlaceholder: 'Ej: Lunes-Viernes 12:00-23:00, Sábado-Domingo 11:00-24:00'
-      },
-      cafe: {
-        descriptionPlaceholder: 'Describe tu café, especialidades, ambiente, menú...',
-        descriptionHelp: 'Menciona bebidas destacadas, ambiente, wifi, eventos especiales',
-        addressPlaceholder: 'Dirección completa del café',
-        phonePlaceholder: 'Teléfono de contacto del café',
-        hoursPlaceholder: 'Ej: Lunes-Viernes 7:00-20:00, Sábado-Domingo 8:00-18:00'
-      },
-      tienda: {
-        descriptionPlaceholder: 'Describe tu tienda, productos, servicios, especialidades...',
-        descriptionHelp: 'Menciona productos principales, marcas, servicios adicionales',
-        addressPlaceholder: 'Dirección completa de la tienda',
-        phonePlaceholder: 'Teléfono de contacto de la tienda',
-        hoursPlaceholder: 'Ej: Lunes-Sábado 9:00-19:00, Domingo 10:00-16:00'
-      },
-      servicio: {
-        descriptionPlaceholder: 'Describe tus servicios, especialidades, experiencia...',
-        descriptionHelp: 'Menciona servicios específicos, experiencia, certificaciones, cobertura',
-        addressPlaceholder: 'Dirección de tu oficina/local',
-        phonePlaceholder: 'Teléfono de contacto principal',
-        hoursPlaceholder: 'Ej: Lunes-Viernes 8:00-18:00, Sábado 9:00-14:00'
-      },
-      entretenimiento: {
-        descriptionPlaceholder: 'Describe tu negocio de entretenimiento, actividades, servicios...',
-        descriptionHelp: 'Menciona actividades principales, edades objetivo, instalaciones especiales',
-        addressPlaceholder: 'Dirección completa del local',
-        phonePlaceholder: 'Teléfono de contacto',
-        hoursPlaceholder: 'Ej: Lunes-Domingo 10:00-22:00 (según actividad)'
-      },
-      salud: {
-        descriptionPlaceholder: 'Describe tus servicios de salud y belleza, especialidades...',
-        descriptionHelp: 'Menciona servicios específicos, especialidades, experiencia, certificaciones',
-        addressPlaceholder: 'Dirección completa del centro',
-        phonePlaceholder: 'Teléfono de contacto',
-        hoursPlaceholder: 'Ej: Lunes-Viernes 9:00-19:00, Sábado 8:00-16:00'
-      },
-      educacion: {
-        descriptionPlaceholder: 'Describe tu institución educativa, programas, metodología...',
-        descriptionHelp: 'Menciona niveles educativos, especialidades, metodologías, instalaciones',
-        addressPlaceholder: 'Dirección completa de la institución',
-        phonePlaceholder: 'Teléfono de contacto',
-        hoursPlaceholder: 'Ej: Lunes-Viernes 7:00-18:00 (según nivel educativo)'
-      },
-      transporte: {
-        descriptionPlaceholder: 'Describe tus servicios de transporte, cobertura, flota...',
-        descriptionHelp: 'Menciona tipo de transporte, zonas de cobertura, servicios adicionales',
-        addressPlaceholder: 'Dirección de tu base/oficina principal',
-        phonePlaceholder: 'Teléfono de contacto 24/7',
-        hoursPlaceholder: 'Ej: Lunes-Domingo 24 horas (servicio continuo)'
-      }
-    }
-
-    return content[category] || {
-      descriptionPlaceholder: 'Describe tu negocio, servicios, especialidades...',
-      descriptionHelp: 'Proporciona información detallada sobre tu negocio para que los clientes sepan qué esperar',
-      addressPlaceholder: 'Dirección completa del negocio',
-      phonePlaceholder: 'Teléfono de contacto',
-      hoursPlaceholder: 'Horario de atención (ej: Lunes-Viernes 9:00-18:00)'
-    }
-  }
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -147,35 +41,6 @@ const Register = () => {
       return
     }
 
-    // Business-specific validations
-    if (userType === 'business') {
-      if (!businessName.trim()) {
-        setError('El nombre del negocio es requerido')
-        setLoading(false)
-        return
-      }
-      if (!businessCategory) {
-        setError('Debes seleccionar una categoría para tu negocio')
-        setLoading(false)
-        return
-      }
-      if (!businessDescription.trim()) {
-        setError('La descripción del negocio es requerida')
-        setLoading(false)
-        return
-      }
-      if (!businessAddress.trim()) {
-        setError('La dirección del negocio es requerida')
-        setLoading(false)
-        return
-      }
-      if (!businessPhone.trim()) {
-        setError('El teléfono del negocio es requerido')
-        setLoading(false)
-        return
-      }
-    }
-
     try {
       // Registrar usuario en Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
@@ -194,12 +59,7 @@ const Register = () => {
         if (userType === 'business') {
           await dbService.createBusiness({
             ownerId: userCredential.user.uid,
-            name: businessName,
-            category: businessCategory,
-            description: businessDescription,
-            address: businessAddress,
-            phone: businessPhone,
-            businessHours: businessHours,
+            name: fullName, // Usar el nombre completo como nombre del negocio
             contactName: fullName,
             contactEmail: email
           })
@@ -337,115 +197,59 @@ const Register = () => {
                 />
               </div>
 
-              {/* Business-specific fields */}
-              {userType === 'business' && (
-                <>
-                  {/* Business Name */}
-                  <div>
-                    <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                      <Building size={16} />
-                      Nombre del Negocio
-                    </label>
-                    <input
-                      type="text"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
-                      placeholder="Nombre oficial de tu negocio"
-                      required
-                    />
-                  </div>
+              {/* Email */}
+              <div>
+                <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <Mail size={16} />
+                  Correo Electrónico
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                  placeholder="tu@ejemplo.com"
+                  required
+                />
+              </div>
 
-                  {/* Business Category */}
-                  <div>
-                    <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                      <Tag size={16} />
-                      Categoría del Negocio
-                    </label>
-                    <select
-                      value={businessCategory}
-                      onChange={(e) => setBusinessCategory(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
-                      required
-                    >
-                      <option value="">Selecciona una categoría</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.name}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+              {/* Password */}
+              <div>
+                <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <Lock size={16} />
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                />
+                <PasswordStrength password={password} />
+              </div>
 
-                  {/* Business Description */}
-                  <div>
-                    <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                      <FileText size={16} />
-                      Descripción del Negocio
-                    </label>
-                    <textarea
-                      value={businessDescription}
-                      onChange={(e) => setBusinessDescription(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all resize-none"
-                      placeholder={businessCategory ? getCategoryContent(businessCategory.toLowerCase().replace(/\s+/g, '')).descriptionPlaceholder : 'Describe tu negocio, servicios, especialidades...'}
-                      rows="3"
-                      required
-                    />
-                    {businessCategory && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        💡 {getCategoryContent(businessCategory.toLowerCase().replace(/\s+/g, '')).descriptionHelp}
-                      </p>
-                    )}
-                  </div>
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <CheckCircle size={16} />
+                  Confirmar Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
+                  placeholder="Repite la contraseña"
+                  required
+                />
+                {confirmPassword && password !== confirmPassword && (
+                  <p className="text-red-400 text-xs mt-1">Las contraseñas no coinciden</p>
+                )}
+              </div>
 
-                  {/* Business Address */}
-                  <div>
-                    <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                      <MapPin size={16} />
-                      Dirección del Negocio
-                    </label>
-                    <input
-                      type="text"
-                      value={businessAddress}
-                      onChange={(e) => setBusinessAddress(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
-                      placeholder={businessCategory ? getCategoryContent(businessCategory.toLowerCase().replace(/\s+/g, '')).addressPlaceholder : 'Dirección completa del negocio'}
-                      required
-                    />
-                  </div>
 
-                  {/* Business Phone */}
-                  <div>
-                    <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                      <Phone size={16} />
-                      Teléfono del Negocio
-                    </label>
-                    <input
-                      type="tel"
-                      value={businessPhone}
-                      onChange={(e) => setBusinessPhone(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
-                      placeholder={businessCategory ? getCategoryContent(businessCategory.toLowerCase().replace(/\s+/g, '')).phonePlaceholder : 'Teléfono de contacto'}
-                      required
-                    />
-                  </div>
-
-                  {/* Business Hours */}
-                  <div>
-                    <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                      <Clock size={16} />
-                      Horario de Atención
-                    </label>
-                    <input
-                      type="text"
-                      value={businessHours}
-                      onChange={(e) => setBusinessHours(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
-                      placeholder={businessCategory ? getCategoryContent(businessCategory.toLowerCase().replace(/\s+/g, '')).hoursPlaceholder : 'Horario de atención (ej: Lunes-Viernes 9:00-18:00)'}
-                    />
-                  </div>
-                </>
-              )}
               
               {error && (
                 <div className="bg-red-900/30 border border-red-500/50 text-red-400 p-3 rounded-xl text-sm">
