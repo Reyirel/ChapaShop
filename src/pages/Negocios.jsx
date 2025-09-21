@@ -18,27 +18,53 @@ import {
   ChevronDown,
   ChevronUp,
   Layers,
-  X
+  X,
+  UtensilsCrossed,
+  Coffee,
+  ShoppingBag,
+  Wrench,
+  Laptop,
+  Stethoscope,
+  GraduationCap,
+  Gamepad2,
+  Car,
+  Package,
+  Sparkles,
+  Scissors,
+  Home,
+  Trophy,
+  PawPrint
 } from 'lucide-react'
 
 // Function to get appropriate icon for each category
 const getCategoryIcon = (categoryName) => {
+  const normalizedCategory = categoryName?.toLowerCase() || 'otros'
+  
   const categoryIcons = {
-    'Restaurante': Store,
-    'Café': Store,
-    'Tienda': Store,
-    'Servicio': Store,
-    'Servicios': Store,
-    'Entretenimiento': Store,
-    'Salud y Belleza': Store,
-    'Salud': Store,
-    'Educación': Store,
-    'Tecnología': Store,
-    'Transporte': Store,
-    'Otros': Store
+    'restaurante': UtensilsCrossed,
+    'café': Coffee,
+    'cafe': Coffee,
+    'tienda': ShoppingBag,
+    'servicios': Wrench,
+    'servicio': Wrench,
+    'tecnología': Laptop,
+    'tecnologia': Laptop,
+    'salud y belleza': Stethoscope,
+    'salud': Stethoscope,
+    'educación': GraduationCap,
+    'educacion': GraduationCap,
+    'entretenimiento': Gamepad2,
+    'transporte': Car,
+    'automotriz': Car,
+    'belleza': Scissors,
+    'hogar': Home,
+    'deportes': Trophy,
+    'mascotas': PawPrint,
+    'otros': Package,
+    'otro': Package
   }
   
-  return categoryIcons[categoryName] || Store
+  return categoryIcons[normalizedCategory] || Package
 }
 
 const Negocios = () => {
@@ -139,10 +165,13 @@ const Negocios = () => {
     const matchesSearch = negocio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          negocio.description?.toLowerCase().includes(searchTerm.toLowerCase())
     
-    // Improved category matching - check multiple possible fields
+    // Improved category matching - check multiple possible fields and normalize comparison
     const negocioCategory = negocio.category || negocio.category_name || negocio.business_categories?.name || ''
+    const normalizedNegocioCategory = negocioCategory.toLowerCase().trim()
+    const normalizedSelectedCategory = selectedCategory.toLowerCase().trim()
+    
     const matchesCategory = !selectedCategory || 
-                           negocioCategory.toLowerCase() === selectedCategory.toLowerCase() ||
+                           normalizedNegocioCategory === normalizedSelectedCategory ||
                            negocioCategory === selectedCategory
     
     return matchesSearch && matchesCategory
@@ -304,6 +333,7 @@ const Negocios = () => {
                 
                 {categorias.map((categoria) => {
                   const CategoryIcon = getCategoryIcon(categoria.name)
+                  const isSelected = selectedCategory === categoria.name
                   return (
                     <button
                       key={categoria.id}
@@ -312,14 +342,16 @@ const Negocios = () => {
                         setIsCategoriesExpanded(false)
                       }}
                       className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
-                        selectedCategory === categoria.name
+                        isSelected
                           ? 'bg-[#3ecf8e] text-white font-semibold shadow-md'
                           : 'hover:bg-gray-50 text-gray-700'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <CategoryIcon className="h-4 w-4 text-[#3ecf8e]" />
-                        {categoria.name}
+                        <CategoryIcon className={`h-4 w-4 ${
+                          isSelected ? 'text-white' : 'text-[#3ecf8e]'
+                        }`} />
+                        {categoria.display_name || categoria.name}
                       </div>
                     </button>
                   )

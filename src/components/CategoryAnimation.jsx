@@ -28,7 +28,11 @@ import {
   Brush,
   Scissors,
   MapPin,
-  Clock
+  Clock,
+  Home,
+  PawPrint,
+  Trophy,
+  Bike
 } from 'lucide-react'
 
 const CategoryAnimation = ({ category, businessName }) => {
@@ -118,7 +122,61 @@ const CategoryAnimation = ({ category, businessName }) => {
         title: 'Transporte',
         emoji: '🚗'
       },
+      automotriz: {
+        primaryColor: '#C2410C',
+        secondaryColor: '#EA580C',
+        accentColor: '#F97316',
+        icons: [Car, Settings, Wrench, Zap],
+        backgroundPattern: 'automotive',
+        title: 'Automotriz',
+        emoji: '🚗'
+      },
+      belleza: {
+        primaryColor: '#BE185D',
+        secondaryColor: '#DB2777',
+        accentColor: '#EC4899',
+        icons: [Sparkles, Scissors, Brush, Star],
+        backgroundPattern: 'beauty',
+        title: 'Belleza',
+        emoji: '💄'
+      },
+      hogar: {
+        primaryColor: '#059669',
+        secondaryColor: '#10B981',
+        accentColor: '#34D399',
+        icons: [Home, Settings, Sparkles, Crown],
+        backgroundPattern: 'home',
+        title: 'Hogar',
+        emoji: '🏠'
+      },
+      deportes: {
+        primaryColor: '#DC2626',
+        secondaryColor: '#EF4444',
+        accentColor: '#F87171',
+        icons: [Trophy, Dumbbell, Bike, Star],
+        backgroundPattern: 'sports',
+        title: 'Deportes',
+        emoji: '⚽'
+      },
+      mascotas: {
+        primaryColor: '#7C2D12',
+        secondaryColor: '#9A3412',
+        accentColor: '#C2410C',
+        icons: [PawPrint, Heart, Star, Sparkles],
+        backgroundPattern: 'pets',
+        title: 'Mascotas',
+        emoji: '🐕'
+      },
       otros: {
+        primaryColor: '#374151',
+        secondaryColor: '#4B5563',
+        accentColor: '#6B7280',
+        icons: [Package, Store, Sparkles, Star],
+        backgroundPattern: 'general',
+        title: 'Otros',
+        emoji: '📦'
+      },
+      otro: {
         primaryColor: '#374151',
         secondaryColor: '#4B5563',
         accentColor: '#6B7280',

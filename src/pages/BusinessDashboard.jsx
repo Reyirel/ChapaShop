@@ -637,19 +637,19 @@ Error técnico: ${error.message}`
                     className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     <option value="">Seleccionar categoría</option>
-                    <option value="restaurante">🍽️ Restaurante</option>
-                    <option value="tienda">🏪 Tienda</option>
-                    <option value="servicios">🔧 Servicios</option>
-                    <option value="salud">🏥 Salud</option>
-                    <option value="educacion">📚 Educación</option>
-                    <option value="entretenimiento">🎭 Entretenimiento</option>
-                    <option value="tecnologia">💻 Tecnología</option>
-                    <option value="automotriz">🚗 Automotriz</option>
-                    <option value="belleza">💄 Belleza</option>
-                    <option value="hogar">🏠 Hogar</option>
-                    <option value="deportes">⚽ Deportes</option>
-                    <option value="mascotas">🐕 Mascotas</option>
-                    <option value="otro">📦 Otro</option>
+                    <option value="restaurante">Restaurante</option>
+                    <option value="tienda">Tienda</option>
+                    <option value="servicios">Servicios</option>
+                    <option value="salud">Salud</option>
+                    <option value="educacion">Educación</option>
+                    <option value="entretenimiento">Entretenimiento</option>
+                    <option value="tecnologia">Tecnología</option>
+                    <option value="automotriz">Automotriz</option>
+                    <option value="belleza">Belleza</option>
+                    <option value="hogar">Hogar</option>
+                    <option value="deportes">Deportes</option>
+                    <option value="mascotas">Mascotas</option>
+                    <option value="otro">Otro</option>
                   </select>
                 </div>
               </div>
@@ -978,19 +978,19 @@ Error técnico: ${error.message}`
                     className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     <option value="">Seleccionar categoría</option>
-                    <option value="restaurante">🍽️ Restaurante</option>
-                    <option value="tienda">🏪 Tienda</option>
-                    <option value="servicios">🔧 Servicios</option>
-                    <option value="salud">🏥 Salud</option>
-                    <option value="educacion">📚 Educación</option>
-                    <option value="entretenimiento">🎭 Entretenimiento</option>
-                    <option value="tecnologia">💻 Tecnología</option>
-                    <option value="automotriz">🚗 Automotriz</option>
-                    <option value="belleza">💄 Belleza</option>
-                    <option value="hogar">🏠 Hogar</option>
-                    <option value="deportes">⚽ Deportes</option>
-                    <option value="mascotas">🐕 Mascotas</option>
-                    <option value="otro">📦 Otro</option>
+                    <option value="restaurante">Restaurante</option>
+                    <option value="tienda">Tienda</option>
+                    <option value="servicios">Servicios</option>
+                    <option value="salud">Salud</option>
+                    <option value="educacion">Educación</option>
+                    <option value="entretenimiento">Entretenimiento</option>
+                    <option value="tecnologia">Tecnología</option>
+                    <option value="automotriz">Automotriz</option>
+                    <option value="belleza">Belleza</option>
+                    <option value="hogar">Hogar</option>
+                    <option value="deportes">Deportes</option>
+                    <option value="mascotas">Mascotas</option>
+                    <option value="otro">Otro</option>
                   </select>
                 </div>
               </div>

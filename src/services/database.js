@@ -1130,7 +1130,7 @@ class DatabaseService {
               const userDoc = await getDoc(doc(db, 'users', review.userId))
               if (userDoc.exists()) {
                 const userData = userDoc.data()
-                review.userName = userData.displayName || userData.name || 'Usuario'
+                review.userName = userData.full_name || userData.displayName || userData.name || 'Usuario'
                 review.userAvatar = userData.photoURL || userData.avatar
               } else {
                 review.userName = 'Usuario'
@@ -1507,49 +1507,54 @@ class DatabaseService {
       // Extract unique categories from businesses
       const categoryMap = new Map()
       
-      // Add default categories first
-      const defaultCategories = [
-        { id: 'restaurante', name: 'Restaurante', color: '#FF6B6B' },
-        { id: 'cafe', name: 'Café', color: '#4ECDC4' },
-        { id: 'tienda', name: 'Tienda', color: '#45B7D1' },
-        { id: 'servicio', name: 'Servicio', color: '#96CEB4' },
-        { id: 'entretenimiento', name: 'Entretenimiento', color: '#FFEAA7' },
-        { id: 'salud', name: 'Salud y Belleza', color: '#DDA0DD' },
-        { id: 'educacion', name: 'Educación', color: '#98D8C8' },
-        { id: 'transporte', name: 'Transporte', color: '#F7DC6F' }
+      // Add predefined categories that match exactly with the form options
+      const predefinedCategories = [
+        { id: 'restaurante', name: 'restaurante', display_name: 'Restaurante', color: '#FF6B6B' },
+        { id: 'cafe', name: 'cafe', display_name: 'Café', color: '#4ECDC4' },
+        { id: 'tienda', name: 'tienda', display_name: 'Tienda', color: '#45B7D1' },
+        { id: 'servicios', name: 'servicios', display_name: 'Servicios', color: '#96CEB4' },
+        { id: 'tecnologia', name: 'tecnologia', display_name: 'Tecnología', color: '#74B9FF' },
+        { id: 'salud', name: 'salud', display_name: 'Salud y Belleza', color: '#DDA0DD' },
+        { id: 'educacion', name: 'educacion', display_name: 'Educación', color: '#98D8C8' },
+        { id: 'entretenimiento', name: 'entretenimiento', display_name: 'Entretenimiento', color: '#FFEAA7' },
+        { id: 'transporte', name: 'transporte', display_name: 'Transporte', color: '#F7DC6F' },
+        { id: 'automotriz', name: 'automotriz', display_name: 'Automotriz', color: '#636E72' },
+        { id: 'belleza', name: 'belleza', display_name: 'Belleza', color: '#FD79A8' },
+        { id: 'hogar', name: 'hogar', display_name: 'Hogar', color: '#FDCB6E' },
+        { id: 'deportes', name: 'deportes', display_name: 'Deportes', color: '#E17055' },
+        { id: 'mascotas', name: 'mascotas', display_name: 'Mascotas', color: '#00B894' },
+        { id: 'otros', name: 'otros', display_name: 'Otros', color: '#A29BFE' }
       ]
       
-      defaultCategories.forEach(cat => categoryMap.set(cat.name, cat))
-      
-      // Add categories from existing businesses
-      businesses.forEach(business => {
-        const categoryName = business.category || business.category_name || 'Sin Categoría'
-        if (!categoryMap.has(categoryName) && categoryName !== 'Sin Categoría') {
-          // Normalize category name to avoid duplicates
-          const normalizedName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1).toLowerCase()
-          const categoryId = normalizedName.toLowerCase().replace(/\s+/g, '-')
-          
-          categoryMap.set(normalizedName, {
-            id: categoryId,
-            name: normalizedName,
-            color: this.getCategoryColor(normalizedName)
+      // Only add categories that actually have businesses
+      const categoriesWithBusinesses = []
+      predefinedCategories.forEach(cat => {
+        const hasBusinesses = businesses.some(business => {
+          const businessCategory = business.category || business.category_name || ''
+          return businessCategory.toLowerCase() === cat.name.toLowerCase()
+        })
+        
+        if (hasBusinesses) {
+          categoriesWithBusinesses.push({
+            id: cat.id,
+            name: cat.name, // Use the exact value that's stored in the database
+            display_name: cat.display_name,
+            color: cat.color
           })
         }
       })
       
-      return Array.from(categoryMap.values())
+      return categoriesWithBusinesses
     } catch (error) {
       console.error('Error getting business categories:', error)
       // Return default categories as fallback
       return [
-        { id: 'restaurante', name: 'Restaurante', color: '#FF6B6B' },
-        { id: 'cafe', name: 'Café', color: '#4ECDC4' },
-        { id: 'tienda', name: 'Tienda', color: '#45B7D1' },
-        { id: 'servicio', name: 'Servicio', color: '#96CEB4' },
-        { id: 'entretenimiento', name: 'Entretenimiento', color: '#FFEAA7' },
-        { id: 'salud', name: 'Salud y Belleza', color: '#DDA0DD' },
-        { id: 'educacion', name: 'Educación', color: '#98D8C8' },
-        { id: 'transporte', name: 'Transporte', color: '#F7DC6F' }
+        { id: 'restaurante', name: 'restaurante', display_name: 'Restaurante', color: '#FF6B6B' },
+        { id: 'cafe', name: 'cafe', display_name: 'Café', color: '#4ECDC4' },
+        { id: 'tienda', name: 'tienda', display_name: 'Tienda', color: '#45B7D1' },
+        { id: 'servicios', name: 'servicios', display_name: 'Servicios', color: '#96CEB4' },
+        { id: 'entretenimiento', name: 'entretenimiento', display_name: 'Entretenimiento', color: '#FFEAA7' },
+        { id: 'otros', name: 'otros', display_name: 'Otros', color: '#A29BFE' }
       ]
     }
   }

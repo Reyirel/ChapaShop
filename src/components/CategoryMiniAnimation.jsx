@@ -11,7 +11,12 @@ import {
   Package,
   Car,
   Store,
-  Sparkles
+  Sparkles,
+  Stethoscope,
+  Home,
+  PawPrint,
+  Trophy,
+  Scissors
 } from 'lucide-react'
 
 const CategoryMiniAnimation = ({ category, size = 'small' }) => {
@@ -74,7 +79,43 @@ const CategoryMiniAnimation = ({ category, size = 'small' }) => {
         icon: Car,
         emoji: '🚗'
       },
+      automotriz: {
+        primaryColor: '#C2410C',
+        secondaryColor: '#EA580C',
+        icon: Car,
+        emoji: '🚗'
+      },
+      belleza: {
+        primaryColor: '#BE185D',
+        secondaryColor: '#DB2777',
+        icon: Scissors,
+        emoji: '💄'
+      },
+      hogar: {
+        primaryColor: '#059669',
+        secondaryColor: '#10B981',
+        icon: Home,
+        emoji: '🏠'
+      },
+      deportes: {
+        primaryColor: '#DC2626',
+        secondaryColor: '#EF4444',
+        icon: Trophy,
+        emoji: '⚽'
+      },
+      mascotas: {
+        primaryColor: '#7C2D12',
+        secondaryColor: '#9A3412',
+        icon: PawPrint,
+        emoji: '🐕'
+      },
       otros: {
+        primaryColor: '#374151',
+        secondaryColor: '#4B5563',
+        icon: Package,
+        emoji: '📦'
+      },
+      otro: {
         primaryColor: '#374151',
         secondaryColor: '#4B5563',
         icon: Package,

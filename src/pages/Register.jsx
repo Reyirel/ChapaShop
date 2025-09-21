@@ -55,19 +55,11 @@ const Register = () => {
           updated_at: new Date().toISOString()
         })
 
-        // Create business if user type is business
-        if (userType === 'business') {
-          await dbService.createBusiness({
-            ownerId: userCredential.user.uid,
-            name: fullName, // Usar el nombre completo como nombre del negocio
-            contactName: fullName,
-            contactEmail: email
-          })
-        }
+        // NO crear negocio automáticamente - los vendedores crearán sus negocios desde el dashboard
       }
       
       setMessage(userType === 'business' 
-        ? '¡Registro exitoso! Tu negocio está pendiente de aprobación. Te notificaremos cuando sea aprobado.' 
+        ? '¡Registro exitoso! Ahora puedes crear y gestionar tus negocios desde tu dashboard.' 
         : '¡Registro exitoso! Ahora puedes iniciar sesión.'
       )
       
@@ -176,7 +168,7 @@ const Register = () => {
                   >
                     <Store size={32} className={`mx-auto mb-2 ${userType === 'business' ? 'text-[#3ecf8e]' : 'text-gray-400'}`} />
                     <p className="text-sm font-medium">Negocio</p>
-                    <p className="text-xs text-gray-400">Vendedor/Empresa</p>
+                    <p className="text-xs text-gray-400">Vendedor/Gestor</p>
                   </button>
                 </div>
               </div>
@@ -185,14 +177,14 @@ const Register = () => {
               <div>
                 <label className="block text-white text-sm font-semibold mb-2 flex items-center gap-2">
                   <User size={16} />
-                  {userType === 'business' ? 'Nombre del Responsable' : 'Nombre Completo'}
+                  {userType === 'business' ? 'Nombre Completo' : 'Nombre Completo'}
                 </label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#3ecf8e] focus:ring-2 focus:ring-[#3ecf8e]/20 transition-all"
-                  placeholder={userType === 'business' ? 'Nombre del responsable' : 'Tu nombre completo'}
+                  placeholder={userType === 'business' ? 'Tu nombre completo' : 'Tu nombre completo'}
                   required
                 />
               </div>
@@ -274,7 +266,7 @@ const Register = () => {
                     Registrando...
                   </div>
                 ) : (
-                  userType === 'business' ? 'Registrar Negocio' : 'Crear Cuenta'
+                  userType === 'business' ? 'Registrar como Vendedor' : 'Crear Cuenta'
                 )}
               </button>
             </form>

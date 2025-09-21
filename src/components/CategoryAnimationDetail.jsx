@@ -28,7 +28,11 @@ import {
   Brush,
   Scissors,
   MapPin,
-  Clock
+  Clock,
+  Home,
+  PawPrint,
+  Trophy,
+  Bike
 } from 'lucide-react'
 
 const CategoryAnimationDetail = ({ category, businessName }) => {
@@ -118,7 +122,61 @@ const CategoryAnimationDetail = ({ category, businessName }) => {
         title: 'Transporte',
         emoji: '🚗'
       },
+      automotriz: {
+        primaryColor: '#F7DC6F',
+        secondaryColor: '#F9E79F',
+        accentColor: '#FBEECF',
+        icons: [Car, Settings, Wrench, Zap],
+        backgroundPattern: 'automotive',
+        title: 'Automotriz',
+        emoji: '🚗'
+      },
+      belleza: {
+        primaryColor: '#FFB6C1',
+        secondaryColor: '#FFC4CB',
+        accentColor: '#FFD2D5',
+        icons: [Sparkles, Scissors, Brush, Star],
+        backgroundPattern: 'beauty',
+        title: 'Belleza',
+        emoji: '💄'
+      },
+      hogar: {
+        primaryColor: '#98FB98',
+        secondaryColor: '#AFEEAA',
+        accentColor: '#C6F2C6',
+        icons: [Home, Settings, Sparkles, Crown],
+        backgroundPattern: 'home',
+        title: 'Hogar',
+        emoji: '🏠'
+      },
+      deportes: {
+        primaryColor: '#FF6B6B',
+        secondaryColor: '#FF8E8E',
+        accentColor: '#FFB3B3',
+        icons: [Trophy, Dumbbell, Bike, Star],
+        backgroundPattern: 'sports',
+        title: 'Deportes',
+        emoji: '⚽'
+      },
+      mascotas: {
+        primaryColor: '#DEB887',
+        secondaryColor: '#F5DEB3',
+        accentColor: '#F5E6C8',
+        icons: [PawPrint, Heart, Star, Sparkles],
+        backgroundPattern: 'pets',
+        title: 'Mascotas',
+        emoji: '🐕'
+      },
       otros: {
+        primaryColor: '#3ecf8e',
+        secondaryColor: '#5dd6a3',
+        accentColor: '#7cddb8',
+        icons: [Package, Store, Sparkles, Star],
+        backgroundPattern: 'general',
+        title: 'Otros',
+        emoji: '📦'
+      },
+      otro: {
         primaryColor: '#3ecf8e',
         secondaryColor: '#5dd6a3',
         accentColor: '#7cddb8',
